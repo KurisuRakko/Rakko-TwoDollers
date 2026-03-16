@@ -849,7 +849,14 @@ button {
 		background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
 		border-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
 		color 220ms cubic-bezier(0.22, 1, 0.36, 1),
-		box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+		box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+		transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.editor-chip-button:active,
+.category-chip:active,
+.tag-chip:active {
+	transform: scale(0.96);
 }
 
 .editor-chip-button,
@@ -895,6 +902,10 @@ button {
 	background: var(--home-highlight-soft);
 }
 
+.editor-meta-button:active {
+	transform: scale(0.92);
+}
+
 .editor-comment-input {
 	color: var(--foreground);
 }
@@ -918,12 +929,26 @@ button {
 	box-shadow: var(--home-shadow-raised);
 }
 
+.editor-confirm-button:active {
+	transform: scale(0.97);
+	filter: brightness(0.95);
+}
+
 .calculator-key {
 	border: 1px solid var(--home-border-strong);
 	border-radius: 18px;
 	background: var(--home-surface-strong);
 	color: var(--foreground);
 	box-shadow: var(--home-shadow);
+	transition:
+		background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+		transform 120ms cubic-bezier(0.22, 1, 0.36, 1),
+		box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.calculator-key:active {
+	transform: scale(0.94);
+	background: var(--home-surface-muted);
 }
 
 .calculator-key:hover {
