@@ -12,6 +12,7 @@ import { StorageAPI } from "@/api/storage";
 import CloudLoopIcon from "@/assets/icons/cloud-loop.svg?react";
 import AnimatedNumber from "@/components/animated-number";
 import { showBookGuide } from "@/components/book/util";
+import { AnimatePresence, motion } from "motion/react";
 import BudgetCard from "@/components/budget/card";
 import { HintTooltip } from "@/components/hint";
 import { PaginationIndicator } from "@/components/indicator";
@@ -19,6 +20,7 @@ import Ledger from "@/components/ledger";
 import Loading from "@/components/loading";
 import { Promotion } from "@/components/promotion";
 import { useBudget } from "@/hooks/use-budget";
+import { useIsDesktop } from "@/hooks/use-media-query";
 import { useSnap } from "@/hooks/use-snap";
 import { amountToNumber } from "@/ledger/bill";
 import { useIntl } from "@/locale";
@@ -61,6 +63,9 @@ export default function Page() {
     const [showSyncSuccess, setShowSyncSuccess] = useState(false);
     const [syncPillMounted, setSyncPillMounted] = useState(false);
     const [syncPillLeaving, setSyncPillLeaving] = useState(false);
+    const isDesktop = useIsDesktop();
+    const [isExpanded, setIsExpanded] = useState(false);
+
     const syncStateLabel =
         sync === "wait"
             ? t("home-sync-wait")
@@ -128,6 +133,47 @@ export default function Page() {
         }
     }, []);
 
+    const onScroll = useCallback(
+        (scrollTop: number) => {
+            if (isDesktop) return;
+            // 只要往上滑就进入全屏
+            if (!isExpanded && scrollTop > 5) {
+                setIsExpanded(true);
+            }
+        },
+        [isExpanded, isDesktop],
+    );
+
+    // 检测在顶部滑下的逻辑
+    const touchStartY = useRef<number>(-1);
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!isExpanded || isDesktop) return;
+        const container = ledgerRef.current?.getContainer();
+        // 只有在滚动到顶端时才记录初始点
+        if (container && container.scrollTop <= 0) {
+            touchStartY.current = e.touches[0].clientY;
+        } else {
+            touchStartY.current = -1;
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isExpanded || isDesktop || touchStartY.current === -1) return;
+        const currentY = e.touches[0].clientY;
+        const deltaY = currentY - touchStartY.current;
+        // 如果在顶端且向下滑动超过一定距离，则收起
+        if (deltaY > 60) {
+            setIsExpanded(false);
+            touchStartY.current = -1;
+        }
+    };
+
+    useEffect(() => {
+        if (isDesktop && isExpanded) {
+            setIsExpanded(false);
+        }
+    }, [isDesktop, isExpanded]);
+
     const presence = useMemo(() => {
         if (ledgerAnimationShows) {
             return false;
@@ -187,96 +233,152 @@ export default function Page() {
     }, [showSyncPill]);
 
     return (
-        <div className="home-page w-full h-full p-2 flex flex-col overflow-hidden page-show">
-            <div className="home-hero-grid">
-                <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[28px] p-5 text-foreground">
-                    <div className="home-hero-orb home-hero-orb-primary"></div>
-                    <div className="home-hero-orb home-hero-orb-secondary"></div>
-                    <div className="relative z-[1] flex h-full flex-col gap-5">
-                        <div className="home-hero-head flex items-start justify-between gap-3">
-                            <div className="flex flex-col gap-2">
-                                <span className="home-kicker">
-                                    {denseDate(currentDate)}
-                                </span>
-                                <div className="home-title-line">
-                                    {t("sum")}
+        <div
+            className={cn(
+                "home-page w-full h-full p-2 flex flex-col overflow-hidden page-show transition-all duration-500",
+                isExpanded && "p-0 gap-0",
+            )}
+        >
+            <AnimatePresence initial={false}>
+                {!isExpanded && (
+                    <motion.div
+                        key="hero-section"
+                        initial={{ height: "auto", opacity: 1, marginBottom: 14 }}
+                        animate={{ height: "auto", opacity: 1, marginBottom: 14 }}
+                        exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden flex-shrink-0"
+                    >
+                        <div className="home-hero-grid">
+                            <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[28px] p-5 text-foreground">
+                                <div className="home-hero-orb home-hero-orb-primary"></div>
+                                <div className="home-hero-orb home-hero-orb-secondary"></div>
+                                <div className="relative z-[1] flex h-full flex-col gap-5">
+                                    <div className="home-hero-head flex items-start justify-between gap-3">
+                                        <div className="flex flex-col gap-2">
+                                            <span className="home-kicker">
+                                                {denseDate(currentDate)}
+                                            </span>
+                                            <div className="home-title-line">
+                                                {t("sum")}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="home-book-chip"
+                                            onClick={() => {
+                                                showBookGuide();
+                                            }}
+                                        >
+                                            <i className="icon-[mdi--book-open-variant-outline]"></i>
+                                            {currentBook?.name ??
+                                                t("ledger-books")}
+                                        </button>
+                                    </div>
+                                    <div className="home-hero-main flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                                        <div className="home-hero-value-stack flex flex-col gap-3">
+                                            <AnimatedNumber
+                                                value={currentDateAmount}
+                                                className="home-hero-amount font-bold"
+                                            />
+                                            {syncPillMounted && (
+                                                <div
+                                                    className={cn(
+                                                        "home-sync-pill",
+                                                        syncPillLeaving &&
+                                                            "home-sync-pill-leaving",
+                                                    )}
+                                                >
+                                                    <i
+                                                        className={cn(
+                                                            syncIconClassName,
+                                                            "size-[18px]",
+                                                        )}
+                                                    ></i>
+                                                    {syncStateLabel}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <button
-                                type="button"
-                                className="home-book-chip"
-                                onClick={() => {
-                                    showBookGuide();
-                                }}
-                            >
-                                <i className="icon-[mdi--book-open-variant-outline]"></i>
-                                {currentBook?.name ?? t("ledger-books")}
-                            </button>
                         </div>
-                        <div className="home-hero-main flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                            <div className="home-hero-value-stack flex flex-col gap-3">
-                                <AnimatedNumber
-                                    value={currentDateAmount}
-                                    className="home-hero-amount font-bold"
-                                />
-                                {syncPillMounted && (
-                                    <div
-                                        className={cn(
-                                            "home-sync-pill",
-                                            syncPillLeaving &&
-                                                "home-sync-pill-leaving",
-                                        )}
-                                    >
-                                        <i
-                                            className={cn(
-                                                syncIconClassName,
-                                                "size-[18px]",
-                                            )}
-                                        ></i>
-                                        {syncStateLabel}
-                                    </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {!isExpanded && (
+                    <motion.div
+                        key="promotion-section"
+                        initial={{ height: "auto", opacity: 1, marginBottom: 14 }}
+                        animate={{ height: "auto", opacity: 1, marginBottom: 14 }}
+                        exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden flex-shrink-0"
+                    >
+                        <Promotion />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {!isExpanded && budgets.length > 0 && (
+                    <motion.div
+                        key="budget-section"
+                        initial={{ height: "auto", opacity: 1, marginBottom: 14 }}
+                        animate={{ height: "auto", opacity: 1, marginBottom: 14 }}
+                        exit={{ height: 0, opacity: 0, marginBottom: 0 }}
+                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden flex-shrink-0"
+                    >
+                        <div className="home-budget-shell">
+                            <div className="home-section-head">
+                                <div className="home-section-title">
+                                    {t("home-budget-title")}
+                                </div>
+                                {budgetCount > 1 && (
+                                    <PaginationIndicator
+                                        count={budgetCount}
+                                        current={curBudgetIndex}
+                                    />
                                 )}
                             </div>
-
+                            <div
+                                ref={budgetContainer}
+                                className="w-full flex overflow-x-auto gap-3 scrollbar-hidden snap-mandatory snap-x"
+                            >
+                                {budgets.map((budget) => {
+                                    return (
+                                        <BudgetCard
+                                            className="home-budget-card flex-shrink-0 snap-start"
+                                            key={budget.id}
+                                            budget={budget}
+                                        />
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            <Promotion />
-
-            {budgets.length > 0 && (
-                <div className="home-budget-shell">
-                    <div className="home-section-head">
-                        <div className="home-section-title">
-                            {t("home-budget-title")}
-                        </div>
-                        {budgetCount > 1 && (
-                            <PaginationIndicator
-                                count={budgetCount}
-                                current={curBudgetIndex}
-                            />
-                        )}
-                    </div>
-                    <div
-                        ref={budgetContainer}
-                        className="w-full flex overflow-x-auto gap-3 scrollbar-hidden snap-mandatory snap-x"
-                    >
-                        {budgets.map((budget) => {
-                            return (
-                                <BudgetCard
-                                    className="home-budget-card flex-shrink-0 snap-start"
-                                    key={budget.id}
-                                    budget={budget}
-                                />
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-            <div className="home-ledger-stage">
-                <div className="home-toolbar">
+            <motion.div
+                layout={false}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className={cn(
+                    "home-ledger-stage flex-1 flex flex-col min-height-0 transition-all duration-500",
+                    isExpanded && "rounded-none !p-0 !gap-0",
+                )}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+            >
+                <div
+                    className={cn(
+                        "home-toolbar transition-all duration-500",
+                        isExpanded && "rounded-none border-x-0 border-t-0 bg-background/95",
+                    )}
+                >
                     <div className="home-toolbar-copy">
                         <div className="home-toolbar-subtitle">
                             {t("home-today-records")}: {currentDateBills.length}
@@ -310,8 +412,22 @@ export default function Page() {
                             )}
                         </button>
                     </HintTooltip>
+                    {isExpanded && !isDesktop && (
+                        <button
+                            type="button"
+                            className="home-toolbar-button"
+                            onClick={() => setIsExpanded(false)}
+                        >
+                            <i className="icon-[mdi--close] size-[18px]"></i>
+                        </button>
+                    )}
                 </div>
-                <div className="home-ledger-shell flex-1 translate-0 overflow-hidden">
+                <div
+                    className={cn(
+                        "home-ledger-shell flex-1 translate-0 overflow-hidden transition-all duration-500",
+                        isExpanded && "rounded-none !p-0 border-none",
+                    )}
+                >
                     <div className="w-full h-full">
                         {bills.length > 0 ? (
                             <Ledger
@@ -326,6 +442,7 @@ export default function Page() {
                                 onItemShow={onItemShow}
                                 onVisibleDateChange={setCurrentDate}
                                 onDateClick={onDateClick}
+                                onScroll={onScroll}
                                 presence={presence}
                                 showAssets={showAssets}
                             />
@@ -336,7 +453,7 @@ export default function Page() {
                         )}
                     </div>
                 </div>
-            </div>
+            </motion.div>
         </div>
     );
 }

@@ -40,6 +40,7 @@ function Divider({
 
 type LedgerRef = {
     scrollToIndex: (index: number) => void;
+    getContainer: () => HTMLDivElement | null;
 };
 
 type LedgerProps = {
@@ -56,6 +57,7 @@ type LedgerProps = {
     onItemShow?: (index: number) => void;
     onVisibleDateChange?: (date: Dayjs) => void;
     onDateClick?: (date: Dayjs) => void;
+    onScroll?: (scrollTop: number) => void;
     showAssets?: boolean;
 };
 
@@ -73,6 +75,7 @@ const Ledger = forwardRef<LedgerRef, LedgerProps>(
             onItemShow,
             onVisibleDateChange,
             onDateClick,
+            onScroll,
             showAssets,
         },
         ref,
@@ -84,6 +87,7 @@ const Ledger = forwardRef<LedgerRef, LedgerProps>(
             scrollToIndex: (index: number) => {
                 rowVirtualizer.scrollToIndex(index);
             },
+            getContainer: () => parentRef.current,
         }));
 
         const rowVirtualizer = useVirtualizer({
@@ -103,6 +107,7 @@ const Ledger = forwardRef<LedgerRef, LedgerProps>(
             if (!el) return;
             const handleScroll = () => {
                 const scrollTop = el.scrollTop;
+                onScroll?.(scrollTop);
                 const visibleItems = rowVirtualizer.getVirtualItems();
                 // 找到第一个底部超过 scrollTop 的 item，即当前顶部可见的那个
                 const firstVisible = visibleItems.find(
@@ -125,7 +130,7 @@ const Ledger = forwardRef<LedgerRef, LedgerProps>(
             // 初始调用
             handleScroll();
             return () => el.removeEventListener("scroll", handleScroll);
-        }, [bills, enableDivideAsOrdered, onVisibleDateChange, rowVirtualizer]);
+        }, [bills, enableDivideAsOrdered, onVisibleDateChange, onScroll, rowVirtualizer]);
 
         useEffect(() => {
             if (!presence) {
