@@ -249,9 +249,6 @@ importers:
       vite-plugin-html:
         specifier: ^3.2.2
         version: 3.2.2(vite@7.1.3(@types/node@24.3.1)(jiti@2.6.1)(lightningcss@1.30.1)(sass-embedded@1.93.3)(sass@1.93.3)(terser@5.44.0))
-      vite-plugin-info:
-        specifier: ^0.4.1
-        version: 0.4.1(vite@7.1.3(@types/node@24.3.1)(jiti@2.6.1)(lightningcss@1.30.1)(sass-embedded@1.93.3)(sass@1.93.3)(terser@5.44.0))
       vite-plugin-pwa:
         specifier: ^1.0.3
         version: 1.0.3(vite@7.1.3(@types/node@24.3.1)(jiti@2.6.1)(lightningcss@1.30.1)(sass-embedded@1.93.3)(sass@1.93.3)(terser@5.44.0))(workbox-build@7.3.0)(workbox-window@7.3.0)
@@ -3395,10 +3392,6 @@ packages:
     resolution: {integrity: sha512-+IxzY9BZOQd/XuYPRmrvEVjF/nqj5kgT4kEq7VofrDoM1MxoRjEWkrCC3EtLi59TVawxTAn+orJwFQcrqEN1+g==}
     engines: {node: '>=18'}
 
-  ci-info@3.9.0:
-    resolution: {integrity: sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ==}
-    engines: {node: '>=8'}
-
   ci-info@4.3.1:
     resolution: {integrity: sha512-Wdy2Igu8OcBpI2pZePZ5oWjPC38tmDVx5WKUXKwlLYkA0ozo85sLsLvkBbBn/sZaSCMFOGZJ14fvW9t5/d7kdA==}
     engines: {node: '>=8'}
@@ -3937,18 +3930,10 @@ packages:
     resolution: {integrity: sha512-w9UMqWwJxHNOvoNzSJ2oPF5wvYcvP7jUvYzhp67yEhTi17ZDBBC1z9pTdGuzjD+EFIqLSYRweZjqfiPzQ06Ebg==}
     engines: {node: '>= 0.4'}
 
-  git-config-path@2.0.0:
-    resolution: {integrity: sha512-qc8h1KIQbJpp+241id3GuAtkdyJ+IK+LIVtkiFTRKRrmddDzs3SI9CvP1QYmWBFvm1I/PWRwj//of8bgAc0ltA==}
-    engines: {node: '>=4'}
-
   git-raw-commits@4.0.0:
     resolution: {integrity: sha512-ICsMM1Wk8xSGMowkOmPrzo2Fgmfo4bMHLNX6ytHjajRJUqvHOw/TFapQ+QG75c3X/tTDDhOSRPGC52dDbNM8FQ==}
     engines: {node: '>=16'}
     hasBin: true
-
-  git-repo-info@2.1.1:
-    resolution: {integrity: sha512-8aCohiDo4jwjOwma4FmYFd3i97urZulL8XL24nIPxuE+GZnfsAyy/g2Shqx6OjUiFKUXZM+Yy+KHnOmmA3FVcg==}
-    engines: {node: '>= 4.0'}
 
   git-up@8.1.1:
     resolution: {integrity: sha512-FDenSF3fVqBYSaJoYy1KSc2wosx0gCvKP+c+PRBht7cAaiCeQlBtfBDX9vgnNOHmdePlSFITVcn4pFfcgNvx3g==}
@@ -4085,9 +4070,6 @@ packages:
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
-
-  ini@1.3.8:
-    resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
 
   ini@4.1.1:
     resolution: {integrity: sha512-QQnnxNyfvmHFIsj7gkPcYymR8Jdw/o7mp5ZFihxn6h8Ci6fh3Dx4E1gPjpQEpIuPo9XVNY/ZUwh4BPMjGyL01g==}
@@ -4649,15 +4631,6 @@ packages:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
 
-  parse-git-config@3.0.0:
-    resolution: {integrity: sha512-wXoQGL1D+2COYWCD35/xbiKma1Z15xvZL8cI25wvxzled58V51SJM04Urt/uznS900iQor7QO04SgdfT/XlbuA==}
-    engines: {node: '>=8'}
-
-  parse-github-url@1.0.3:
-    resolution: {integrity: sha512-tfalY5/4SqGaV/GIGzWyHnFjlpTPTNpENR9Ea2lLldSJ8EWXMsvacWucqY3m3I4YPtas15IxTLQVQ5NSYXPrww==}
-    engines: {node: '>= 0.10'}
-    hasBin: true
-
   parse-json@5.2.0:
     resolution: {integrity: sha512-ayCKvm/phCGxOkYRSCM82iDwct8/EonSEgCSxWxD7ve6jHggsFl4fZVQBPRNgQoKiuV/odhFrGzQXZwbifC8Rg==}
     engines: {node: '>=8'}
@@ -4891,10 +4864,6 @@ packages:
   relateurl@0.2.7:
     resolution: {integrity: sha512-G08Dxvm4iDN3MLM0EsP62EDV9IuhXPR6blNz6Utcp7zyV3tr4HVNINt6MpaRWbxoOHT3Q7YN2P+jaHX8vUbgog==}
     engines: {node: '>= 0.10'}
-
-  remote-origin-url@2.0.0:
-    resolution: {integrity: sha512-4TKz5bTDEHFzsqgjQZY/NxNqceWhtWD69Fgwetm+172GT2NoljyQssB649ECUBHGhBINuGwKw8mfcjQFugdIlg==}
-    engines: {node: '>=8'}
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -5524,11 +5493,6 @@ packages:
     resolution: {integrity: sha512-vb9C9kcdzcIo/Oc3CLZVS03dL5pDlOFuhGlZYDCJ840BhWl/0nGeZWf3Qy7NlOayscY4Cm/QRgULCQkEZige5Q==}
     peerDependencies:
       vite: '>=2.0.0'
-
-  vite-plugin-info@0.4.1:
-    resolution: {integrity: sha512-CP+B3N1+tdEM/o2Cu3kQpU7H/qABvNb5GqDVsbuH3ICJfdUyHn8xCZPEVQ5dB8/gr/vzFnzRoPbX2YcZQzG7jQ==}
-    peerDependencies:
-      vite: ^2.9.13 || ^3.0.0 || ^4.0.0
 
   vite-plugin-pwa@1.0.3:
     resolution: {integrity: sha512-/OpqIpUldALGxcsEnv/ekQiQ5xHkQ53wcoN5ewX4jiIDNGs3W+eNcI1WYZeyOLmzoEjg09D7aX0O89YGjen1aw==}
@@ -9384,8 +9348,6 @@ snapshots:
 
   chownr@3.0.0: {}
 
-  ci-info@3.9.0: {}
-
   ci-info@4.3.1: {}
 
   class-variance-authority@0.7.1:
@@ -10024,15 +9986,11 @@ snapshots:
       es-errors: 1.3.0
       get-intrinsic: 1.3.0
 
-  git-config-path@2.0.0: {}
-
   git-raw-commits@4.0.0:
     dependencies:
       dargs: 8.1.0
       meow: 12.1.1
       split2: 4.2.0
-
-  git-repo-info@2.1.1: {}
 
   git-up@8.1.1:
     dependencies:
@@ -10152,8 +10110,6 @@ snapshots:
       wrappy: 1.0.2
 
   inherits@2.0.4: {}
-
-  ini@1.3.8: {}
 
   ini@4.1.1: {}
 
@@ -10668,13 +10624,6 @@ snapshots:
     dependencies:
       callsites: 3.1.0
 
-  parse-git-config@3.0.0:
-    dependencies:
-      git-config-path: 2.0.0
-      ini: 1.3.8
-
-  parse-github-url@1.0.3: {}
-
   parse-json@5.2.0:
     dependencies:
       '@babel/code-frame': 7.27.1
@@ -10961,10 +10910,6 @@ snapshots:
       jsesc: 3.0.2
 
   relateurl@0.2.7: {}
-
-  remote-origin-url@2.0.0:
-    dependencies:
-      parse-git-config: 3.0.0
 
   require-directory@2.1.1: {}
 
@@ -11600,14 +11545,6 @@ snapshots:
       html-minifier-terser: 6.1.0
       node-html-parser: 5.4.2
       pathe: 0.2.0
-      vite: 7.1.3(@types/node@24.3.1)(jiti@2.6.1)(lightningcss@1.30.1)(sass-embedded@1.93.3)(sass@1.93.3)(terser@5.44.0)
-
-  vite-plugin-info@0.4.1(vite@7.1.3(@types/node@24.3.1)(jiti@2.6.1)(lightningcss@1.30.1)(sass-embedded@1.93.3)(sass@1.93.3)(terser@5.44.0)):
-    dependencies:
-      ci-info: 3.9.0
-      git-repo-info: 2.1.1
-      parse-github-url: 1.0.3
-      remote-origin-url: 2.0.0
       vite: 7.1.3(@types/node@24.3.1)(jiti@2.6.1)(lightningcss@1.30.1)(sass-embedded@1.93.3)(sass@1.93.3)(terser@5.44.0)
 
   vite-plugin-pwa@1.0.3(vite@7.1.3(@types/node@24.3.1)(jiti@2.6.1)(lightningcss@1.30.1)(sass-embedded@1.93.3)(sass@1.93.3)(terser@5.44.0))(workbox-build@7.3.0)(workbox-window@7.3.0):
