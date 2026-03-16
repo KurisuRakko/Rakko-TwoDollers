@@ -21,9 +21,7 @@ export function CategoryItem({
             type="button"
             className={cn(
                 "category-chip rounded-xl border flex-1 py-1 px-2 h-10 flex items-center justify-center whitespace-nowrap cursor-pointer",
-                selected
-                    ? "category-chip-selected"
-                    : "category-chip-idle",
+                selected ? "category-chip-selected" : "category-chip-idle",
                 className,
             )}
             onMouseDown={onMouseDown}

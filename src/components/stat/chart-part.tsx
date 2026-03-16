@@ -273,12 +273,12 @@ export function useChartPart({
                         />
                     </div>
                 ) : (
-                            <Chart
-                                ref={trendChart}
-                                key={dimension}
-                                option={charts[0]}
-                                className="w-full h-[220px] sm:h-[260px]"
-                            />
+                    <Chart
+                        ref={trendChart}
+                        key={dimension}
+                        option={charts[0]}
+                        className="w-full h-[220px] sm:h-[260px]"
+                    />
                 )}
             </div>
             {focusType !== "balance" && (

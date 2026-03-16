@@ -65,7 +65,7 @@ export function AnalysisCloud({ bills }: { bills?: { comment?: string }[] }) {
             }
         }, []);
         processText(texts).then(setWordCut);
-        }, [bills]);
+    }, [bills]);
     return (
         <div className="stat-card stat-data-card w-full flex flex-col relative">
             <h2 className="font-medium text-lg my-3 text-center">

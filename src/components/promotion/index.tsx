@@ -129,7 +129,9 @@ export function Promotion() {
     return (
         <div className="home-promotion-shell w-full flex flex-col gap-2">
             <div className="home-section-head">
-                <div className="home-section-title">{t("home-guide-title")}</div>
+                <div className="home-section-title">
+                    {t("home-guide-title")}
+                </div>
             </div>
             <div
                 ref={scrollRef}

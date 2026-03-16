@@ -165,7 +165,9 @@ export default function Page() {
     }, [sync]);
 
     const showSyncPill =
-        sync === "syncing" || (sync !== "wait" && sync !== "success") || showSyncSuccess;
+        sync === "syncing" ||
+        (sync !== "wait" && sync !== "success") ||
+        showSyncSuccess;
 
     useEffect(() => {
         if (showSyncPill) {
@@ -299,7 +301,9 @@ export default function Page() {
                     </div>
                     <HintTooltip
                         persistKey={"cloudSyncHintShows"}
-                        content={"等待云同步完成后，其他设备即可获取最新的账单数据"}
+                        content={
+                            "等待云同步完成后，其他设备即可获取最新的账单数据"
+                        }
                     >
                         <button
                             type="button"

@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "react";
-import wallpaper from "../../arknightswall9.jpg";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
 import { useUserStore } from "@/store/user";
+import wallpaper from "../../arknightswall9.jpg";
 
 const STYLE_ID = "rakko-custom-css";
 

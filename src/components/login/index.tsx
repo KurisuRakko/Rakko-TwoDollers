@@ -1,10 +1,11 @@
 /** biome-ignore-all lint/a11y/noSvgWithoutTitle: <explanation> */
-import { createPortal } from "react-dom";
+
 import { Collapsible } from "radix-ui";
-import loginWallpaper from "../../../arknightswall9.jpg";
+import { createPortal } from "react-dom";
 import { useShallow } from "zustand/shallow";
 import { useIntl } from "@/locale";
 import { useIsLogin, useUserStore } from "@/store/user";
+import loginWallpaper from "../../../arknightswall9.jpg";
 
 const loaded = import("@/api/storage");
 
@@ -65,59 +66,89 @@ export default function Login() {
                         </div>
                         <div className="login-panel-body px-4 pb-4 sm:px-6 sm:pb-6">
                             <div className="login-panel-stack flex flex-col gap-4">
-                        {loading ? (
+                                {loading ? (
                                     <div className="text-sm flex items-center gap-2 rounded-2xl border bg-card/60 px-4 py-4">
-                                <i className="icon-[mdi--loading] animate-spin text-primary"></i>
-                                {t("login")}
-                            </div>
-                        ) : (
-                            <>
+                                        <i className="icon-[mdi--loading] animate-spin text-primary"></i>
+                                        {t("login")}
+                                    </div>
+                                ) : (
+                                    <>
                                         <div className="login-section login-section-surface flex flex-col gap-3 rounded-[22px] border bg-card/70 p-4">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
                                                     <div className="text-base font-semibold">
-                                                        {t("login-with-github-token")}
+                                                        {t(
+                                                            "login-with-github-token",
+                                                        )}
                                                     </div>
                                                     <div className="mt-1 text-xs text-muted-foreground leading-5">
-                                                        {t("login-github-token-description")}
+                                                        {t(
+                                                            "login-github-token-description",
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="login-badge">
                                                     GitHub
                                                 </div>
                                             </div>
-                                    <button
-                                        type="button"
-                                        className={`${primaryButtonStyle}`}
-                                        onClick={async () => {
-                                            const StorageAPI =
-                                                await loadStorageAPI();
-                                            StorageAPI.loginManuallyWith(
-                                                "github",
-                                            );
-                                        }}
-                                    >
-                                        <i className="icon-[mdi--key-variant]"></i>
+                                            <button
+                                                type="button"
+                                                className={`${primaryButtonStyle}`}
+                                                onClick={async () => {
+                                                    const StorageAPI =
+                                                        await loadStorageAPI();
+                                                    StorageAPI.loginManuallyWith(
+                                                        "github",
+                                                    );
+                                                }}
+                                            >
+                                                <i className="icon-[mdi--key-variant]"></i>
                                                 <div className="flex-1">
-                                                    {t("login-with-github-token")}
+                                                    {t(
+                                                        "login-with-github-token",
+                                                    )}
                                                 </div>
-                                    </button>
+                                            </button>
                                             <Collapsible.Root className="group rounded-2xl border border-border/70 bg-background/60 transition-[background-color,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=open]:bg-background/80 data-[state=open]:shadow-sm">
                                                 <Collapsible.Trigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-xs font-medium cursor-pointer">
-                                            <span>{t("login-token-guide-title")}</span>
-                                            <i className="icon-[mdi--chevron-down] transition-transform duration-200 group-data-[state=open]:rotate-180"></i>
-                                        </Collapsible.Trigger>
-                                        <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
+                                                    <span>
+                                                        {t(
+                                                            "login-token-guide-title",
+                                                        )}
+                                                    </span>
+                                                    <i className="icon-[mdi--chevron-down] transition-transform duration-200 group-data-[state=open]:rotate-180"></i>
+                                                </Collapsible.Trigger>
+                                                <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
                                                     <div className="border-t border-border/60 px-4 py-4 text-xs leading-5 text-muted-foreground flex flex-col gap-2">
-                                                <div>{t("login-token-guide-step1")}</div>
-                                                <div>{t("login-token-guide-step2")}</div>
-                                                <div>{t("login-token-guide-step3")}</div>
-                                                <div>{t("login-token-guide-step4")}</div>
-                                                <div>{t("login-token-guide-step5")}</div>
-                                            </div>
-                                        </Collapsible.Content>
-                                    </Collapsible.Root>
-                                </div>
+                                                        <div>
+                                                            {t(
+                                                                "login-token-guide-step1",
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            {t(
+                                                                "login-token-guide-step2",
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            {t(
+                                                                "login-token-guide-step3",
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            {t(
+                                                                "login-token-guide-step4",
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            {t(
+                                                                "login-token-guide-step5",
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </Collapsible.Content>
+                                            </Collapsible.Root>
+                                        </div>
                                         <div className="login-section login-section-surface flex flex-col gap-3 rounded-[22px] border bg-card/70 p-4">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
@@ -125,49 +156,55 @@ export default function Login() {
                                                         {t("offline-mode")}
                                                     </div>
                                                     <div className="mt-1 text-xs text-muted-foreground leading-5">
-                                                        {t("login-offline-description")}
+                                                        {t(
+                                                            "login-offline-description",
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="login-badge login-badge-muted">
                                                     Local
                                                 </div>
                                             </div>
-                                    <button
-                                        type="button"
-                                        className={`${secondaryButtonStyle}`}
-                                        onClick={async () => {
-                                            const StorageAPI =
-                                                await loadStorageAPI();
-                                            StorageAPI.loginWith("offline");
-                                        }}
-                                    >
-                                        <i className="icon-[mdi--local]"></i>
+                                            <button
+                                                type="button"
+                                                className={`${secondaryButtonStyle}`}
+                                                onClick={async () => {
+                                                    const StorageAPI =
+                                                        await loadStorageAPI();
+                                                    StorageAPI.loginWith(
+                                                        "offline",
+                                                    );
+                                                }}
+                                            >
+                                                <i className="icon-[mdi--local]"></i>
                                                 <div className="flex-1">
                                                     {t("offline-mode")}
                                                 </div>
-                                    </button>
-                                </div>
+                                            </button>
+                                        </div>
                                         <div className="login-help-card login-section login-section-surface rounded-[22px] border bg-gradient-to-br from-muted/55 to-background/78 p-4 text-xs leading-5 flex-col gap-3 backdrop-blur-sm">
                                             <div className="font-semibold text-foreground text-sm">
-                                        {t("login-help-title")}
-                                    </div>
+                                                {t("login-help-title")}
+                                            </div>
                                             <div className="login-help-row">
-                                        <span className="font-medium text-foreground">
-                                            {t("login-help-github-title")}
-                                        </span>
-                                        {" "}
-                                            {t("login-help-github-body")}
-                                    </div>
+                                                <span className="font-medium text-foreground">
+                                                    {t(
+                                                        "login-help-github-title",
+                                                    )}
+                                                </span>{" "}
+                                                {t("login-help-github-body")}
+                                            </div>
                                             <div className="login-help-row">
-                                        <span className="font-medium text-foreground">
-                                            {t("login-help-offline-title")}
-                                        </span>
-                                        {" "}
-                                            {t("login-help-offline-body")}
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                                                <span className="font-medium text-foreground">
+                                                    {t(
+                                                        "login-help-offline-title",
+                                                    )}
+                                                </span>{" "}
+                                                {t("login-help-offline-body")}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -181,9 +218,7 @@ export default function Login() {
 function Guide({ wallpaper }: { wallpaper: string }) {
     const t = useIntl();
     return (
-        <div
-            className="login-hero text-white relative overflow-hidden"
-        >
+        <div className="login-hero text-white relative overflow-hidden">
             <div
                 className="login-hero-wallpaper absolute inset-0 scale-105"
                 style={{
@@ -201,9 +236,7 @@ function Guide({ wallpaper }: { wallpaper: string }) {
                     KurisuRakko
                 </div>
                 <div className="flex flex-col gap-4">
-                    <div className="login-kicker">
-                        {t("app-brand")}
-                    </div>
+                    <div className="login-kicker">{t("app-brand")}</div>
                     <h1 className="max-w-[10ch] text-4xl leading-none font-semibold sm:text-5xl drop-shadow-[0_10px_36px_rgba(0,0,0,0.42)]">
                         {t("APP_NAME")}
                     </h1>

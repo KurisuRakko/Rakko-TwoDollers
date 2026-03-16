@@ -1,16 +1,17 @@
 import {
     type ChangeEvent,
     type PointerEvent,
+    useCallback,
     useEffect,
     useMemo,
     useRef,
     useState,
 } from "react";
-import defaultWallpaper from "../../../arknightswall9.jpg";
 import PopupLayout from "@/layouts/popup-layout";
 import { useIntl } from "@/locale";
 import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
+import defaultWallpaper from "../../../arknightswall9.jpg";
 import createConfirmProvider from "../confirm";
 import modal from "../modal";
 import { Button } from "../ui/button";
@@ -123,14 +124,13 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
     const t = useIntl();
     const savedWallpaper = usePreferenceStore((state) => state.mainWallpaper);
     const inputRef = useRef<HTMLInputElement>(null);
-    const cropViewportRef = useRef<HTMLDivElement>(null);
     const dragStateRef = useRef<{
         pointerId: number;
         x: number;
         y: number;
     } | null>(null);
     const [draft, setDraft] = useState(savedWallpaper ?? "");
-    const [preview, setPreview] = useState(savedWallpaper || defaultWallpaper);
+    const [_preview, setPreview] = useState(savedWallpaper || defaultWallpaper);
     const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
     const [viewportSize, setViewportSize] = useState({
         width: 0,
@@ -145,24 +145,26 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
         setPreview(savedWallpaper || defaultWallpaper);
     }, [savedWallpaper]);
 
-    useEffect(() => {
-        const element = cropViewportRef.current;
-        if (!element) {
-            return;
-        }
+    const cropViewportObserveRef = useCallback(
+        (element: HTMLDivElement | null) => {
+            if (!element) {
+                return;
+            }
 
-        const updateSize = () => {
-            setViewportSize({
-                width: element.clientWidth,
-                height: element.clientHeight,
-            });
-        };
+            const updateSize = () => {
+                setViewportSize({
+                    width: element.clientWidth,
+                    height: element.clientHeight,
+                });
+            };
 
-        updateSize();
-        const observer = new ResizeObserver(updateSize);
-        observer.observe(element);
-        return () => observer.disconnect();
-    }, [cropDraft?.src]);
+            updateSize();
+            const observer = new ResizeObserver(updateSize);
+            observer.observe(element);
+            return () => observer.disconnect();
+        },
+        [],
+    );
 
     useEffect(() => {
         const updateAspectRatio = () => {
@@ -183,11 +185,12 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
     }, []);
 
     useEffect(() => {
-        if (!cropDraft || viewportSize.width === 0 || viewportSize.height === 0) {
-            return;
-        }
         setCropDraft((prev) => {
-            if (!prev) {
+            if (
+                !prev ||
+                viewportSize.width === 0 ||
+                viewportSize.height === 0
+            ) {
                 return prev;
             }
             return clampCropPosition(
@@ -196,7 +199,7 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                 viewportSize.height,
             );
         });
-    }, [cropDraft?.zoom, viewportSize.height, viewportSize.width]);
+    }, [viewportSize.height, viewportSize.width]);
 
     const cropImageStyle = useMemo(() => {
         if (
@@ -354,7 +357,11 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
 
     const onCropPointerMove = (event: PointerEvent<HTMLDivElement>) => {
         const dragState = dragStateRef.current;
-        if (!cropDraft || !dragState || dragState.pointerId !== event.pointerId) {
+        if (
+            !cropDraft ||
+            !dragState ||
+            dragState.pointerId !== event.pointerId
+        ) {
             return;
         }
 
@@ -496,7 +503,11 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                             <div className="text-sm font-medium">
                                 {t("wallpaper-crop-title")}
                             </div>
-                            <Button type="button" variant="ghost" onClick={applyCrop}>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={applyCrop}
+                            >
                                 {t("confirm")}
                             </Button>
                         </div>
@@ -507,7 +518,7 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
 
                         <div className="flex flex-1 items-center justify-center px-4 py-4">
                             <div
-                                ref={cropViewportRef}
+                                ref={cropViewportObserveRef}
                                 className="relative w-full max-w-[520px] overflow-hidden rounded-[28px] border bg-stone-950 shadow-2xl touch-none"
                                 style={{ aspectRatio: `${cropAspectRatio}` }}
                                 onPointerDown={onCropPointerDown}
@@ -541,7 +552,9 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                             <div className="rounded-[22px] border bg-background/80 p-4 shadow-sm">
                                 <div className="flex items-center justify-between text-xs opacity-65">
                                     <span>{t("wallpaper-crop-zoom")}</span>
-                                    <span>{Math.round(cropDraft.zoom * 100)}%</span>
+                                    <span>
+                                        {Math.round(cropDraft.zoom * 100)}%
+                                    </span>
                                 </div>
                                 <input
                                     type="range"
@@ -551,7 +564,9 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                                     value={cropDraft.zoom}
                                     className="mt-3 w-full accent-foreground"
                                     onChange={(event) => {
-                                        const nextZoom = Number(event.target.value);
+                                        const nextZoom = Number(
+                                            event.target.value,
+                                        );
                                         setCropDraft((prev) => {
                                             if (
                                                 !prev ||
