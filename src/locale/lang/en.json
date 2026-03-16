@@ -98,6 +98,7 @@
   "create-new-book": "Create new book",
   "select-a-book": "Select a book\"",
   "loading-books": "Loading Books...",
+  "clearing-data": "Clearing data...",
   "no-books-go-create-one": "No books, go create one",
   "import-from-oncent-github-io": "Import from Oncent.github.io",
   "import-success": "Import success",

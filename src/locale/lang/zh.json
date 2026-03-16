@@ -98,6 +98,7 @@
   "create-new-book": "新建账本",
   "ledger-books": "账本管理",
   "loading-books": "账本加载中...",
+  "clearing-data": "正在清除数据...",
   "logout-warning": "确定要退出登录吗，未同步到云端到数据将会全部丢失",
   "no-books-go-create-one": "还没有账本，新建一本",
   "select-a-book": "选择账本",

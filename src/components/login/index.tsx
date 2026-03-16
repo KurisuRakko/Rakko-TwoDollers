@@ -30,7 +30,7 @@ export default function Login() {
         return null;
     }
     return createPortal(
-        <div className="fixed z-[1] top-0 right-0 w-screen h-screen overflow-y-auto overscroll-contain">
+        <div className="fixed z-[50] top-0 right-0 w-screen h-screen overflow-y-auto overscroll-contain">
             <div
                 className="login-backdrop absolute w-full h-full z-[-1]"
                 style={{
@@ -45,12 +45,6 @@ export default function Login() {
                         <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent)] pointer-events-none"></div>
                         <div className="flex items-center justify-between px-5 pt-5 pb-3 sm:px-7">
                             <div className="flex flex-col">
-                                <span className="text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
-                                    {t("app-brand")}
-                                </span>
-                                <span className="text-lg font-semibold">
-                                    {t("APP_NAME")}
-                                </span>
                                 <span className="login-mobile-tip mt-2 text-xs leading-5 text-muted-foreground">
                                     {t("login-choose-mode-tip")}
                                 </span>
@@ -236,7 +230,6 @@ function Guide({ wallpaper }: { wallpaper: string }) {
                     KurisuRakko
                 </div>
                 <div className="flex flex-col gap-4">
-                    <div className="login-kicker">{t("app-brand")}</div>
                     <h1 className="max-w-[10ch] text-4xl leading-none font-semibold sm:text-5xl drop-shadow-[0_10px_36px_rgba(0,0,0,0.42)]">
                         {t("APP_NAME")}
                     </h1>

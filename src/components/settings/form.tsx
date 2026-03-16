@@ -24,16 +24,18 @@ function UserInfo() {
     const toLogOut = async () => {
         await modal.prompt({ title: t("logout-warning") });
 
-        await Promise.all([
-            StorageAPI.logout(),
-            new Promise<void>((res) => {
-                setTimeout(() => {
-                    res();
-                }, 100);
-            }),
-        ]);
-        localStorage.clear();
-        sessionStorage.clear();
+        const [close] = modal.loading({
+            label: t("clearing-data"),
+        });
+
+        try {
+            await StorageAPI.toSync();
+        } catch (e) {
+            console.error(e);
+        }
+
+        await StorageAPI.clearAll();
+        close();
         location.reload();
     };
     return (

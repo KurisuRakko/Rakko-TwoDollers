@@ -2,6 +2,7 @@ import { wrap } from "comlink";
 import modal from "@/components/modal";
 import { GithubEndpoint } from "../endpoints/github";
 import { OfflineEndpoint } from "../endpoints/offline";
+import { BillIndexedDBStorage } from "@/database/storage";
 import type { Exposed } from "./worker";
 import DeferredWorker from "./worker?worker";
 
@@ -41,6 +42,12 @@ export const StorageAPI = {
         if (type === "github") {
             return loginWithGithubToken();
         }
+    },
+    clearAll: async () => {
+        const storage = new BillIndexedDBStorage("dummy");
+        await storage.dangerousClearAll();
+        localStorage.clear();
+        sessionStorage.clear();
     },
 };
 

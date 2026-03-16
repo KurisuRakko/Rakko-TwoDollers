@@ -66,6 +66,7 @@ export class Scheduler {
                 this.startCallback(controller, myGeneration);
             }, this.delay);
         }
+        return this.sessionPromise;
     }
 
     onProcess(listener: (running: Promise<void>) => void): () => void {
