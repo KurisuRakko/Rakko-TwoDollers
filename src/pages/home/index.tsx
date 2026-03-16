@@ -237,24 +237,7 @@ export default function Page() {
                                     </div>
                                 )}
                             </div>
-                            <div className="home-hero-stats">
-                                <div className="home-mini-card">
-                                    <div className="home-mini-label">
-                                        {t("home-today-records")}
-                                    </div>
-                                    <div className="home-mini-value">
-                                        {currentDateBills.length}
-                                    </div>
-                                </div>
-                                <div className="home-mini-card">
-                                    <div className="home-mini-label">
-                                        {t("home-budget-title")}
-                                    </div>
-                                    <div className="home-mini-value">
-                                        {budgets.length || 0}
-                                    </div>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
                 </div>
