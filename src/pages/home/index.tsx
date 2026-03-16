@@ -153,13 +153,13 @@ export default function Page() {
         [isExpanded, isDesktop],
     );
 
-    // 检测在顶部滑下的逻辑
     const touchStartY = useRef<number>(-1);
     const handleTouchStart = (e: React.TouchEvent) => {
-        if (!isExpanded || isDesktop) return;
+        if (isDesktop) return;
         const container = ledgerRef.current?.getContainer();
-        // 只有在滚动到顶端时才记录初始点
-        if (container && container.scrollTop <= 0) {
+        const isAtTop = !container || container.scrollTop <= 0;
+        
+        if (!isExpanded || isAtTop) {
             touchStartY.current = e.touches[0].clientY;
         } else {
             touchStartY.current = -1;
@@ -167,13 +167,22 @@ export default function Page() {
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        if (!isExpanded || isDesktop || touchStartY.current === -1) return;
+        if (isDesktop || touchStartY.current === -1) return;
         const currentY = e.touches[0].clientY;
         const deltaY = currentY - touchStartY.current;
-        // 如果在顶端且向下滑动超过一定距离，则收起
-        if (deltaY > 50) {
-            setIsExpanded(false);
-            touchStartY.current = -1;
+
+        if (isExpanded) {
+            // 在全屏状态，只有在顶端且向下滑动超过一定距离才收起
+            if (deltaY > 50) {
+                setIsExpanded(false);
+                touchStartY.current = -1;
+            }
+        } else {
+            // 在收起状态，只要向上滑动超过一定距离就展开
+            if (deltaY < -40) {
+                setIsExpanded(true);
+                touchStartY.current = -1;
+            }
         }
     };
 
@@ -244,7 +253,7 @@ export default function Page() {
     return (
         <div
             className={cn(
-                "home-page w-full h-full p-2 flex flex-col overflow-hidden page-show",
+                "home-page w-full h-full px-2 pt-2 pb-0 flex flex-col overflow-hidden page-show",
                 isExpanded && "p-0 gap-0",
             )}
         >
@@ -271,8 +280,7 @@ export default function Page() {
                         }}
                         className="overflow-hidden flex-shrink-0 flex flex-col gap-[14px]"
                     >
-                        {/* Summary Section */}
-                        <div className="home-hero-grid">
+                        <div className="home-hero-grid flex-shrink-0" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
                             <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[24px] p-4 text-foreground">
                                 <div className="home-hero-orb home-hero-orb-primary"></div>
                                 <div className="home-hero-orb home-hero-orb-secondary"></div>

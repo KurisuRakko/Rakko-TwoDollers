@@ -38,15 +38,14 @@ export default function Login() {
                 }}
             ></div>
             <div className="login-screen-shell w-full min-h-full flex justify-center items-start sm:items-center p-3 sm:p-6">
-                <div className="login-shell login-card bg-background/72 w-full max-w-[1080px] max-h-none sm:max-h-[calc(100vh-48px)] grid overflow-visible sm:overflow-hidden border border-white/10 rounded-[28px]">
-                    <div className="login-card-glow absolute inset-x-10 top-6 h-24 rounded-full bg-amber-100/12 blur-3xl pointer-events-none"></div>
+                <div className="login-shell login-card bg-background/80 w-full max-w-[460px] sm:max-w-[1024px] h-fit sm:max-h-[calc(100vh-64px)] grid grid-cols-1 sm:grid-cols-[1.1fr_1fr] overflow-hidden border border-white/10 rounded-[32px] shadow-2xl">
                     <Guide wallpaper={loginWallpaper} />
-                    <div className="login-panel relative flex flex-col overflow-visible sm:overflow-hidden">
+                    <div className="login-panel relative flex flex-col overflow-hidden">
                         <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent)] pointer-events-none"></div>
                         <div className="flex items-center justify-between px-5 pt-5 pb-3 sm:px-7">
                             <div className="flex flex-col">
-                                <span className="login-mobile-tip mt-2 text-xs leading-5 text-muted-foreground">
-                                    {t("login-choose-mode-tip")}
+                                <span className="login-mobile-tip mt-2 text-xs leading-5 text-muted-foreground mr-12">
+                                    {t("app-introduce")}
                                 </span>
                             </div>
                             <a
@@ -176,27 +175,6 @@ export default function Login() {
                                                 </div>
                                             </button>
                                         </div>
-                                        <div className="login-help-card login-section login-section-surface rounded-[22px] border bg-gradient-to-br from-muted/55 to-background/78 p-4 text-xs leading-5 flex-col gap-3 backdrop-blur-sm">
-                                            <div className="font-semibold text-foreground text-sm">
-                                                {t("login-help-title")}
-                                            </div>
-                                            <div className="login-help-row">
-                                                <span className="font-medium text-foreground">
-                                                    {t(
-                                                        "login-help-github-title",
-                                                    )}
-                                                </span>{" "}
-                                                {t("login-help-github-body")}
-                                            </div>
-                                            <div className="login-help-row">
-                                                <span className="font-medium text-foreground">
-                                                    {t(
-                                                        "login-help-offline-title",
-                                                    )}
-                                                </span>{" "}
-                                                {t("login-help-offline-body")}
-                                            </div>
-                                        </div>
                                     </>
                                 )}
                             </div>
@@ -212,7 +190,7 @@ export default function Login() {
 function Guide({ wallpaper }: { wallpaper: string }) {
     const t = useIntl();
     return (
-        <div className="login-hero text-white relative overflow-hidden">
+        <div className="login-hero text-white relative overflow-hidden hidden sm:flex flex-col">
             <div
                 className="login-hero-wallpaper absolute inset-0 scale-105"
                 style={{
@@ -222,9 +200,6 @@ function Guide({ wallpaper }: { wallpaper: string }) {
                 }}
             ></div>
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(24,17,17,0.18),rgba(24,17,17,0.72))]"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(255,196,148,0.18),transparent_26%)]"></div>
-            <div className="absolute inset-x-10 top-[-42px] h-24 rounded-full bg-white/12 blur-2xl"></div>
-            <div className="login-hero-spark absolute right-8 top-6 h-18 w-18 rounded-full border border-white/18 bg-white/8"></div>
             <div className="relative flex h-full flex-col justify-between p-6 sm:p-8">
                 <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/18 bg-black/18 px-3 py-1 text-[11px] tracking-[0.24em] uppercase text-white/88 backdrop-blur-sm">
                     KurisuRakko
