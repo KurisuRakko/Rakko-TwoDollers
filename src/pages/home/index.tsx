@@ -36,7 +36,7 @@ let ledgerAnimationShows = false;
 
 // Spring configuration for iOS-like feel
 const springTransition = {
-    type: "spring",
+    type: "spring" as const,
     stiffness: 300,
     damping: 30,
     mass: 1,
@@ -271,12 +271,12 @@ export default function Page() {
                     >
                         {/* Summary Section */}
                         <div className="home-hero-grid">
-                            <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[28px] p-5 text-foreground">
+                            <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[24px] p-4 text-foreground">
                                 <div className="home-hero-orb home-hero-orb-primary"></div>
                                 <div className="home-hero-orb home-hero-orb-secondary"></div>
-                                <div className="relative z-[1] flex h-full flex-col gap-5">
-                                    <div className="home-hero-head flex items-start justify-between gap-3">
-                                        <div className="flex flex-col gap-2">
+                                <div className="relative z-[1] flex h-full flex-col justify-between">
+                                    <div className="home-hero-head flex items-start justify-between gap-1">
+                                        <div className="flex flex-col gap-1">
                                             <span className="home-kicker">
                                                 {denseDate(currentDate)}
                                             </span>
@@ -296,8 +296,8 @@ export default function Page() {
                                                 t("ledger-books")}
                                         </button>
                                     </div>
-                                    <div className="home-hero-main flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                                        <div className="home-hero-value-stack flex flex-col gap-3">
+                                    <div className="home-hero-main flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                                        <div className="home-hero-value-stack flex flex-col gap-1">
                                             <AnimatedNumber
                                                 value={currentDateAmount}
                                                 className="home-hero-amount font-bold"
@@ -383,7 +383,7 @@ export default function Page() {
                             {t("home-today-records")}: {currentDateBills.length}
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                         <HintTooltip
                             persistKey={"cloudSyncHintShows"}
                             content={
@@ -415,7 +415,7 @@ export default function Page() {
                         {isExpanded && !isDesktop && (
                             <button
                                 type="button"
-                                className="home-toolbar-button bg-red-500/10 text-red-500 border-red-500/20"
+                                className="home-toolbar-button"
                                 onClick={() => setIsExpanded(false)}
                             >
                                 <i className="icon-[mdi--close] size-[18px]"></i>

@@ -228,7 +228,7 @@ button {
 }
 
 .home-page {
-	gap: 14px;
+	gap: 12px;
 }
 
 .home-hero-grid {
@@ -259,7 +259,7 @@ button {
 }
 
 .home-hero-panel {
-	min-height: 208px;
+	min-height: 160px;
 	box-shadow: var(--home-shadow-raised);
 }
 
@@ -335,10 +335,10 @@ button {
 }
 
 .home-hero-amount {
-	font-size: clamp(2.6rem, 7vw, 4.4rem);
-	line-height: 0.95;
+	font-size: clamp(2.2rem, 6vw, 3.8rem);
+	line-height: 1;
 	color: var(--foreground);
-	text-shadow: 0 8px 30px rgb(0 0 0 / 0.1);
+	text-shadow: 0 4px 20px rgb(0 0 0 / 0.05);
 }
 
 .home-hero-main {
