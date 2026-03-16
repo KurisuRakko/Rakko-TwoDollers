@@ -298,12 +298,26 @@ export default function Page() {
                                             type="button"
                                             className="home-book-chip"
                                             onClick={() => {
-                                                showBookGuide();
+                                                if (StorageAPI.type === "github") {
+                                                    showBookGuide();
+                                                } else {
+                                                    useUserStore
+                                                        .getState()
+                                                        .setForceLoginUI(true);
+                                                }
                                             }}
                                         >
-                                            <i className="icon-[mdi--book-open-variant-outline]"></i>
-                                            {currentBook?.name ??
-                                                t("ledger-books")}
+                                            <i
+                                                className={cn(
+                                                    StorageAPI.type === "github"
+                                                        ? "icon-[mdi--book-open-variant-outline]"
+                                                        : "icon-[mdi--account-outline]",
+                                                )}
+                                            ></i>
+                                            {StorageAPI.type === "github"
+                                                ? (currentBook?.name ??
+                                                  t("ledger-books"))
+                                                : t("login")}
                                         </button>
                                     </div>
                                     <div className="home-hero-main flex flex-col gap-2 md:flex-row md:items-end md:justify-between">

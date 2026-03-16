@@ -18,6 +18,7 @@ type UserStoreState = {
     expired?: boolean;
     cachedUsers: Record<string, UserInfo>;
     cachedCollaborators: Record<string, UserInfo[]>;
+    forceLoginUI: boolean;
 };
 
 type UserStoreActions = {
@@ -25,6 +26,7 @@ type UserStoreActions = {
 
     getUserInfo: (login: string) => Promise<UserInfo>;
     getCollaborators: (repo: string) => Promise<UserInfo[]>;
+    setForceLoginUI: (show: boolean) => void;
 };
 
 type UserStore = UserStoreState & UserStoreActions;
@@ -145,6 +147,14 @@ export const useUserStore = create<UserStore>()(
                 getCollaborators,
                 cachedUsers: {},
                 cachedCollaborators: {},
+                forceLoginUI: false,
+                setForceLoginUI: (show: boolean) => {
+                    set(
+                        produce((state: UserStore) => {
+                            state.forceLoginUI = show;
+                        }),
+                    );
+                },
             };
         },
         {

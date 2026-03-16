@@ -44,6 +44,23 @@ export default function MainLayout() {
 
     const isLogin = useIsLogin();
 
+    // Auto login & default book
+    useEffect(() => {
+        const init = async () => {
+            const { StorageAPI } = await import("@/api/storage");
+            if (!isLogin) {
+                await StorageAPI.loginWith("offline");
+            }
+            
+            const { useBookStore } = await import("@/store/book");
+            const books = await useBookStore.getState().updateBookList();
+            if (books.length === 0) {
+                await useBookStore.getState().addBook("Personal");
+            }
+        };
+        init();
+    }, [isLogin]);
+
     return (
         <ThemeProvider>
             <TooltipProvider>

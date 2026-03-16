@@ -16,11 +16,13 @@ type SupportedStorageType = keyof typeof APIS;
 
 const savedType = localStorage.getItem(SYNC_ENDPOINT_KEY);
 const type: SupportedStorageType =
-    savedType === "offline" ? "offline" : "github";
+    savedType === "github" ? "github" : "offline";
 
 if (savedType && savedType !== type) {
     localStorage.setItem(SYNC_ENDPOINT_KEY, type);
 }
+
+const PENDING_MIGRATION_KEY = "PENDING_MIGRATION";
 
 const _StorageAPI = APIS[type];
 const actions = _StorageAPI.init({ modal });
@@ -30,17 +32,27 @@ export const StorageAPI = {
     name: _StorageAPI.name,
     type: _StorageAPI.type,
     ...actions,
-    loginWith: (type: string) => {
-        if (type === "github") {
-            return loginWithGithubToken();
+    loginWith: async (targetType: string) => {
+        if (targetType === "github") {
+            if (localStorage.getItem(SYNC_ENDPOINT_KEY) === "offline") {
+                localStorage.setItem(PENDING_MIGRATION_KEY, "true");
+            }
+            await GithubEndpoint.login({ modal });
+            return;
         }
-        if (type === "offline") {
-            return OfflineEndpoint.login({ modal });
+        if (targetType === "offline") {
+            OfflineEndpoint.login({ modal });
         }
     },
-    loginManuallyWith: (type: string) => {
-        if (type === "github") {
-            return loginWithGithubToken();
+    loginManuallyWith: async (targetType: string) => {
+        if (targetType === "github") {
+            const isOffline = localStorage.getItem(SYNC_ENDPOINT_KEY) === "offline";
+            await loginWithGithubToken();
+            if (isOffline) {
+                const { migrateFromOffline } = await import("./migration");
+                await migrateFromOffline(StorageAPI);
+                location.reload();
+            }
         }
     },
     clearAll: async () => {
@@ -50,6 +62,21 @@ export const StorageAPI = {
         sessionStorage.clear();
     },
 };
+
+// Check for pending migration on boot
+if (localStorage.getItem(PENDING_MIGRATION_KEY) === "true" && type !== "offline") {
+    (async () => {
+        try {
+            const { migrateFromOffline } = await import("./migration");
+            await migrateFromOffline(StorageAPI);
+            localStorage.removeItem(PENDING_MIGRATION_KEY);
+            // Optionally reload to refresh the UI with new data
+            location.reload();
+        } catch (e) {
+            console.error("Migration failed:", e);
+        }
+    })();
+}
 
 // ComlinkSharedWorker
 

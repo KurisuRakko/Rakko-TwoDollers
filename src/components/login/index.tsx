@@ -21,12 +21,15 @@ const secondaryButtonStyle = `inline-flex items-center justify-center gap-2 whit
 export default function Login() {
     const t = useIntl();
     const isLogin = useIsLogin();
-    const [loading] = useUserStore(
-        useShallow((state) => {
-            return [state.loading];
-        }),
+    const { loading, forceLoginUI, setForceLoginUI } = useUserStore(
+        useShallow((state) => ({
+            loading: state.loading,
+            forceLoginUI: state.forceLoginUI,
+            setForceLoginUI: state.setForceLoginUI,
+        })),
     );
-    if (isLogin) {
+
+    if (isLogin && !forceLoginUI) {
         return null;
     }
     return createPortal(
@@ -44,7 +47,16 @@ export default function Login() {
                         <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent)] pointer-events-none"></div>
                         <div className="flex items-center justify-between px-5 pt-5 pb-3 sm:px-7">
                             <div className="flex flex-col">
-                                <span className="login-mobile-tip mt-2 text-xs leading-5 text-muted-foreground mr-12">
+                                {forceLoginUI && isLogin && (
+                                    <button
+                                        className="mb-1 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                        onClick={() => setForceLoginUI(false)}
+                                    >
+                                        <i className="icon-[mdi--arrow-left] size-3"></i>
+                                        {t("back")}
+                                    </button>
+                                )}
+                                <span className="login-mobile-tip text-xs leading-5 text-muted-foreground mr-12">
                                     {t("app-introduce")}
                                 </span>
                             </div>
@@ -141,39 +153,6 @@ export default function Login() {
                                                     </div>
                                                 </Collapsible.Content>
                                             </Collapsible.Root>
-                                        </div>
-                                        <div className="login-section login-section-surface flex flex-col gap-3 rounded-[22px] border bg-card/70 p-4">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <div className="text-base font-semibold">
-                                                        {t("offline-mode")}
-                                                    </div>
-                                                    <div className="mt-1 text-xs text-muted-foreground leading-5">
-                                                        {t(
-                                                            "login-offline-description",
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="login-badge login-badge-muted">
-                                                    Local
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className={`${secondaryButtonStyle}`}
-                                                onClick={async () => {
-                                                    const StorageAPI =
-                                                        await loadStorageAPI();
-                                                    StorageAPI.loginWith(
-                                                        "offline",
-                                                    );
-                                                }}
-                                            >
-                                                <i className="icon-[mdi--local]"></i>
-                                                <div className="flex-1">
-                                                    {t("offline-mode")}
-                                                </div>
-                                            </button>
                                         </div>
                                     </>
                                 )}
