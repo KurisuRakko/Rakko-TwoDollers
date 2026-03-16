@@ -34,6 +34,14 @@ import { denseDate } from "@/utils/time";
 
 let ledgerAnimationShows = false;
 
+// Spring configuration for iOS-like feel
+const springTransition = {
+    type: "spring",
+    stiffness: 300,
+    damping: 30,
+    mass: 1,
+};
+
 export default function Page() {
     const t = useIntl();
 
@@ -137,7 +145,7 @@ export default function Page() {
         (scrollTop: number) => {
             if (isDesktop) return;
             // 只要往上滑就进入全屏
-            if (!isExpanded && scrollTop > 5) {
+            if (!isExpanded && scrollTop > 10) {
                 setIsExpanded(true);
             }
         },
@@ -162,7 +170,7 @@ export default function Page() {
         const currentY = e.touches[0].clientY;
         const deltaY = currentY - touchStartY.current;
         // 如果在顶端且向下滑动超过一定距离，则收起
-        if (deltaY > 60) {
+        if (deltaY > 50) {
             setIsExpanded(false);
             touchStartY.current = -1;
         }
@@ -235,20 +243,33 @@ export default function Page() {
     return (
         <div
             className={cn(
-                "home-page w-full h-full p-2 flex flex-col overflow-hidden page-show transition-all duration-500",
+                "home-page w-full h-full p-2 flex flex-col overflow-hidden page-show",
                 isExpanded && "p-0 gap-0",
             )}
         >
             <AnimatePresence initial={false}>
                 {!isExpanded && (
                     <motion.div
-                        key="hero-section"
-                        initial={{ height: "auto", opacity: 1, marginBottom: 14 }}
-                        animate={{ height: "auto", opacity: 1, marginBottom: 14 }}
-                        exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden flex-shrink-0"
+                        key="top-collapsible-section"
+                        initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        animate={{
+                            opacity: 1,
+                            height: "auto",
+                            marginBottom: 14,
+                            transition: springTransition,
+                        }}
+                        exit={{
+                            opacity: 0,
+                            height: 0,
+                            marginBottom: 0,
+                            transition: {
+                                ...springTransition,
+                                opacity: { duration: 0.2 },
+                            },
+                        }}
+                        className="overflow-hidden flex-shrink-0 flex flex-col gap-[14px]"
                     >
+                        {/* Summary Section */}
                         <div className="home-hero-grid">
                             <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[28px] p-5 text-foreground">
                                 <div className="home-hero-orb home-hero-orb-primary"></div>
@@ -303,71 +324,49 @@ export default function Page() {
                                 </div>
                             </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
-            <AnimatePresence>
-                {!isExpanded && (
-                    <motion.div
-                        key="promotion-section"
-                        initial={{ height: "auto", opacity: 1, marginBottom: 14 }}
-                        animate={{ height: "auto", opacity: 1, marginBottom: 14 }}
-                        exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden flex-shrink-0"
-                    >
+                        {/* Promotion Section */}
                         <Promotion />
-                    </motion.div>
-                )}
-            </AnimatePresence>
 
-            <AnimatePresence>
-                {!isExpanded && budgets.length > 0 && (
-                    <motion.div
-                        key="budget-section"
-                        initial={{ height: "auto", opacity: 1, marginBottom: 14 }}
-                        animate={{ height: "auto", opacity: 1, marginBottom: 14 }}
-                        exit={{ height: 0, opacity: 0, marginBottom: 0 }}
-                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden flex-shrink-0"
-                    >
-                        <div className="home-budget-shell">
-                            <div className="home-section-head">
-                                <div className="home-section-title">
-                                    {t("home-budget-title")}
-                                </div>
-                                {budgetCount > 1 && (
-                                    <PaginationIndicator
-                                        count={budgetCount}
-                                        current={curBudgetIndex}
-                                    />
-                                )}
-                            </div>
-                            <div
-                                ref={budgetContainer}
-                                className="w-full flex overflow-x-auto gap-3 scrollbar-hidden snap-mandatory snap-x"
-                            >
-                                {budgets.map((budget) => {
-                                    return (
-                                        <BudgetCard
-                                            className="home-budget-card flex-shrink-0 snap-start"
-                                            key={budget.id}
-                                            budget={budget}
+                        {/* Budget Section */}
+                        {budgets.length > 0 && (
+                            <div className="home-budget-shell">
+                                <div className="home-section-head">
+                                    <div className="home-section-title">
+                                        {t("home-budget-title")}
+                                    </div>
+                                    {budgetCount > 1 && (
+                                        <PaginationIndicator
+                                            count={budgetCount}
+                                            current={curBudgetIndex}
                                         />
-                                    );
-                                })}
+                                    )}
+                                </div>
+                                <div
+                                    ref={budgetContainer}
+                                    className="w-full flex overflow-x-auto gap-3 scrollbar-hidden snap-mandatory snap-x"
+                                >
+                                    {budgets.map((budget) => {
+                                        return (
+                                            <BudgetCard
+                                                className="home-budget-card flex-shrink-0 snap-start"
+                                                key={budget.id}
+                                                budget={budget}
+                                            />
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
 
             <motion.div
-                layout={false}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                layout
+                transition={springTransition}
                 className={cn(
-                    "home-ledger-stage flex-1 flex flex-col min-height-0 transition-all duration-500",
+                    "home-ledger-stage flex-1 flex flex-col min-height-0 overflow-hidden",
                     isExpanded && "rounded-none !p-0 !gap-0",
                 )}
                 onTouchStart={handleTouchStart}
@@ -375,8 +374,8 @@ export default function Page() {
             >
                 <div
                     className={cn(
-                        "home-toolbar transition-all duration-500",
-                        isExpanded && "rounded-none border-x-0 border-t-0 bg-background/95",
+                        "home-toolbar",
+                        isExpanded && "rounded-none border-x-0 border-t-0 bg-background/95 sticky top-0 z-[20]",
                     )}
                 >
                     <div className="home-toolbar-copy">
@@ -384,47 +383,49 @@ export default function Page() {
                             {t("home-today-records")}: {currentDateBills.length}
                         </div>
                     </div>
-                    <HintTooltip
-                        persistKey={"cloudSyncHintShows"}
-                        content={
-                            "等待云同步完成后，其他设备即可获取最新的账单数据"
-                        }
-                    >
-                        <button
-                            type="button"
-                            className="home-toolbar-button"
-                            onClick={() => {
-                                useLedgerStore.getState().initCurrentBook();
-                                StorageAPI.toSync();
-                            }}
+                    <div className="flex items-center gap-2">
+                        <HintTooltip
+                            persistKey={"cloudSyncHintShows"}
+                            content={
+                                "等待云同步完成后，其他设备即可获取最新的账单数据"
+                            }
                         >
-                            {loading ? (
-                                <Loading className="[&_i]:size-[18px]" />
-                            ) : sync === "syncing" ? (
-                                <CloudLoopIcon width={18} height={18} />
-                            ) : (
-                                <i
-                                    className={cn(
-                                        syncIconClassName,
-                                        "size-[18px]",
-                                    )}
-                                ></i>
-                            )}
-                        </button>
-                    </HintTooltip>
-                    {isExpanded && !isDesktop && (
-                        <button
-                            type="button"
-                            className="home-toolbar-button"
-                            onClick={() => setIsExpanded(false)}
-                        >
-                            <i className="icon-[mdi--close] size-[18px]"></i>
-                        </button>
-                    )}
+                            <button
+                                type="button"
+                                className="home-toolbar-button"
+                                onClick={() => {
+                                    useLedgerStore.getState().initCurrentBook();
+                                    StorageAPI.toSync();
+                                }}
+                            >
+                                {loading ? (
+                                    <Loading className="[&_i]:size-[18px]" />
+                                ) : sync === "syncing" ? (
+                                    <CloudLoopIcon width={18} height={18} />
+                                ) : (
+                                    <i
+                                        className={cn(
+                                            syncIconClassName,
+                                            "size-[18px]",
+                                        )}
+                                    ></i>
+                                )}
+                            </button>
+                        </HintTooltip>
+                        {isExpanded && !isDesktop && (
+                            <button
+                                type="button"
+                                className="home-toolbar-button bg-red-500/10 text-red-500 border-red-500/20"
+                                onClick={() => setIsExpanded(false)}
+                            >
+                                <i className="icon-[mdi--close] size-[18px]"></i>
+                            </button>
+                        )}
+                    </div>
                 </div>
                 <div
                     className={cn(
-                        "home-ledger-shell flex-1 translate-0 overflow-hidden transition-all duration-500",
+                        "home-ledger-shell flex-1 translate-0 overflow-hidden",
                         isExpanded && "rounded-none !p-0 border-none",
                     )}
                 >
