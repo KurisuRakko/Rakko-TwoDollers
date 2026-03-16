@@ -7,11 +7,11 @@ import {
     useRef,
     useState,
 } from "react";
+import defaultWallpaper from "@/assets/arknightswall9.jpg";
 import PopupLayout from "@/layouts/popup-layout";
 import { useIntl } from "@/locale";
 import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
-import defaultWallpaper from "../../../arknightswall9.jpg";
 import createConfirmProvider from "../confirm";
 import modal from "../modal";
 import { Button } from "../ui/button";

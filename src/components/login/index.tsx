@@ -3,9 +3,9 @@
 import { Collapsible } from "radix-ui";
 import { createPortal } from "react-dom";
 import { useShallow } from "zustand/shallow";
+import loginWallpaper from "@/assets/arknightswall9.jpg";
 import { useIntl } from "@/locale";
 import { useIsLogin, useUserStore } from "@/store/user";
-import loginWallpaper from "../../../arknightswall9.jpg";
 
 const loaded = import("@/api/storage");
 
