@@ -127,18 +127,18 @@ export default function BillInfo({
         ? scheduleds.find((v) => v.id === edit.extra?.scheduledId)
         : undefined;
     return (
-        <div>
-            <div className="min-h-[320px] p-4 flex flex-col w-full h-full">
+        <div className="bill-info-shell">
+            <div className="bill-info-panel min-h-[320px] p-4 flex flex-col w-full h-full">
                 <div className="flex-1 flex flex-col">
                     {/* header */}
-                    <div className="flex items-center justify-between">
+                    <div className="bill-info-header flex items-center justify-between gap-3">
                         <div className="flex items-center">
-                            <div className="w-12 h-12 flex-shrink-0 rounded-full bg-background border p-4 flex items-center justify-center">
+                            <div className="bill-info-icon w-12 h-12 flex-shrink-0 rounded-full p-4 flex items-center justify-center">
                                 {categoryInfo?.icon && (
                                     <CategoryIcon icon={categoryInfo?.icon} />
                                 )}
                             </div>
-                            <div className="flex text-md font-semibold px-2">
+                            <div className="flex text-md font-semibold px-2 text-foreground">
                                 <div>{categoryInfo?.name ?? ""}</div>
                             </div>
                         </div>
@@ -157,28 +157,32 @@ export default function BillInfo({
                         </div>
                     </div>
 
-                    <div className="w-full border border-dashed my-2"></div>
+                    <div className="bill-info-divider w-full my-3"></div>
 
                     {/* details */}
-                    <div className="text-gray-500">
-                        <div className="flex justify-between items-center my-1 gap-2">
+                    <div className="bill-info-meta">
+                        <div className="bill-info-row flex justify-between items-center my-1 gap-2">
                             <div>{t("comment")}:</div>
-                            <div className="flex-1 overflow-x-auto text-right">
+                            <div className="bill-info-value flex-1 overflow-x-auto text-right">
                                 {edit.comment}
                             </div>
                         </div>
-                        <div className="flex justify-between items-center my-1 gap-2">
+                        <div className="bill-info-row flex justify-between items-center my-1 gap-2">
                             <div>{t("creator")}:</div>
-                            <div>{isMe ? t("me") : name}</div>
+                            <div className="bill-info-value">
+                                {isMe ? t("me") : name}
+                            </div>
                         </div>
-                        <div className="flex justify-between items-center my-1 gap-2">
+                        <div className="bill-info-row flex justify-between items-center my-1 gap-2">
                             <div>{t("time")}:</div>
-                            <div>{formatTime(edit.time)}</div>
+                            <div className="bill-info-value">
+                                {formatTime(edit.time)}
+                            </div>
                         </div>
                         {currency !== undefined && (
-                            <div className="flex justify-between items-center my-1 gap-2">
+                            <div className="bill-info-row flex justify-between items-center my-1 gap-2">
                                 <div>{t("currency")}:</div>
-                                <div>
+                                <div className="bill-info-value">
                                     {currency.symbol}
                                     {amountToNumber(edit.currency!.amount)}{" "}
                                     {currency.label}
@@ -186,9 +190,9 @@ export default function BillInfo({
                             </div>
                         )}
                         {(tags?.length ?? 0) > 0 && (
-                            <div className="flex justify-between items-start my-1">
+                            <div className="bill-info-row flex justify-between items-start my-1">
                                 <div>{t("tags")}:</div>
-                                <div className="flex flex-wrap gap-1 justify-end max-w-[80%]">
+                                <div className="bill-info-value flex flex-wrap gap-1 justify-end max-w-[80%]">
                                     {tags?.map((t) => (
                                         <span key={t.id}>#{t.name}</span>
                                     ))}
@@ -218,7 +222,7 @@ export default function BillInfo({
                 </div>
 
                 {/* footer */}
-                <div className="footer flex justify-between items-center">
+                <div className="bill-info-footer footer flex justify-between items-center gap-3">
                     <div className="flex">
                         {canEdit && (
                             <MoreAction
@@ -231,7 +235,7 @@ export default function BillInfo({
                     <div className="flex">
                         <button
                             type="button"
-                            className="buttoned px-2 rounded-md cursor-pointer"
+                            className="bill-info-action buttoned px-2 rounded-md cursor-pointer"
                             onClick={toClose}
                         >
                             {t("cancel")}
@@ -239,7 +243,7 @@ export default function BillInfo({
                         {canEdit && (
                             <button
                                 type="button"
-                                className="buttoned ml-2 px-2 rounded-md font-semibold cursor-pointer"
+                                className="bill-info-action bill-info-action-primary buttoned ml-2 px-2 rounded-md font-semibold cursor-pointer"
                                 onClick={toEdit}
                             >
                                 {t("edit")}
@@ -267,12 +271,17 @@ function MoreAction({
             <DropdownMenuTrigger asChild>
                 <Button
                     variant={"ghost"}
-                    className="text-base font-normal cursor-pointer"
+                    className="bill-info-action text-base font-normal cursor-pointer"
                 >
                     {t("more-actions")}
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent
+                align="start"
+                side="top"
+                sideOffset={10}
+                className="bill-info-more-menu"
+            >
                 <DropdownMenuGroup>
                     <DropdownMenuItem onClick={onDuplicate}>
                         <i className="icon-[mdi--content-copy]"></i>

@@ -45,7 +45,7 @@ export default function MainLayout() {
             <TooltipProvider>
                 <CustomCSS />
                 <Navigation />
-                <div className="main-layout-content w-full h-full sm:pl-18">
+                <div className="main-layout-content w-full h-full min-h-0 box-border sm:pl-18">
                     <Outlet />
                 </div>
                 <BillEditorProvider />

@@ -17,11 +17,9 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
 const MAX_WALLPAPER_SIZE = 2 * 1024 * 1024;
-const CROPPER_RATIO = 16 / 10;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
-const OUTPUT_WIDTH = 1600;
-const OUTPUT_HEIGHT = Math.round(OUTPUT_WIDTH / CROPPER_RATIO);
+const OUTPUT_LONG_EDGE = 1800;
 
 type CropDraft = {
     src: string;
@@ -34,6 +32,31 @@ type CropDraft = {
 
 const clamp = (value: number, min: number, max: number) => {
     return Math.min(Math.max(value, min), max);
+};
+
+const getViewportAspectRatio = () => {
+    if (typeof window === "undefined") {
+        return 16 / 10;
+    }
+    const width = window.visualViewport?.width ?? window.innerWidth;
+    const height = window.visualViewport?.height ?? window.innerHeight;
+    if (!width || !height) {
+        return 16 / 10;
+    }
+    return width / height;
+};
+
+const getOutputSize = (aspectRatio: number) => {
+    if (aspectRatio >= 1) {
+        return {
+            width: OUTPUT_LONG_EDGE,
+            height: Math.round(OUTPUT_LONG_EDGE / aspectRatio),
+        };
+    }
+    return {
+        width: Math.round(OUTPUT_LONG_EDGE * aspectRatio),
+        height: OUTPUT_LONG_EDGE,
+    };
 };
 
 function getViewportMetrics(
@@ -113,6 +136,9 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
         width: 0,
         height: 0,
     });
+    const [cropAspectRatio, setCropAspectRatio] = useState(() =>
+        getViewportAspectRatio(),
+    );
 
     useEffect(() => {
         setDraft(savedWallpaper ?? "");
@@ -137,6 +163,24 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
         observer.observe(element);
         return () => observer.disconnect();
     }, [cropDraft?.src]);
+
+    useEffect(() => {
+        const updateAspectRatio = () => {
+            setCropAspectRatio(getViewportAspectRatio());
+        };
+
+        updateAspectRatio();
+        window.addEventListener("resize", updateAspectRatio);
+        window.visualViewport?.addEventListener("resize", updateAspectRatio);
+
+        return () => {
+            window.removeEventListener("resize", updateAspectRatio);
+            window.visualViewport?.removeEventListener(
+                "resize",
+                updateAspectRatio,
+            );
+        };
+    }, []);
 
     useEffect(() => {
         if (!cropDraft || viewportSize.width === 0 || viewportSize.height === 0) {
@@ -266,9 +310,10 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
         const sHeight =
             (viewportSize.height / renderedHeight) * cropDraft.naturalHeight;
 
+        const outputSize = getOutputSize(cropAspectRatio);
         const canvas = document.createElement("canvas");
-        canvas.width = OUTPUT_WIDTH;
-        canvas.height = OUTPUT_HEIGHT;
+        canvas.width = outputSize.width;
+        canvas.height = outputSize.height;
         const context = canvas.getContext("2d");
 
         if (!context) {
@@ -284,8 +329,8 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
             sHeight,
             0,
             0,
-            OUTPUT_WIDTH,
-            OUTPUT_HEIGHT,
+            outputSize.width,
+            outputSize.height,
         );
         const cropped = canvas.toDataURL("image/jpeg", 0.92);
 
@@ -357,16 +402,13 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
             className="h-full overflow-hidden"
         >
             <div className="relative flex flex-1 flex-col overflow-y-auto px-4 pb-4">
-                <div className="rounded-[24px] border bg-background/70 p-3 shadow-sm backdrop-blur-sm">
-                    <div className="relative overflow-hidden rounded-[18px] border bg-muted/30">
-                        <img
-                            src={preview}
-                            alt={t("wallpaper-preview")}
-                            className="aspect-[16/10] w-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                <div className="rounded-[24px] border bg-background/70 p-4 shadow-sm backdrop-blur-sm">
+                    <div className="text-sm font-medium">
+                        {draft.trim()
+                            ? t("wallpaper-url-label")
+                            : t("wallpaper-preview-default")}
                     </div>
-                    <div className="px-1 pt-3 text-xs leading-5 opacity-70">
+                    <div className="pt-2 text-xs leading-5 opacity-70">
                         {t("wallpaper-tip")}
                     </div>
                 </div>
@@ -467,7 +509,7 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                             <div
                                 ref={cropViewportRef}
                                 className="relative w-full max-w-[520px] overflow-hidden rounded-[28px] border bg-stone-950 shadow-2xl touch-none"
-                                style={{ aspectRatio: `${CROPPER_RATIO}` }}
+                                style={{ aspectRatio: `${cropAspectRatio}` }}
                                 onPointerDown={onCropPointerDown}
                                 onPointerMove={onCropPointerMove}
                                 onPointerUp={onCropPointerUp}

@@ -201,9 +201,44 @@ export function useChartPart({
             filtered.length,
         ],
     );
+    const isEmpty = filtered.length === 0;
+
+    if (isEmpty) {
+        const Part = (
+            <>
+                <div className="stat-card stat-chart-card stat-empty-card flex-shrink-0 w-full min-h-[220px]">
+                    <div className="stat-empty-icon">
+                        <i className="icon-[mdi--chart-timeline-variant] size-7"></i>
+                    </div>
+                    <div className="stat-empty-title">{t("overall-trend")}</div>
+                    <div className="stat-empty-copy">
+                        {t("nothing-here-add-one-bill")}
+                    </div>
+                </div>
+                {focusType !== "balance" && (
+                    <div className="stat-card stat-chart-card stat-empty-card flex-shrink-0 w-full min-h-[220px]">
+                        <div className="stat-empty-icon">
+                            <i className="icon-[mdi--chart-donut] size-7"></i>
+                        </div>
+                        <div className="stat-empty-title">
+                            {focusType === "income"
+                                ? t("income-structure")
+                                : t("expense-structure")}
+                        </div>
+                        <div className="stat-empty-copy">
+                            {t("nothing-here-add-one-bill")}
+                        </div>
+                    </div>
+                )}
+            </>
+        );
+
+        return { dataSources, Part, setSelectedCategoryId };
+    }
+
     const Part = (
         <>
-            <div className="stat-card stat-chart-card flex-shrink-0 w-full min-h-[300px] relative">
+            <div className="stat-card stat-chart-card flex-shrink-0 w-full min-h-[220px] sm:min-h-[260px] relative">
                 <div className="absolute top-4 left-4 z-2">
                     {viewType !== "custom" && (
                         <button
@@ -238,12 +273,12 @@ export function useChartPart({
                         />
                     </div>
                 ) : (
-                    <Chart
-                        ref={trendChart}
-                        key={dimension}
-                        option={charts[0]}
-                        className="w-full h-full"
-                    />
+                            <Chart
+                                ref={trendChart}
+                                key={dimension}
+                                option={charts[0]}
+                                className="w-full h-[220px] sm:h-[260px]"
+                            />
                 )}
             </div>
             {focusType !== "balance" && (
@@ -327,7 +362,7 @@ export function useChartPart({
                             <Chart
                                 key={dimension}
                                 option={charts[1]}
-                                className="w-full h-[300px] "
+                                className="w-full h-[220px] sm:h-[260px]"
                                 onClick={onStructureChartClick}
                             />
                             <div className="flex justify-end p-1">
@@ -353,7 +388,7 @@ export function useChartPart({
             )}
             {!asList && selectedCategoryChart && (
                 <div className="stat-card stat-chart-card flex-shrink-0 w-full">
-                    <div className="w-full h-[300px]">
+                    <div className="w-full h-[220px] sm:h-[260px]">
                         <Chart
                             option={selectedCategoryChart}
                             className="w-full h-full "

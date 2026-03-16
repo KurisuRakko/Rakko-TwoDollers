@@ -57,6 +57,10 @@ export default function Page() {
 
     const [currentDate, setCurrentDate] = useState(dayjs());
     const ledgerRef = useRef<any>(null);
+    const previousSyncRef = useRef(sync);
+    const [showSyncSuccess, setShowSyncSuccess] = useState(false);
+    const [syncPillMounted, setSyncPillMounted] = useState(false);
+    const [syncPillLeaving, setSyncPillLeaving] = useState(false);
     const syncStateLabel =
         sync === "wait"
             ? t("home-sync-wait")
@@ -135,6 +139,51 @@ export default function Page() {
     useEffect(() => {
         ledgerAnimationShows = true;
     }, []);
+
+    useEffect(() => {
+        const previousSync = previousSyncRef.current;
+        previousSyncRef.current = sync;
+
+        if (sync === "syncing" || sync === "wait") {
+            setShowSyncSuccess(false);
+            return;
+        }
+
+        if (sync === "success" && previousSync === "syncing") {
+            setShowSyncSuccess(true);
+            const timer = window.setTimeout(() => {
+                setShowSyncSuccess(false);
+            }, 2200);
+            return () => {
+                window.clearTimeout(timer);
+            };
+        }
+
+        if (sync !== "success") {
+            setShowSyncSuccess(false);
+        }
+    }, [sync]);
+
+    const showSyncPill =
+        sync === "syncing" || (sync !== "wait" && sync !== "success") || showSyncSuccess;
+
+    useEffect(() => {
+        if (showSyncPill) {
+            setSyncPillMounted(true);
+            setSyncPillLeaving(false);
+            return;
+        }
+
+        setSyncPillLeaving(true);
+        const timer = window.setTimeout(() => {
+            setSyncPillMounted(false);
+            setSyncPillLeaving(false);
+        }, 220);
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [showSyncPill]);
+
     return (
         <div className="home-page w-full h-full p-2 flex flex-col overflow-hidden page-show">
             <div className="home-hero-grid">
@@ -168,15 +217,23 @@ export default function Page() {
                                     value={currentDateAmount}
                                     className="home-hero-amount font-bold"
                                 />
-                                <div className="home-sync-pill">
-                                    <i
+                                {syncPillMounted && (
+                                    <div
                                         className={cn(
-                                            syncIconClassName,
-                                            "size-[18px]",
+                                            "home-sync-pill",
+                                            syncPillLeaving &&
+                                                "home-sync-pill-leaving",
                                         )}
-                                    ></i>
-                                    {syncStateLabel}
-                                </div>
+                                    >
+                                        <i
+                                            className={cn(
+                                                syncIconClassName,
+                                                "size-[18px]",
+                                            )}
+                                        ></i>
+                                        {syncStateLabel}
+                                    </div>
+                                )}
                             </div>
                             <div className="home-hero-stats">
                                 <div className="home-mini-card">
@@ -236,29 +293,10 @@ export default function Page() {
             <div className="home-ledger-stage">
                 <div className="home-toolbar">
                     <div className="home-toolbar-copy">
-                        <div className="home-toolbar-title">
-                            {t("home-ledger-title")}
-                        </div>
                         <div className="home-toolbar-subtitle">
                             {t("home-today-records")}: {currentDateBills.length}
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        className="home-toolbar-button"
-                        onClick={() => {
-                            if (loading) {
-                                return;
-                            }
-                            useLedgerStore.getState().initCurrentBook();
-                        }}
-                    >
-                        <div
-                            className={cn("opacity-0", loading && "opacity-100")}
-                        >
-                            <Loading className="[&_i]:size-[18px]" />
-                        </div>
-                    </button>
                     <HintTooltip
                         persistKey={"cloudSyncHintShows"}
                         content={"等待云同步完成后，其他设备即可获取最新的账单数据"}
@@ -267,10 +305,13 @@ export default function Page() {
                             type="button"
                             className="home-toolbar-button"
                             onClick={() => {
+                                useLedgerStore.getState().initCurrentBook();
                                 StorageAPI.toSync();
                             }}
                         >
-                            {sync === "syncing" ? (
+                            {loading ? (
+                                <Loading className="[&_i]:size-[18px]" />
+                            ) : sync === "syncing" ? (
                                 <CloudLoopIcon width={18} height={18} />
                             ) : (
                                 <i

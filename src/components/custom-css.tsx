@@ -22,37 +22,24 @@ body.main-layout-active::before {
     inset: 0;
     z-index: -2;
     pointer-events: none;
-    background-image:
-        linear-gradient(180deg, rgba(248, 249, 252, 0.2), rgba(241, 243, 244, 0.72)),
-        url("${wallpaperUrl}");
+    background-image: url("${wallpaperUrl}");
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
-    filter: saturate(0.92) contrast(0.94);
+    filter: none;
 }
 
 body.main-layout-active::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(241, 243, 244, 0.16)),
-        linear-gradient(180deg, rgba(241, 243, 244, 0.28), rgba(241, 243, 244, 0.48));
+    content: none;
 }
 
 .dark body.main-layout-active::before {
-    background-image:
-        linear-gradient(180deg, rgba(11, 13, 16, 0.36), rgba(11, 13, 16, 0.78)),
-        url("${wallpaperUrl}");
-    filter: saturate(0.88) brightness(0.62);
+    background-image: url("${wallpaperUrl}");
+    filter: none;
 }
 
 .dark body.main-layout-active::after {
-    background:
-        linear-gradient(180deg, rgba(18, 18, 18, 0.24), rgba(18, 18, 18, 0.34)),
-        linear-gradient(180deg, rgba(18, 18, 18, 0.26), rgba(18, 18, 18, 0.56));
+    content: none;
 }
 
 body.main-layout-active .nav-flat-button,
@@ -65,10 +52,12 @@ body.main-layout-active .home-budget-shell,
 body.main-layout-active .home-ledger-shell,
 body.main-layout-active .home-promotion-card,
 body.main-layout-active .home-budget-card,
+body.main-layout-active .home-toolbar,
 body.main-layout-active .home-toolbar-button,
 body.main-layout-active .ledger-divider,
 body.main-layout-active .bill-item {
-    backdrop-filter: none;
+    backdrop-filter: blur(22px) saturate(1.18);
+    -webkit-backdrop-filter: blur(22px) saturate(1.18);
 }
 
 body.main-layout-active .ledger-divider {
@@ -82,7 +71,7 @@ body.main-layout-active .ledger-divider {
 body.main-layout-active .bill-item {
     border: 1px solid var(--home-border-strong);
     border-radius: 18px;
-    background: var(--home-surface-strong);
+    background: linear-gradient(180deg, var(--home-surface-strong), var(--home-surface));
     box-shadow: var(--home-shadow);
     transition:
         background-color 280ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -96,7 +85,7 @@ body.main-layout-active .bill-item:hover {
 }
 
 body.main-layout-active .bill-item .bg-background {
-    background-color: var(--home-surface-muted) !important;
+    background-color: rgb(255 255 255 / 0.08) !important;
 }
 
 @media (max-width: 640px) {

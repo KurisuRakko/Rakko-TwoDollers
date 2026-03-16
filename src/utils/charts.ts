@@ -425,8 +425,12 @@ export function processBillDataForCharts(
 export const overallTrendOption = (
     dataset: { source: any[] },
     options?: ECOption,
-) =>
-    merge(
+) => {
+    const axisColor = getCSSVariable("--muted-foreground");
+    const textColor = getCSSVariable("--foreground");
+    const borderColor = getCSSVariable("--home-border-strong");
+
+    return merge(
         {
             // 提示框，'axis' 表示鼠标悬浮在x轴上时触发
             tooltip: {
@@ -434,11 +438,30 @@ export const overallTrendOption = (
             },
             // 图例，用于筛选系列
             legend: {
+                top: 36,
+                textStyle: {
+                    color: textColor,
+                },
                 // ECharts 会自动从 dataset.source 的第一行读取图例名称
                 // ['date', '收入', '支出', '结余'] -> '收入', '支出', '结余'
             },
+            title: {
+                top: 10,
+                left: "center",
+                textStyle: {
+                    color: textColor,
+                    fontSize: 18,
+                    fontWeight: 700,
+                },
+            },
             // ECharts 的数据核心
             dataset: dataset,
+            grid: {
+                left: 40,
+                right: 24,
+                top: 68,
+                bottom: 34,
+            },
             // x轴配置，type: 'category' 表示类目轴
             // ECharts 会自动将 dataset 的第一列 ('date') 映射到 x 轴
             xAxis: {
@@ -446,11 +469,12 @@ export const overallTrendOption = (
                 boundaryGap: false, // 折线图建议设为 false，让线贴近y轴
                 axisLabel: {
                     fontSize: 10, // 设置 y 轴刻度标签字体大小
+                    color: axisColor,
                 },
                 axisLine: {
                     show: true, // 确保 X 轴线显示
                     lineStyle: {
-                        color: "#666", // 可以设置轴线颜色
+                        color: borderColor, // 可以设置轴线颜色
                         width: 1, // 可以设置轴线宽度
                         // type: 'solid'  // 也可以设置线的类型，如实线 'solid'，虚线 'dashed'
                     },
@@ -464,16 +488,17 @@ export const overallTrendOption = (
                     show: true, // 确保显示
                     lineStyle: {
                         type: "dashed", // 设置为虚线
-                        // color: '#ccc' // 可以设置颜色
+                        color: borderColor,
                     },
                 },
                 axisLabel: {
                     fontSize: 10, // 设置 y 轴刻度标签字体大小
+                    color: axisColor,
                 },
                 axisLine: {
                     show: true, // 确保 X 轴线显示
                     lineStyle: {
-                        color: "#666", // 可以设置轴线颜色
+                        color: borderColor, // 可以设置轴线颜色
                         width: 1, // 可以设置轴线宽度
                         // type: 'solid'  // 也可以设置线的类型，如实线 'solid'，虚线 'dashed'
                     },
@@ -499,6 +524,7 @@ export const overallTrendOption = (
         },
         options,
     );
+};
 
 /**
  * 通用的趋势图 ECharts Option 生成器
@@ -512,13 +538,46 @@ export const userTrendOption = (
     options?: ECOption,
 ): ECOption => {
     const seriesCount = dataset.source[0].length - 1;
+    const axisColor = getCSSVariable("--muted-foreground");
+    const textColor = getCSSVariable("--foreground");
+    const borderColor = getCSSVariable("--home-border-strong");
 
     const baseOption: ECOption = {
         tooltip: { trigger: "axis" },
-        legend: {},
+        title: {
+            top: 10,
+            left: "center",
+            textStyle: {
+                color: textColor,
+                fontSize: 18,
+                fontWeight: 700,
+            },
+        },
+        legend: {
+            top: 8,
+            textStyle: {
+                color: textColor,
+            },
+        },
         dataset: dataset,
-        xAxis: { type: "category", boundaryGap: false },
-        yAxis: { type: "value" },
+        grid: {
+            left: 40,
+            right: 24,
+            top: 68,
+            bottom: 34,
+        },
+        xAxis: {
+            type: "category",
+            boundaryGap: false,
+            axisLabel: { color: axisColor },
+            axisLine: { lineStyle: { color: borderColor } },
+        },
+        yAxis: {
+            type: "value",
+            axisLabel: { color: axisColor },
+            axisLine: { lineStyle: { color: borderColor } },
+            splitLine: { lineStyle: { color: borderColor, type: "dashed" } },
+        },
         series: Array.from({ length: seriesCount }, (_, i) => ({
             type: "line",
             smooth: true,
@@ -535,6 +594,8 @@ export const userTrendOption = (
 };
 
 export const structureOption = (dataset: any[], options?: ECOption) => {
+    const textColor = getCSSVariable("--foreground");
+    const axisColor = getCSSVariable("--muted-foreground");
     // 处理数据，为每一项注入基于 name 的固定颜色
     const coloredData = sortBy(dataset, (v) => v.value).map((item) => ({
         ...item,
@@ -549,6 +610,12 @@ export const structureOption = (dataset: any[], options?: ECOption) => {
             title: {
                 text: "支出结构",
                 left: "center",
+                top: 10,
+                textStyle: {
+                    color: textColor,
+                    fontSize: 18,
+                    fontWeight: 700,
+                },
             },
             tooltip: {
                 trigger: "item",
@@ -557,13 +624,20 @@ export const structureOption = (dataset: any[], options?: ECOption) => {
             legend: {
                 orient: "vertical",
                 left: "left",
+                top: "center",
+                textStyle: {
+                    color: axisColor,
+                },
             },
             series: [
                 {
                     name: "支出类型",
                     type: "pie",
-                    center: ["55%", "50%"],
-                    radius: "55%",
+                    center: ["58%", "56%"],
+                    radius: ["34%", "60%"],
+                    label: {
+                        color: textColor,
+                    },
                     labelLine: {
                         show: true,
                         length: 10,
@@ -571,7 +645,7 @@ export const structureOption = (dataset: any[], options?: ECOption) => {
                         lineStyle: {
                             width: 1,
                             type: "solid",
-                            color: "#aaa",
+                            color: axisColor,
                         },
                         smooth: 0.2,
                     },

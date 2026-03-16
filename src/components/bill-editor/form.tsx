@@ -205,7 +205,7 @@ export default function EditorForm({
             input={monitorFocused}
         >
             <PopupLayout
-                className="editor-popup h-full gap-3 pb-0 overflow-y-auto scrollbar-hidden"
+                className="editor-popup h-full gap-3 overflow-hidden scrollbar-hidden"
                 onBack={goBack}
                 title={
                     <div className="editor-header-shell pl-[54px] w-full min-h-12 rounded-lg flex pt-2 pb-0 overflow-hidden scrollbar-hidden">
@@ -300,8 +300,8 @@ export default function EditorForm({
                 }
             >
                 {/* categories */}
-                <div className="editor-category-shell flex-1 flex-shrink-0 overflow-y-auto min-h-[80px] scrollbar-hidden flex flex-col px-2 text-sm font-medium gap-2">
-                    <div className="editor-category-panel flex flex-col min-h-[80px] grow-[2] shrink overflow-y-auto scrollbar-hidden w-full">
+                <div className="editor-category-shell flex-shrink overflow-y-auto min-h-[80px] scrollbar-hidden flex flex-col px-2 text-sm font-medium gap-2">
+                    <div className="editor-category-panel flex flex-col min-h-[80px] shrink overflow-y-auto scrollbar-hidden w-full">
                         <div
                             className={cn(
                                 "grid gap-1",
@@ -334,7 +334,7 @@ export default function EditorForm({
                         </div>
                     </div>
                     {(subCategories?.length ?? 0) > 0 && (
-                        <div className="editor-subcategory-panel flex flex-col min-h-[68px] grow-[1] shrink max-h-fit overflow-y-auto rounded-2xl p-2 scrollbar-hidden">
+                        <div className="editor-subcategory-panel flex flex-col min-h-[68px] shrink max-h-fit overflow-y-auto rounded-2xl p-2 scrollbar-hidden">
                             <div
                                 className={cn(
                                     "grid gap-1",
@@ -397,7 +397,7 @@ export default function EditorForm({
                 <div
                     className={cn(
                         "h-[calc(480px+160px*(var(--bekh,0.5)-0.5))] sm:h-[calc(380px+160px*(var(--bekh,0.5)-0.5))] min-h-[264px] max-h-[calc(100%-124px)]",
-                        "editor-keyboard-shell keyboard-field flex gap-3 flex-col justify-start sm:rounded-b-[24px] p-3 pb-[max(env(safe-area-inset-bottom),12px)]",
+                        "editor-keyboard-shell keyboard-field flex gap-3 flex-col justify-start sm:rounded-b-[24px] p-3 pb-[max(env(safe-area-inset-bottom),12px)] mt-auto",
                     )}
                 >
                     <div className="editor-meta-bar flex justify-between items-center">

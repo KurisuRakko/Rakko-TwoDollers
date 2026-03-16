@@ -114,6 +114,7 @@ export default function Page() {
     };
 
     const [filtered, setFiltered] = useState<Bill[]>([]);
+    const hasFiltered = filtered.length > 0;
 
     useEffect(() => {
         const book = useBookStore.getState().currentBookId;
@@ -261,7 +262,7 @@ export default function Page() {
     const { allCurrencies, baseCurrency } = useCurrency();
 
     return (
-        <div className="stat-page w-full h-full p-2 flex flex-col items-center justify-center gap-4 overflow-hidden page-show">
+        <div className="stat-page w-full h-full p-2 flex flex-col items-center justify-start sm:justify-center gap-4 overflow-hidden page-show">
             <div className="stat-page-shell w-full mx-2 max-w-[600px] flex flex-col gap-3">
                 <div className="stat-top-shell w-full flex flex-col gap-3">
                     <div className="stat-filter-row w-full flex">
@@ -352,10 +353,10 @@ export default function Page() {
                     money={totalMoneys}
                 />
             </div>
-            <div className="w-full px-2 flex-1 flex justify-center overflow-y-auto">
+            <div className="stat-scroll-shell w-full px-2 flex-1 flex justify-center overflow-y-auto">
                 <div className="stat-content-shell w-full max-w-[600px] flex flex-col items-center gap-4 relative">
                     {Part}
-                    {tagStructure.length > 0 && (
+                    {hasFiltered && tagStructure.length > 0 && (
                         <div className="stat-card stat-data-card w-full flex flex-col">
                             <h2 className="font-medium text-lg my-3 text-center">
                                 {t("tag-details")}
@@ -390,59 +391,74 @@ export default function Page() {
                             </div>
                         </div>
                     )}
-                    <AnalysisCloud
-                        bills={
-                            focusType === "expense"
-                                ? filteredExpenseBills
-                                : focusType === "income"
-                                  ? filteredIncomeBills
-                                  : filtered
-                        }
-                    />
-                    {analysis && (
-                        <div className="stat-card stat-data-card w-full flex flex-col">
-                            <h2 className="font-medium text-lg my-3 text-center">
-                                {t("analysis")}
-                            </h2>
-                            <AnalysisDetail
-                                analysis={analysis}
-                                type={focusType}
-                                unit={analysisUnit}
+                    {hasFiltered ? (
+                        <>
+                            <AnalysisCloud
+                                bills={
+                                    focusType === "expense"
+                                        ? filteredExpenseBills
+                                        : focusType === "income"
+                                          ? filteredIncomeBills
+                                          : filtered
+                                }
                             />
+                            {analysis && (
+                                <div className="stat-card stat-data-card w-full flex flex-col">
+                                    <h2 className="font-medium text-lg my-3 text-center">
+                                        {t("analysis")}
+                                    </h2>
+                                    <AnalysisDetail
+                                        analysis={analysis}
+                                        type={focusType}
+                                        unit={analysisUnit}
+                                    />
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="stat-card stat-data-card stat-empty-summary w-full flex flex-col">
+                            <div className="stat-empty-title">
+                                {t("analysis")}
+                            </div>
+                            <div className="stat-empty-copy">
+                                {t("nothing-here-add-one-bill")}
+                            </div>
                         </div>
                     )}
-                    <div className="w-full flex flex-col gap-4">
-                        {dataSources.highestExpenseBill && (
-                            <div className="stat-card stat-inline-card">
-                                {t("highest-expense")}:
-                                <BillItem
-                                    className="w-full"
-                                    bill={dataSources.highestExpenseBill}
-                                    showTime
-                                    onClick={() =>
-                                        showBillInfo(
-                                            dataSources.highestExpenseBill!,
-                                        )
-                                    }
-                                />
-                            </div>
-                        )}
-                        {dataSources.highestIncomeBill && (
-                            <div className="stat-card stat-inline-card">
-                                {t("highest-income")}:
-                                <BillItem
-                                    className="w-full"
-                                    bill={dataSources.highestIncomeBill}
-                                    showTime
-                                    onClick={() =>
-                                        showBillInfo(
-                                            dataSources.highestIncomeBill!,
-                                        )
-                                    }
-                                />
-                            </div>
-                        )}
-                    </div>
+                    {hasFiltered && (
+                        <div className="w-full flex flex-col gap-4">
+                            {dataSources.highestExpenseBill && (
+                                <div className="stat-card stat-inline-card">
+                                    {t("highest-expense")}:
+                                    <BillItem
+                                        className="w-full"
+                                        bill={dataSources.highestExpenseBill}
+                                        showTime
+                                        onClick={() =>
+                                            showBillInfo(
+                                                dataSources.highestExpenseBill!,
+                                            )
+                                        }
+                                    />
+                                </div>
+                            )}
+                            {dataSources.highestIncomeBill && (
+                                <div className="stat-card stat-inline-card">
+                                    {t("highest-income")}:
+                                    <BillItem
+                                        className="w-full"
+                                        bill={dataSources.highestIncomeBill}
+                                        showTime
+                                        onClick={() =>
+                                            showBillInfo(
+                                                dataSources.highestIncomeBill!,
+                                            )
+                                        }
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
                     <div className="stat-footer-action">
                         <Button
                             variant="ghost"
@@ -453,7 +469,7 @@ export default function Page() {
                             <i className="icon-[mdi--arrow-up-right]"></i>
                         </Button>
                     </div>
-                    <div className="w-full h-20 flex-shrink-0"></div>
+                    <div className="stat-footer-spacer w-full flex-shrink-0"></div>
                 </div>
             </div>
             <BillFilterViewProvider />
