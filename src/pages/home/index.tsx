@@ -325,8 +325,6 @@ export default function Page() {
                             </div>
                         </div>
 
-                        {/* Promotion Section */}
-                        <Promotion />
 
                         {/* Budget Section */}
                         {budgets.length > 0 && (

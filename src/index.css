@@ -453,8 +453,8 @@ button {
 }
 
 .home-toolbar {
-	display: grid;
-	grid-template-columns: 1fr 44px 44px;
+	display: flex;
+	justify-content: space-between;
 	align-items: center;
 	padding: 10px 14px;
 	gap: 10px;
@@ -509,7 +509,7 @@ button {
 .home-toolbar-subtitle {
 	font-size: 13px;
 	font-weight: 500;
-	color: color-mix(in srgb, var(--foreground) 90%, transparent);
+	color: var(--foreground);
 }
 
 .home-ledger-shell {
