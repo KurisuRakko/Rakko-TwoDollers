@@ -9,7 +9,7 @@ import type { Bill } from "@/ledger/type";
 import { useIntl } from "@/locale";
 import { useUserStore } from "@/store/user";
 import { cn } from "@/utils";
-import { denseTime, shortTime } from "@/utils/time";
+import { denseTime } from "@/utils/time";
 import CategoryIcon from "../category/icon";
 import SmartImage from "../image";
 import Money from "../money";
@@ -110,7 +110,9 @@ export default function BillItem({
                 <div
                     className={cn(
                         "text-lg font-bold truncate flex-shrink-0 flex flex-col items-end opacity-90",
-                        bill.type === "expense" ? "text-red-500/80" : "text-green-500/80"
+                        bill.type === "expense"
+                            ? "text-red-500/80"
+                            : "text-green-500/80",
                     )}
                 >
                     <Money value={amountToNumber(bill.amount)} accurate />
@@ -119,7 +121,7 @@ export default function BillItem({
                         <div className="text-xs">
                             {currency.symbol}
                             <Money
-                                value={amountToNumber(bill.currency!.amount)}
+                                value={amountToNumber(bill.currency?.amount)}
                                 accurate
                             />
                         </div>

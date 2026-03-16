@@ -16,7 +16,7 @@ const loadStorageAPI = async () => {
 
 const primaryButtonStyle = `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[transform,box-shadow,background-color,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer disabled:pointer-events-none disabled:opacity-50 disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-lg shadow-primary/15 hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-xl active:translate-y-0 h-10 px-4 py-2`;
 
-const secondaryButtonStyle = `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[transform,box-shadow,background-color,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer disabled:pointer-events-none disabled:opacity-50 disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-secondary text-secondary-foreground shadow-sm hover:-translate-y-0.5 hover:bg-secondary/88 hover:shadow-md active:translate-y-0 h-10 px-4 py-2 w-full`;
+const _secondaryButtonStyle = `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[transform,box-shadow,background-color,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer disabled:pointer-events-none disabled:opacity-50 disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-secondary text-secondary-foreground shadow-sm hover:-translate-y-0.5 hover:bg-secondary/88 hover:shadow-md active:translate-y-0 h-10 px-4 py-2 w-full`;
 
 export default function Login() {
     const t = useIntl();
@@ -49,6 +49,7 @@ export default function Login() {
                             <div className="flex flex-col">
                                 {forceLoginUI && isLogin && (
                                     <button
+                                        type="button"
                                         className="mb-1 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                                         onClick={() => setForceLoginUI(false)}
                                     >
@@ -77,84 +78,80 @@ export default function Login() {
                                         {t("login")}
                                     </div>
                                 ) : (
-                                    <>
-                                        <div className="login-section login-section-surface flex flex-col gap-3 rounded-[22px] border bg-card/70 p-4">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div>
-                                                    <div className="text-base font-semibold">
-                                                        {t(
-                                                            "login-with-github-token",
-                                                        )}
-                                                    </div>
-                                                    <div className="mt-1 text-xs text-muted-foreground leading-5">
-                                                        {t(
-                                                            "login-github-token-description",
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="login-badge">
-                                                    GitHub
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className={`${primaryButtonStyle}`}
-                                                onClick={async () => {
-                                                    const StorageAPI =
-                                                        await loadStorageAPI();
-                                                    StorageAPI.loginManuallyWith(
-                                                        "github",
-                                                    );
-                                                }}
-                                            >
-                                                <i className="icon-[mdi--key-variant]"></i>
-                                                <div className="flex-1">
+                                    <div className="login-section login-section-surface flex flex-col gap-3 rounded-[22px] border bg-card/70 p-4">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <div className="text-base font-semibold">
                                                     {t(
                                                         "login-with-github-token",
                                                     )}
                                                 </div>
-                                            </button>
-                                            <Collapsible.Root className="group rounded-2xl border border-border/70 bg-background/60 transition-[background-color,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=open]:bg-background/80 data-[state=open]:shadow-sm">
-                                                <Collapsible.Trigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-xs font-medium cursor-pointer">
-                                                    <span>
-                                                        {t(
-                                                            "login-token-guide-title",
-                                                        )}
-                                                    </span>
-                                                    <i className="icon-[mdi--chevron-down] transition-transform duration-200 group-data-[state=open]:rotate-180"></i>
-                                                </Collapsible.Trigger>
-                                                <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
-                                                    <div className="border-t border-border/60 px-4 py-4 text-xs leading-5 text-muted-foreground flex flex-col gap-2">
-                                                        <div>
-                                                            {t(
-                                                                "login-token-guide-step1",
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            {t(
-                                                                "login-token-guide-step2",
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            {t(
-                                                                "login-token-guide-step3",
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            {t(
-                                                                "login-token-guide-step4",
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            {t(
-                                                                "login-token-guide-step5",
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </Collapsible.Content>
-                                            </Collapsible.Root>
+                                                <div className="mt-1 text-xs text-muted-foreground leading-5">
+                                                    {t(
+                                                        "login-github-token-description",
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="login-badge">
+                                                GitHub
+                                            </div>
                                         </div>
-                                    </>
+                                        <button
+                                            type="button"
+                                            className={`${primaryButtonStyle}`}
+                                            onClick={async () => {
+                                                const StorageAPI =
+                                                    await loadStorageAPI();
+                                                StorageAPI.loginManuallyWith(
+                                                    "github",
+                                                );
+                                            }}
+                                        >
+                                            <i className="icon-[mdi--key-variant]"></i>
+                                            <div className="flex-1">
+                                                {t("login-with-github-token")}
+                                            </div>
+                                        </button>
+                                        <Collapsible.Root className="group rounded-2xl border border-border/70 bg-background/60 transition-[background-color,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=open]:bg-background/80 data-[state=open]:shadow-sm">
+                                            <Collapsible.Trigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-xs font-medium cursor-pointer">
+                                                <span>
+                                                    {t(
+                                                        "login-token-guide-title",
+                                                    )}
+                                                </span>
+                                                <i className="icon-[mdi--chevron-down] transition-transform duration-200 group-data-[state=open]:rotate-180"></i>
+                                            </Collapsible.Trigger>
+                                            <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
+                                                <div className="border-t border-border/60 px-4 py-4 text-xs leading-5 text-muted-foreground flex flex-col gap-2">
+                                                    <div>
+                                                        {t(
+                                                            "login-token-guide-step1",
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        {t(
+                                                            "login-token-guide-step2",
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        {t(
+                                                            "login-token-guide-step3",
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        {t(
+                                                            "login-token-guide-step4",
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        {t(
+                                                            "login-token-guide-step5",
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </Collapsible.Content>
+                                        </Collapsible.Root>
+                                    </div>
                                 )}
                             </div>
                         </div>

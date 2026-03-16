@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { AnimatePresence, motion } from "motion/react";
 import {
     useCallback,
     useEffect,
@@ -12,19 +13,17 @@ import { StorageAPI } from "@/api/storage";
 import CloudLoopIcon from "@/assets/icons/cloud-loop.svg?react";
 import AnimatedNumber from "@/components/animated-number";
 import { showBookGuide } from "@/components/book/util";
-import { AnimatePresence, motion } from "motion/react";
 import BudgetCard from "@/components/budget/card";
 import { HintTooltip } from "@/components/hint";
 import { PaginationIndicator } from "@/components/indicator";
 import Ledger from "@/components/ledger";
 import Loading from "@/components/loading";
-import { Promotion } from "@/components/promotion";
+import Navigation from "@/components/navigation";
 import { useBudget } from "@/hooks/use-budget";
 import { useIsDesktop } from "@/hooks/use-media-query";
 import { useSnap } from "@/hooks/use-snap";
 import { amountToNumber } from "@/ledger/bill";
 import { useIntl } from "@/locale";
-import Navigation from "@/components/navigation";
 import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
@@ -158,7 +157,7 @@ export default function Page() {
         if (isDesktop) return;
         const container = ledgerRef.current?.getContainer();
         const isAtTop = !container || container.scrollTop <= 0;
-        
+
         if (!isExpanded || isAtTop) {
             touchStartY.current = e.touches[0].clientY;
         } else {
@@ -280,7 +279,11 @@ export default function Page() {
                         }}
                         className="overflow-hidden flex-shrink-0 flex flex-col gap-[14px]"
                     >
-                        <div className="home-hero-grid flex-shrink-0" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove}>
+                        <div
+                            className="home-hero-grid flex-shrink-0"
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                        >
                             <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[24px] p-4 text-foreground">
                                 <div className="home-hero-orb home-hero-orb-primary"></div>
                                 <div className="home-hero-orb home-hero-orb-secondary"></div>
@@ -298,7 +301,9 @@ export default function Page() {
                                             type="button"
                                             className="home-book-chip"
                                             onClick={() => {
-                                                if (StorageAPI.type === "github") {
+                                                if (
+                                                    StorageAPI.type === "github"
+                                                ) {
                                                     showBookGuide();
                                                 } else {
                                                     useUserStore
@@ -349,7 +354,6 @@ export default function Page() {
                             </div>
                         </div>
 
-
                         {/* Budget Section */}
                         {budgets.length > 0 && (
                             <div className="home-budget-shell">
@@ -397,7 +401,8 @@ export default function Page() {
                 <div
                     className={cn(
                         "home-toolbar",
-                        isExpanded && "rounded-none border-x-0 border-t-0 bg-background/95 sticky top-0 z-[20]",
+                        isExpanded &&
+                            "rounded-none border-x-0 border-t-0 bg-background/95 sticky top-0 z-[20]",
                     )}
                 >
                     <div className="home-toolbar-copy">

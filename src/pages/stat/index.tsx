@@ -11,6 +11,7 @@ import {
 } from "@/components/bill-filter";
 import { showBillInfo } from "@/components/bill-info";
 import BillItem from "@/components/ledger/item";
+import Navigation from "@/components/navigation";
 import { showSortableList } from "@/components/sortable";
 import { AnalysisCloud } from "@/components/stat/analysic-cloud";
 import { AnalysisDetail } from "@/components/stat/analysis-detail";
@@ -35,7 +36,6 @@ import { useIntl } from "@/locale";
 import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { cn } from "@/utils";
-import Navigation from "@/components/navigation";
 
 export default function Page() {
     const t = useIntl();

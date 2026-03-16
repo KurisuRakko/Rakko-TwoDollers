@@ -1,8 +1,8 @@
 import { wrap } from "comlink";
 import modal from "@/components/modal";
+import { BillIndexedDBStorage } from "@/database/storage";
 import { GithubEndpoint } from "../endpoints/github";
 import { OfflineEndpoint } from "../endpoints/offline";
-import { BillIndexedDBStorage } from "@/database/storage";
 import type { Exposed } from "./worker";
 import DeferredWorker from "./worker?worker";
 
@@ -46,7 +46,8 @@ export const StorageAPI = {
     },
     loginManuallyWith: async (targetType: string) => {
         if (targetType === "github") {
-            const isOffline = localStorage.getItem(SYNC_ENDPOINT_KEY) === "offline";
+            const isOffline =
+                localStorage.getItem(SYNC_ENDPOINT_KEY) === "offline";
             await loginWithGithubToken();
             if (isOffline) {
                 const { migrateFromOffline } = await import("./migration");
@@ -64,7 +65,10 @@ export const StorageAPI = {
 };
 
 // Check for pending migration on boot
-if (localStorage.getItem(PENDING_MIGRATION_KEY) === "true" && type !== "offline") {
+if (
+    localStorage.getItem(PENDING_MIGRATION_KEY) === "true" &&
+    type !== "offline"
+) {
     (async () => {
         try {
             const { migrateFromOffline } = await import("./migration");

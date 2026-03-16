@@ -1,4 +1,4 @@
-import { orderBy, sortBy } from "lodash-es";
+import { orderBy } from "lodash-es";
 import { Collapsible } from "radix-ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
@@ -14,6 +14,7 @@ import {
     showBatchEdit,
 } from "@/components/ledger/batch-edit";
 import modal from "@/components/modal";
+import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import useCategory from "@/hooks/use-category";
@@ -25,7 +26,6 @@ import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
-import Navigation from "@/components/navigation";
 
 const SORTS = [
     // 最近的在最上面
@@ -206,7 +206,7 @@ export default function Page() {
                     } else if (isTypeChanged) {
                         const firstCategoryId = categories.find(
                             (c) => c.type === edit.type,
-                        )!.id;
+                        )?.id;
                         bill.categoryId = firstCategoryId;
                     }
                 }

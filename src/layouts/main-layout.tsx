@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { Outlet } from "react-router";
-import { cn } from "@/utils";
 import { BillEditorProvider } from "@/components/bill-editor";
 import { BillInfoProvider } from "@/components/bill-info";
 import { TagListProvider } from "@/components/bill-tag";
@@ -12,7 +11,6 @@ import { CategoryListProvider } from "@/components/category";
 import { CurrencyListProvider } from "@/components/currency";
 import CustomCSS from "@/components/custom-css";
 import { ModalProvider } from "@/components/modal";
-import Navigation from "@/components/navigation";
 import {
     ScheduledEditProvider,
     ScheduledProvider,
@@ -29,6 +27,7 @@ import {
 import { useScheduled } from "@/hooks/use-scheduled";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { useIsLogin } from "@/store/user";
+import { cn } from "@/utils";
 
 export default function MainLayout() {
     useQuickGoAdd();
@@ -51,7 +50,7 @@ export default function MainLayout() {
             if (!isLogin) {
                 await StorageAPI.loginWith("offline");
             }
-            
+
             const { useBookStore } = await import("@/store/book");
             const books = await useBookStore.getState().updateBookList();
             if (books.length === 0) {
@@ -65,7 +64,12 @@ export default function MainLayout() {
         <ThemeProvider>
             <TooltipProvider>
                 <CustomCSS />
-                <div className={cn("main-layout-content w-full h-full min-h-0 box-border", isLogin && "sm:pl-18")}>
+                <div
+                    className={cn(
+                        "main-layout-content w-full h-full min-h-0 box-border",
+                        isLogin && "sm:pl-18",
+                    )}
+                >
                     <Outlet />
                 </div>
                 <BillEditorProvider />

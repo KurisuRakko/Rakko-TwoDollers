@@ -130,7 +130,13 @@ const Ledger = forwardRef<LedgerRef, LedgerProps>(
             // 初始调用
             handleScroll();
             return () => el.removeEventListener("scroll", handleScroll);
-        }, [bills, enableDivideAsOrdered, onVisibleDateChange, onScroll, rowVirtualizer]);
+        }, [
+            bills,
+            enableDivideAsOrdered,
+            onVisibleDateChange,
+            onScroll,
+            rowVirtualizer,
+        ]);
 
         useEffect(() => {
             if (!presence) {
