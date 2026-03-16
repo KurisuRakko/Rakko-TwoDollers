@@ -10,7 +10,7 @@ export function BaseButton({
         <button
             type="button"
             className={cn(
-                "w-18 h-18 sm:w-14 sm:h-14 rounded-full bg-stone-900 shadow-md flex items-center justify-center m-1 cursor-pointer transform transition-all hover:scale-105",
+                "nav-add-button w-18 h-18 sm:w-14 sm:h-14 rounded-full flex items-center justify-center m-1 cursor-pointer",
                 className,
             )}
             {...props}

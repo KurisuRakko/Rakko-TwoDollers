@@ -21,15 +21,15 @@ export default function PopupLayout({
     return (
         <div
             className={cn(
-                "flex-1 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
+                "popup-layout-shell flex-1 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
                 className,
             )}
         >
-            <div className="w-full flex justify-center items-center relative px-4 pt-4 pb-2 flex-shrink-0">
+            <div className="popup-layout-header w-full flex justify-center items-center relative px-4 pt-4 pb-2 flex-shrink-0">
                 {!hideBack && (
                     <button
                         type="button"
-                        className="absolute left-0 flex buttoned rounded-full py-1 pl-1 pr-3 cursor-pointer"
+                        className="popup-back-button absolute left-0 flex rounded-full py-1 pl-1 pr-3 cursor-pointer"
                         onClick={(e) => {
                             onBack?.();
                             e.stopPropagation();

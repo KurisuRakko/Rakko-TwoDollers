@@ -185,12 +185,6 @@ export default function BillInfo({
                                 </div>
                             </div>
                         )}
-                        {edit.location && (
-                            <div className="flex justify-between items-center my-1 gap-2">
-                                <div>{t("location")}:</div>
-                                <div>{`(${edit.location.latitude.toFixed(4)},${edit.location.longitude.toFixed(4)})`}</div>
-                            </div>
-                        )}
                         {(tags?.length ?? 0) > 0 && (
                             <div className="flex justify-between items-start my-1">
                                 <div>{t("tags")}:</div>

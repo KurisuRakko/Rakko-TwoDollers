@@ -222,10 +222,10 @@ export default function Page() {
         await toSearch();
     };
     return (
-        <div className="w-full h-full p-2 flex justify-center overflow-hidden page-show">
-            <div className="h-full w-full px-2 max-w-[600px] flex flex-col">
+        <div className="search-page w-full h-full p-2 flex justify-center overflow-hidden page-show">
+            <div className="search-page-shell h-full w-full px-2 max-w-[600px] flex flex-col">
                 <div className="search w-full flex justify-center pt-4">
-                    <div className="w-full h-10 shadow-md rounded-sm flex items-center px-4 focus-within:(shadow-lg)">
+                    <div className="search-input-surface w-full h-12 flex items-center px-4">
                         <div className="flex-1">
                             <Clearable
                                 visible={Boolean(form.comment?.length)}
@@ -240,7 +240,8 @@ export default function Page() {
                                     value={form.comment ?? ""}
                                     type="text"
                                     maxLength={50}
-                                    className="w-full bg-transparent outline-none"
+                                    className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
+                                    placeholder={t("search")}
                                     onChange={(e) => {
                                         setForm((v) => ({
                                             ...v,
@@ -267,12 +268,12 @@ export default function Page() {
                 <Collapsible.Root
                     open={filterOpen}
                     onOpenChange={setFilterOpen}
-                    className="flex flex-col group pt-3 text-xs md:text-sm font-medium"
+                    className="search-filter-shell flex flex-col group pt-3 text-xs md:text-sm font-medium"
                 >
                     <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
                         <BillFilterForm form={form} setForm={setForm} />
                     </Collapsible.Content>
-                    <div className="w-full flex justify-between px-2 pt-1">
+                    <div className="search-filter-actions w-full flex justify-between px-2 pt-1">
                         <Button variant="ghost" onClick={toReset}>
                             {t("reset")}
                         </Button>
@@ -303,7 +304,7 @@ export default function Page() {
                 </Collapsible.Root>
                 <div
                     className={cn(
-                        "flex items-center justify-between px-4 text-xs text-foreground/80",
+                        "search-summary-row flex items-center justify-between px-4 text-xs text-foreground/80",
                         enableSelect && "pl-0",
                     )}
                 >
@@ -400,14 +401,16 @@ export default function Page() {
                         </Button>
                     </div>
                 </div>
-                <Ledger
-                    bills={sorted}
-                    showTime
-                    selectedIds={enableSelect ? selectedIds : undefined}
-                    onSelectChange={onSelectChange}
-                    afterEdit={toSearch}
-                    showAssets={showAssets}
-                />
+                <div className="search-results-shell min-h-0 flex-1">
+                    <Ledger
+                        bills={sorted}
+                        showTime
+                        selectedIds={enableSelect ? selectedIds : undefined}
+                        onSelectChange={onSelectChange}
+                        afterEdit={toSearch}
+                        showAssets={showAssets}
+                    />
+                </div>
             </div>
             <BatchEditProvider />
         </div>

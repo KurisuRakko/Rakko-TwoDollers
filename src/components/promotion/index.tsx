@@ -127,7 +127,10 @@ export function Promotion() {
         return null;
     }
     return (
-        <div className="w-full flex flex-col gap-1">
+        <div className="home-promotion-shell w-full flex flex-col gap-2">
+            <div className="home-section-head">
+                <div className="home-section-title">{t("home-guide-title")}</div>
+            </div>
             <div
                 ref={scrollRef}
                 className="w-full flex overflow-x-auto gap-2 scrollbar-hidden snap-mandatory snap-x scroll-smooth"
@@ -135,7 +138,7 @@ export function Promotion() {
                 {promotions.map((item, index) => (
                     <div
                         key={item.id}
-                        className="relative cursor-pointer flex-shrink-0 snap-start rounded-lg border flex items-center justify-between w-full p-2 h-12"
+                        className="home-promotion-card relative cursor-pointer flex-shrink-0 snap-start"
                         onClick={() => {
                             item?.action?.();
                             setTimeout(() => {
@@ -144,12 +147,12 @@ export function Promotion() {
                         }}
                     >
                         <div
-                            className="text-sm"
+                            className="pr-8 text-sm font-medium leading-6"
                             dangerouslySetInnerHTML={{ __html: t(item.label) }}
                         ></div>
                         <button
                             type="button"
-                            className="absolute top-1 right-1 cursor-pointer flex w-4 h-4"
+                            className="absolute top-3 right-3 cursor-pointer flex size-4"
                             onClick={(e) => {
                                 closePromotion(item.id);
                                 e.preventDefault();
@@ -158,7 +161,7 @@ export function Promotion() {
                         >
                             <i className="icon-[mdi--close-circle]"></i>
                         </button>
-                        <div className="absolute bottom-1 right-1 text-xs opacity-60">
+                        <div className="absolute bottom-3 right-3 text-[10px] tracking-[0.2em] opacity-45">
                             {index + 1}/{promotions.length}
                         </div>
                     </div>

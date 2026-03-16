@@ -14,7 +14,6 @@ import { useIntl, useLocale } from "@/locale";
 import type { EditBill } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
-import { getPredictNow } from "@/utils/predict";
 import { showTagList } from "../bill-tag";
 import { showCategoryList } from "../category";
 import { CategoryItem } from "../category/item";
@@ -24,7 +23,6 @@ import { FORMAT_IMAGE_SUPPORTED, showFilePicker } from "../file-picker";
 import SmartImage from "../image";
 import IOSUnscrolledInput from "../input";
 import Calculator from "../keyboard";
-import CurrentLocation from "../simple-location";
 import Tag from "../tag";
 import {
     Select,
@@ -54,6 +52,7 @@ export default function EditorForm({
     onCancel?: () => void;
 }) {
     const t = useIntl();
+    const isCreate = edit === undefined;
     const goBack = () => {
         onCancel?.();
     };
@@ -61,38 +60,12 @@ export default function EditorForm({
     const { baseCurrency, convert, quickCurrencies, allCurrencies } =
         useCurrency();
 
-    const { incomes, expenses, categories: allCategories } = useCategory();
-
-    const isCreate = edit === undefined;
-
-    const predictCategory = useMemo(() => {
-        // 只有新增账单时才展示预测
-        if (!isCreate) {
-            return;
-        }
-        const predict = getPredictNow();
-        const pc = predict?.category?.[0];
-        if (!pc) {
-            return;
-        }
-        const category = allCategories.find((v) => v.id === pc);
-        return category;
-    }, [isCreate, allCategories]);
-
-    const predictComments = useMemo(() => {
-        // 只有新增账单时才展示预测
-        if (!isCreate) {
-            return;
-        }
-        const predict = getPredictNow();
-        const pc = predict?.comment;
-        return pc;
-    }, [isCreate]);
+    const { incomes, expenses } = useCategory();
 
     const [billState, setBillState] = useState(() => {
         const init = {
             ...defaultBill,
-            categoryId: predictCategory?.id ?? defaultBill.categoryId,
+            categoryId: defaultBill.categoryId,
             time: Date.now(),
             ...edit,
         };
@@ -130,18 +103,6 @@ export default function EditorForm({
             return { ...v, images: [...(v.images ?? []), file] };
         });
     };
-
-    const locationRef = useRef<HTMLButtonElement>(null);
-    const isAdd = useRef(!edit);
-    useEffect(() => {
-        if (
-            !isAdd.current ||
-            !usePreferenceStore.getState().autoLocateWhenAddBill
-        ) {
-            return;
-        }
-        locationRef.current?.click?.();
-    }, []);
 
     const monitorRef = useRef<HTMLButtonElement>(null);
     const [monitorFocused, setMonitorFocused] = useState(false);
@@ -244,13 +205,13 @@ export default function EditorForm({
             input={monitorFocused}
         >
             <PopupLayout
-                className="h-full gap-2 pb-0 overflow-y-auto scrollbar-hidden"
+                className="editor-popup h-full gap-3 pb-0 overflow-y-auto scrollbar-hidden"
                 onBack={goBack}
                 title={
-                    <div className="pl-[54px] w-full min-h-12 rounded-lg flex pt-2 pb-0 overflow-hidden scrollbar-hidden">
-                        <div className="text-white">
+                    <div className="editor-header-shell pl-[54px] w-full min-h-12 rounded-lg flex pt-2 pb-0 overflow-hidden scrollbar-hidden">
+                        <div>
                             <Switch.Root
-                                className="w-24 h-12 relative bg-stone-900 rounded-lg p-1 flex justify-center items-center"
+                                className="editor-type-switch w-24 h-12 relative rounded-2xl p-1 flex justify-center items-center"
                                 checked={billState.type === "income"}
                                 onCheckedChange={() => {
                                     setBillState((v) => ({
@@ -266,8 +227,8 @@ export default function EditorForm({
                                     }));
                                 }}
                             >
-                                <Switch.Thumb className="w-1/2 h-full flex justify-center items-center transition-all rounded-md bg-semantic-expense -translate-x-[22px] data-[state=checked]:bg-semantic-income data-[state=checked]:translate-x-[21px]">
-                                    <span className="text-[8px]">
+                                <Switch.Thumb className="editor-type-thumb w-1/2 h-full flex justify-center items-center transition-all rounded-xl bg-semantic-expense -translate-x-[22px] data-[state=checked]:bg-semantic-income data-[state=checked]:translate-x-[21px]">
+                                    <span className="text-[9px] font-semibold">
                                         {billState.type === "expense"
                                             ? t("expense")
                                             : t("income")}
@@ -275,7 +236,7 @@ export default function EditorForm({
                                 </Switch.Thumb>
                             </Switch.Root>
                         </div>
-                        <div className="flex-1 flex bg-stone-400 focus:outline rounded-lg ml-2 px-2 relative">
+                        <div className="editor-amount-surface flex-1 flex focus:outline rounded-2xl ml-2 px-3 relative">
                             {quickCurrencies.length > 0 && (
                                 <Select
                                     value={targetCurrency?.id}
@@ -285,7 +246,7 @@ export default function EditorForm({
                                 >
                                     <div className="flex items-center">
                                         <SelectTrigger className="w-fit outline-none ring-none border-none shadow-none p-0 [&_svg]:hidden">
-                                            <div className="flex items-center font-semibold text-2xl text-white">
+                                            <div className="flex items-center font-semibold text-2xl text-foreground">
                                                 {targetCurrency?.symbol}
                                             </div>
                                         </SelectTrigger>
@@ -315,7 +276,7 @@ export default function EditorForm({
                                 className="flex-1 flex flex-col justify-center items-end overflow-x-scroll outline-none"
                             >
                                 {billState.currency && (
-                                    <div className="absolute text-white text-[8px] top-0">
+                                    <div className="absolute text-muted-foreground text-[9px] top-1">
                                         ≈ {baseCurrency.symbol}{" "}
                                         {amountToNumber(billState.amount)}{" "}
                                         {baseCurrency.label}
@@ -323,13 +284,13 @@ export default function EditorForm({
                                 )}
                                 <Calculator.Value
                                     className={cn(
-                                        "text-white text-3xl font-semibold text-right bg-transparent after:inline-block after:content-['|'] after:opacity-0 after:font-thin after:translate-y-[-3px] ",
+                                        "text-foreground text-3xl font-semibold text-right bg-transparent after:inline-block after:content-['|'] after:opacity-0 after:font-thin after:translate-y-[-3px] ",
                                         monitorFocused &&
                                             "after:animate-caret-blink",
                                     )}
                                 ></Calculator.Value>
                                 {billState.amount < 0 && (
-                                    <div className="absolute text-red-700 text-[8px] bottom-0">
+                                    <div className="absolute text-destructive text-[9px] bottom-1">
                                         {t("bill-negative-tip")}
                                     </div>
                                 )}
@@ -339,8 +300,8 @@ export default function EditorForm({
                 }
             >
                 {/* categories */}
-                <div className="flex-1 flex-shrink-0 overflow-y-auto min-h-[80px] scrollbar-hidden flex flex-col px-2 text-sm font-medium gap-2">
-                    <div className="flex flex-col min-h-[80px] grow-[2] shrink overflow-y-auto scrollbar-hidden w-full">
+                <div className="editor-category-shell flex-1 flex-shrink-0 overflow-y-auto min-h-[80px] scrollbar-hidden flex flex-col px-2 text-sm font-medium gap-2">
+                    <div className="editor-category-panel flex flex-col min-h-[80px] grow-[2] shrink overflow-y-auto scrollbar-hidden w-full">
                         <div
                             className={cn(
                                 "grid gap-1",
@@ -362,9 +323,7 @@ export default function EditorForm({
                             ))}
                             <button
                                 type="button"
-                                className={cn(
-                                    `rounded-lg border flex-1 py-1 px-2 h-8 flex gap-2 items-center justify-center whitespace-nowrap cursor-pointer`,
-                                )}
+                                className="editor-chip-button rounded-xl border flex-1 py-1 px-2 h-10 flex gap-2 items-center justify-center whitespace-nowrap cursor-pointer"
                                 onClick={() => {
                                     showCategoryList(billState.type);
                                 }}
@@ -375,7 +334,7 @@ export default function EditorForm({
                         </div>
                     </div>
                     {(subCategories?.length ?? 0) > 0 && (
-                        <div className="flex flex-col min-h-[68px] grow-[1] shrink max-h-fit overflow-y-auto rounded-md border p-2 shadow scrollbar-hidden">
+                        <div className="editor-subcategory-panel flex flex-col min-h-[68px] grow-[1] shrink max-h-fit overflow-y-auto rounded-2xl p-2 scrollbar-hidden">
                             <div
                                 className={cn(
                                     "grid gap-1",
@@ -407,7 +366,7 @@ export default function EditorForm({
                 {/* tags */}
                 <div
                     ref={tagSelectorRef}
-                    className="w-full h-[40px] flex-shrink-0 flex-grow-0 flex gap-1 py-1 items-center overflow-x-auto px-2 text-sm font-medium scrollbar-hidden"
+                    className="editor-tag-row w-full min-h-[48px] flex-shrink-0 flex-grow-0 flex gap-1 py-2 items-center overflow-x-auto px-2 text-sm font-medium scrollbar-hidden"
                 >
                     <TagGroupSelector
                         isCreate={isCreate}
@@ -424,9 +383,7 @@ export default function EditorForm({
                     />
                     <button
                         type="button"
-                        className={cn(
-                            `rounded-lg border py-1 px-2 h-8 flex gap-2 items-center justify-center whitespace-nowrap cursor-pointer`,
-                        )}
+                        className="editor-chip-button rounded-xl border py-1 px-3 h-10 flex gap-2 items-center justify-center whitespace-nowrap cursor-pointer"
                         onClick={() => {
                             showTagList();
                         }}
@@ -440,10 +397,10 @@ export default function EditorForm({
                 <div
                     className={cn(
                         "h-[calc(480px+160px*(var(--bekh,0.5)-0.5))] sm:h-[calc(380px+160px*(var(--bekh,0.5)-0.5))] min-h-[264px] max-h-[calc(100%-124px)]",
-                        "keyboard-field flex gap-2 flex-col justify-start bg-stone-900 sm:rounded-b-md text-[white] p-2 pb-[max(env(safe-area-inset-bottom),8px)]",
+                        "editor-keyboard-shell keyboard-field flex gap-3 flex-col justify-start sm:rounded-b-[24px] p-3 pb-[max(env(safe-area-inset-bottom),12px)]",
                     )}
                 >
-                    <div className="flex justify-between items-center">
+                    <div className="editor-meta-bar flex justify-between items-center">
                         <div className="flex gap-2 items-center h-10">
                             <div className="flex items-center h-full">
                                 {(billState.images?.length ?? 0) > 0 && (
@@ -473,42 +430,14 @@ export default function EditorForm({
                                 {(billState.images?.length ?? 0) < 3 && (
                                     <button
                                         type="button"
-                                        className="px-1 flex justify-center items-center rounded-full transition-all cursor-pointer"
+                                        className="editor-meta-button px-2 flex justify-center items-center rounded-full transition-all cursor-pointer"
                                         onClick={chooseImage}
                                     >
-                                        <i className="icon-xs icon-[mdi--image-plus-outline] text-[white]"></i>
+                                        <i className="icon-xs icon-[mdi--image-plus-outline]"></i>
                                     </button>
                                 )}
                             </div>
-                            <div className="h-full flex items-center">
-                                {billState?.location ? (
-                                    <Deletable
-                                        onDelete={() => {
-                                            setBillState((prev) => {
-                                                return {
-                                                    ...prev,
-                                                    location: undefined,
-                                                };
-                                            });
-                                        }}
-                                    >
-                                        <i className="w-5 icon-[mdi--location-radius]"></i>
-                                    </Deletable>
-                                ) : (
-                                    <CurrentLocation
-                                        ref={locationRef}
-                                        className="px-1 flex items-center justify-center"
-                                        onValueChange={(v) => {
-                                            setBillState((prev) => {
-                                                return { ...prev, location: v };
-                                            });
-                                        }}
-                                    >
-                                        <i className="icon-[mdi--add-location]" />
-                                    </CurrentLocation>
-                                )}
-                            </div>
-                            <div className="rounded-full transition-all hover:(bg-stone-700) active:(bg-stone-500)">
+                            <div className="editor-meta-button rounded-full transition-all">
                                 <DatePicker
                                     fixedTime
                                     value={billState.time}
@@ -548,7 +477,6 @@ export default function EditorForm({
                             </div>
                         </div>
                         <RemarkHint
-                            recommends={predictComments}
                             onSelect={(v) => {
                                 setBillState((prev) => ({
                                     ...prev,
@@ -566,7 +494,7 @@ export default function EditorForm({
                                         }));
                                     }}
                                     type="text"
-                                    className="w-full bg-transparent text-white text-right placeholder-opacity-50 outline-none"
+                                    className="editor-comment-input w-full bg-transparent text-right outline-none"
                                     placeholder={t("comment")}
                                     enterKeyHint="done"
                                 />
@@ -576,7 +504,7 @@ export default function EditorForm({
 
                     <button
                         type="button"
-                        className="flex h-[80px] min-h-[48px] justify-center items-center bg-green-700 rounded-lg font-bold text-lg cursor-pointer"
+                        className="editor-confirm-button flex h-[72px] min-h-[48px] justify-center items-center rounded-2xl font-bold text-lg cursor-pointer"
                         onClick={toConfirm}
                     >
                         <i className="icon-[mdi--check] icon-md"></i>

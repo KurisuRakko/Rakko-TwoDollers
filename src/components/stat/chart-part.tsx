@@ -203,14 +203,14 @@ export function useChartPart({
     );
     const Part = (
         <>
-            <div className="flex-shrink-0 w-full min-h-[300px] border rounded-md relative">
+            <div className="stat-card stat-chart-card flex-shrink-0 w-full min-h-[300px] relative">
                 <div className="absolute top-4 left-4 z-2">
                     {viewType !== "custom" && (
                         <button
                             type="button"
                             className={cn(
-                                "inline-flex justify-center items-center p-1 rounded-full",
-                                asCalendar && "bg-foreground text-background",
+                                "stat-chart-toggle inline-flex justify-center items-center p-1 rounded-full",
+                                asCalendar && "stat-chart-toggle-active",
                             )}
                             onClick={() => {
                                 setAsCalendar((v) => !v);
@@ -247,14 +247,14 @@ export function useChartPart({
                 )}
             </div>
             {focusType !== "balance" && (
-                <div className="flex-shrink-0 w-full border rounded-md relative">
+                <div className="stat-card stat-chart-card flex-shrink-0 w-full relative">
                     <div className="absolute top-4 left-4 z-2">
                         {
                             <button
                                 type="button"
                                 className={cn(
-                                    "inline-flex justify-center items-center p-1 rounded-full",
-                                    asList && "bg-foreground text-background",
+                                    "stat-chart-toggle inline-flex justify-center items-center p-1 rounded-full",
+                                    asList && "stat-chart-toggle-active",
                                 )}
                                 onClick={() => {
                                     setAsList((v) => !v);
@@ -334,6 +334,7 @@ export function useChartPart({
                                 <Button
                                     variant="ghost"
                                     size={"sm"}
+                                    className="stat-link-button"
                                     onClick={() => {
                                         seeDetails({
                                             type: focusType,
@@ -351,7 +352,7 @@ export function useChartPart({
                 </div>
             )}
             {!asList && selectedCategoryChart && (
-                <div className="flex-shrink-0 w-full border rounded-md">
+                <div className="stat-card stat-chart-card flex-shrink-0 w-full">
                     <div className="w-full h-[300px]">
                         <Chart
                             option={selectedCategoryChart}

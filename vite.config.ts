@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
-import { buildSync } from "esbuild";
 import Info from "unplugin-info/vite";
 import { defineConfig, loadEnv, type PluginOption } from "vite";
 import { analyzer } from "vite-bundle-analyzer";
@@ -21,13 +20,6 @@ export default defineConfig(({ mode }) => {
             inject: {
                 data: {
                     VITE_GTAG_SCRIPT: env.VITE_GTAG_SCRIPT || "",
-                    injectPresetScript: buildSync({
-                        entryPoints: ["src/inline/load-preset.ts"],
-                        bundle: true,
-                        minify: true,
-                        write: false,
-                        format: "iife",
-                    }).outputFiles[0].text,
                 },
             },
         }),
@@ -42,9 +34,9 @@ export default defineConfig(({ mode }) => {
             injectRegister: "auto",
             includeAssets: ["favicon.ico", "apple-touch-icon.png"],
             manifest: {
-                name: "Cent - 日计",
-                short_name: "Cent",
-                description: "Accounting your life - 记录每一天",
+                name: "Rakko-TwoDollars",
+                short_name: "Rakko-TwoDollars",
+                description: "Rakko-TwoDollars by KurisuRakko",
                 theme_color: "#ffffff",
                 icons: [
                     { src: "icon.png", sizes: "192x192", type: "image/png" },

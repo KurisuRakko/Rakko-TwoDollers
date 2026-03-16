@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSize } from "react-use";
 import WordCloud from "wordcloud";
-import { useTheme } from "@/hooks/use-theme";
 import { useIntl } from "@/locale";
 import { cn } from "@/utils";
 import { processText } from "@/utils/word";
@@ -14,7 +13,6 @@ const DPR = window.devicePixelRatio || 2;
 function TextCloud({ data, className }: { data: WordCut; className?: string }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
-    const { theme } = useTheme();
 
     const [sized, { width, height }] = useSize(({ width, height }) => (
         <div
@@ -47,12 +45,12 @@ function TextCloud({ data, className }: { data: WordCut; className?: string }) {
                 return Math.max((size / max) * 60, 10) * DPR; // 最大字号60px
             },
             fontFamily: "sans-serif",
-            color: theme === "dark" ? "random-light" : "random-dark",
+            color: "random-dark",
             backgroundColor: "transparent",
             rotateRatio: 0.5,
             drawOutOfBound: false,
         });
-    }, [data, width, height, theme]);
+    }, [data, width, height]);
     return sized;
 }
 
@@ -67,9 +65,9 @@ export function AnalysisCloud({ bills }: { bills?: { comment?: string }[] }) {
             }
         }, []);
         processText(texts).then(setWordCut);
-    }, [bills]);
+        }, [bills]);
     return (
-        <div className="rounded-md border p-2 w-full flex flex-col relative">
+        <div className="stat-card stat-data-card w-full flex flex-col relative">
             <h2 className="font-medium text-lg my-3 text-center">
                 {t("comment-cloud")}
             </h2>

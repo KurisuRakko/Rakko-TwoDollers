@@ -5,7 +5,7 @@ import { useLocale } from "@/locale";
 import { cn } from "@/utils";
 import { collaboratorColors } from "@/utils/color";
 import { toThousand } from "@/utils/number";
-import type { EnvArg } from "../assistant/env";
+import type { ViewType } from "./date-slice";
 import type { FocusType } from "./focus-type";
 
 export interface CalendarCellSlotProps {
@@ -15,8 +15,9 @@ export interface CalendarCellSlotProps {
     isCurrentPeriod?: boolean; // 对于月视图：是否在当前月；对于年视图：是否在当前年
 }
 
-export interface CalendarDetailProps
-    extends Pick<EnvArg, "range" | "viewType"> {
+export interface CalendarDetailProps {
+    range: number[];
+    viewType?: ViewType;
     // 周视图和月视图的日期单元格slot
     daySlot?: (props: CalendarCellSlotProps) => ReactNode;
     // 年视图的月份单元格slot

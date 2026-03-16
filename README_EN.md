@@ -1,4 +1,4 @@
-# Cent
+# Rakko-TwoDollars
 
 [简体中文](./README.md) | English
 
@@ -9,12 +9,12 @@
 [![PWA](https://img.shields.io/badge/PWA-supported-blue.svg)]()
 [![GitHub Repo](https://img.shields.io/badge/data-storage_on_GitHub-black?logo=github)]()
 
-Cent is a **completely free, open-source, collaborative accounting Web App**,  
+Rakko-TwoDollars is a **completely free, open-source, collaborative accounting Web App**,  
 which uses a **GitHub Repository** for data synchronization and version control, enabling real-time cross-platform sync without a server.
 
-🔗 **Live Demo**: [https://cent.linkai.work](https://cent.linkai.work)  
-💾 **Open Source Repository**: [https://github.com/glink25/Cent](https://github.com/glink25/Cent)  
-📖 **Blog**: [https://glink25.github.io/tag/Cent/](https://glink25.github.io/tag/Cent/)  
+🔗 **Website**: [https://Rakko.cn](https://Rakko.cn)  
+💾 **Author**: KurisuRakko  
+📖 **Project Name**: Rakko-TwoDollars  
 
 ---
 
@@ -28,7 +28,7 @@ which uses a **GitHub Repository** for data synchronization and version control,
 | Budget Management | ![Budget View](https://glink25.github.io/post-assets/mgucw884-cent-budget.jpg) |
 | GitHub Collaboration | ![Collaboration Feature](https://glink25.github.io/post-assets/mgucw884-github-collaborator.jpg) |
 
->  **Latest Update**: Cent now supports AI Assistant, Voice Recording, Multi-Currency Management, Map Visualization, Scheduled Billing, and many more features! See [Cent 1.1 Update Notes](https://glink25.github.io/post/Cent-%E5%B7%B2%E6%94%AF%E6%8C%81%E5%A4%9A%E5%B8%81%E7%A7%8D%E8%87%AA%E5%8A%A8%E8%AE%B0%E8%B4%A6/) for details.
+>  **Latest Update**: Rakko-TwoDollars now supports Multi-Currency Management, Scheduled Billing, Budgeting, and other core bookkeeping features.
 
 ---
 
@@ -37,21 +37,18 @@ which uses a **GitHub Repository** for data synchronization and version control,
 ### 💾 Fully Self-Contained Data
 Ledger data is stored in your private GitHub/Gitee repository or Web DAV, without any third-party servers. **Multi-user collaboration** via GitHub Collaborator feature, with **incremental sync** mechanism that only uploads/downloads changed data, significantly reducing sync time.
 
-### 🤖 AI-Powered Experience
-Long press the recording button for **Voice Recording**, where AI automatically parses amounts, categories, and notes. Configure OpenAI-compatible APIs for intelligent bill analysis, budget suggestions, annual summaries, and **smart predictions** based on historical data.
-
 ### 💱 Multi-Currency & Scheduled Billing
 Supports 30+ international currencies plus custom currencies, with real-time automatic exchange rate conversion. Perfect for international travel and cross-border transactions. Create **scheduled billing** templates for subscriptions and auto-renewals.
 
 ### 📊 Statistics & Visualization
-Multi-dimensional filtering and trend analysis, custom analysis views, budget management with progress monitoring. **View spending footprints on a map** with AMap support.
+Multi-dimensional filtering and trend analysis, custom analysis views, budget management with progress monitoring.
 
 ### 🛠️ More Features
 - 📱 **PWA Support**: Install to desktop and use like a native app
-- 📥 **Smart Import**: WeChat/Alipay bills, create custom import schemes with AI
+- 📥 **Bill Import**: WeChat/Alipay bill import
 - 🏷️ **Categories & Tags**: Custom categories, tag groups, single/multi-select, preferred currencies
-- 📋 **Quick Actions**: iOS Shortcuts, clipboard entry, batch editing, natural language recognition
-- 🎨 **Customization**: Dark mode, custom CSS, keyboard customization
+- 📋 **Quick Actions**: iOS Shortcuts, clipboard entry, batch editing
+- 🎨 **Customization**: Keyboard customization
 
 *...and many more features waiting to be discovered ✨*
 
@@ -59,8 +56,8 @@ Multi-dimensional filtering and trend analysis, custom analysis views, budget ma
 
 ## 🧠 Core Principles
 
-Cent is a "pure frontend" PWA application.  
-Apart from GitHub OAuth login, Cent does not rely on any backend services.
+Rakko-TwoDollars is a "pure frontend" PWA application.  
+Apart from GitHub token sync, Rakko-TwoDollars does not rely on any backend services.
 
 Learn more: [Using GitHub as a Database](https://glink25.github.io/post/%E7%8E%B0%E5%9C%A8%E5%BC%80%E5%A7%8B%E5%B0%86Github%E4%BD%9C%E4%B8%BA%E6%95%B0%E6%8D%AE%E5%BA%93/)
 
@@ -114,8 +111,6 @@ Cent uses Cloudflare Workers to deploy an online authentication service, which o
 ### Completed
 - ✅ Incremental sync core implementation  
 - ✅ Multi-user collaborative ledgers  
-- ✅ AI assistant features
-- ✅ Voice recording
 - ✅ Multi-currency support and exchange rate management
 - ✅ Map visualization of expenditures (AMap integration)
 - ✅ Scheduled billing

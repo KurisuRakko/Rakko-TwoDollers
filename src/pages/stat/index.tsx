@@ -5,7 +5,6 @@ import { useNavigate, useParams } from "react-router";
 import { useShallow } from "zustand/shallow";
 import { StorageDeferredAPI } from "@/api/storage";
 import type { AnalysisResult } from "@/api/storage/analysis";
-import { Assistant } from "@/components/assistant";
 import {
     BillFilterViewProvider,
     showBillFilterView,
@@ -15,7 +14,6 @@ import BillItem from "@/components/ledger/item";
 import { showSortableList } from "@/components/sortable";
 import { AnalysisCloud } from "@/components/stat/analysic-cloud";
 import { AnalysisDetail } from "@/components/stat/analysis-detail";
-import AnalysisMap from "@/components/stat/analysis-map";
 import { useChartPart } from "@/components/stat/chart-part";
 import { DateSliced, useDateSliced } from "@/components/stat/date-slice";
 import {
@@ -262,20 +260,11 @@ export default function Page() {
 
     const { allCurrencies, baseCurrency } = useCurrency();
 
-    const envArg = useMemo(
-        () => ({
-            filterView: selectedFilterView,
-            focusType,
-            viewType,
-            range: realRange,
-        }),
-        [selectedFilterView, focusType, viewType, realRange],
-    );
     return (
-        <div className="w-full h-full p-2 flex flex-col items-center justify-center gap-4 overflow-hidden page-show">
-            <div className="w-full mx-2 max-w-[600px] flex flex-col gap-2">
-                <div className="w-full flex flex-col gap-2">
-                    <div className="w-full flex">
+        <div className="stat-page w-full h-full p-2 flex flex-col items-center justify-center gap-4 overflow-hidden page-show">
+            <div className="stat-page-shell w-full mx-2 max-w-[600px] flex flex-col gap-3">
+                <div className="stat-top-shell w-full flex flex-col gap-3">
+                    <div className="stat-filter-row w-full flex">
                         <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hidden">
                             {allFilterViews.map((filter) => {
                                 const displayCurrency =
@@ -291,6 +280,7 @@ export default function Page() {
                                         key={filter.id}
                                         size={"sm"}
                                         className={cn(
+                                            "stat-filter-chip",
                                             filterViewId !== filter.id
                                                 ? "text-primary/50"
                                                 : "relative after:absolute after:bottom-[2px] after:left-3 after:w-[calc(100%-24px)] after:h-[2px] after:rounded-full after:bg-primary/20",
@@ -307,11 +297,12 @@ export default function Page() {
                                 );
                             })}
                         </div>
-                        <div className="">
+                        <div className="stat-filter-actions">
                             <Button
                                 variant="ghost"
                                 onClick={toAddFilter}
                                 size="sm"
+                                className="stat-icon-button"
                             >
                                 <i className="icon-[mdi--plus] size-4"></i>
                             </Button>
@@ -319,6 +310,7 @@ export default function Page() {
                                 variant="ghost"
                                 onClick={toReOrder}
                                 size="sm"
+                                className="stat-icon-button"
                             >
                                 <i className="icon-[mdi--menu] size-4"></i>
                             </Button>
@@ -350,20 +342,21 @@ export default function Page() {
                     </div>
                 </DateSliced>
             </div>
-            <FocusTypeSelector
-                value={focusType}
-                onValueChange={(v) => {
-                    setFocusType(v);
-                    setSelectedCategoryId(undefined);
-                }}
-                money={totalMoneys}
-            />
+            <div className="stat-focus-shell">
+                <FocusTypeSelector
+                    value={focusType}
+                    onValueChange={(v) => {
+                        setFocusType(v);
+                        setSelectedCategoryId(undefined);
+                    }}
+                    money={totalMoneys}
+                />
+            </div>
             <div className="w-full px-2 flex-1 flex justify-center overflow-y-auto">
-                <div className="w-full max-w-[600px] flex flex-col items-center gap-4 relative">
-                    <Assistant env={envArg} />
+                <div className="stat-content-shell w-full max-w-[600px] flex flex-col items-center gap-4 relative">
                     {Part}
                     {tagStructure.length > 0 && (
-                        <div className="rounded-md border p-2 w-full flex flex-col">
+                        <div className="stat-card stat-data-card w-full flex flex-col">
                             <h2 className="font-medium text-lg my-3 text-center">
                                 {t("tag-details")}
                             </h2>
@@ -406,17 +399,8 @@ export default function Page() {
                                   : filtered
                         }
                     />
-                    <AnalysisMap
-                        bills={
-                            focusType === "expense"
-                                ? filteredExpenseBills
-                                : focusType === "income"
-                                  ? filteredIncomeBills
-                                  : filtered
-                        }
-                    />
                     {analysis && (
-                        <div className="rounded-md border p-2 w-full flex flex-col">
+                        <div className="stat-card stat-data-card w-full flex flex-col">
                             <h2 className="font-medium text-lg my-3 text-center">
                                 {t("analysis")}
                             </h2>
@@ -429,7 +413,7 @@ export default function Page() {
                     )}
                     <div className="w-full flex flex-col gap-4">
                         {dataSources.highestExpenseBill && (
-                            <div className="rounded-md border p-2">
+                            <div className="stat-card stat-inline-card">
                                 {t("highest-expense")}:
                                 <BillItem
                                     className="w-full"
@@ -444,7 +428,7 @@ export default function Page() {
                             </div>
                         )}
                         {dataSources.highestIncomeBill && (
-                            <div className="rounded-md border p-2">
+                            <div className="stat-card stat-inline-card">
                                 {t("highest-income")}:
                                 <BillItem
                                     className="w-full"
@@ -459,8 +443,12 @@ export default function Page() {
                             </div>
                         )}
                     </div>
-                    <div>
-                        <Button variant="ghost" onClick={() => seeDetails()}>
+                    <div className="stat-footer-action">
+                        <Button
+                            variant="ghost"
+                            className="stat-link-button"
+                            onClick={() => seeDetails()}
+                        >
                             {t("see-all-ledgers")}
                             <i className="icon-[mdi--arrow-up-right]"></i>
                         </Button>

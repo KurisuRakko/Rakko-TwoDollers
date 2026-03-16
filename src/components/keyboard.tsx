@@ -296,8 +296,11 @@ export const CalculatorKeyboard = ({
                     }}
                     className={cn(
                         (row.cols ?? 1) > 1 && "col-span-2",
-                        "h-full text-lg font-semibold bg-background/10 active:bg-background/50 transition-all",
-                        row.label === "c" && "bg-destructive/60",
+                        "calculator-key h-full text-lg font-semibold transition-all",
+                        isOperator(row.label) && "calculator-key-operator",
+                        row.label === "c" && "calculator-key-danger",
+                        row.label === "=" && "calculator-key-confirm",
+                        row.label === "r" && "calculator-key-secondary",
                     )}
                 >
                     {row.label === "c" ? (

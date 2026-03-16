@@ -1,5 +1,7 @@
 /** biome-ignore-all lint/a11y/noSvgWithoutTitle: <explanation> */
 import { createPortal } from "react-dom";
+import { Collapsible } from "radix-ui";
+import loginWallpaper from "../../../arknightswall9.jpg";
 import { useShallow } from "zustand/shallow";
 import { useIntl } from "@/locale";
 import { useIsLogin, useUserStore } from "@/store/user";
@@ -11,11 +13,9 @@ const loadStorageAPI = async () => {
     return lib.StorageAPI;
 };
 
-const primaryButtonStyle = `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2`;
+const primaryButtonStyle = `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[transform,box-shadow,background-color,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer disabled:pointer-events-none disabled:opacity-50 disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow-lg shadow-primary/15 hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-xl active:translate-y-0 h-10 px-4 py-2`;
 
-const secondaryButtonStyle = `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 h-9 px-4 py-2 w-full`;
-
-const betaClassName = `relative after:content-['beta'] after:rounded after:bg-yellow-400 after:px-[2px] after:text-[8px] after:block after:absolute after:top-0 after:right-0 after:translate-x-[calc(50%)]`;
+const secondaryButtonStyle = `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[transform,box-shadow,background-color,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer disabled:pointer-events-none disabled:opacity-50 disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-secondary text-secondary-foreground shadow-sm hover:-translate-y-0.5 hover:bg-secondary/88 hover:shadow-md active:translate-y-0 h-10 px-4 py-2 w-full`;
 
 export default function Login() {
     const t = useIntl();
@@ -29,38 +29,66 @@ export default function Login() {
         return null;
     }
     return createPortal(
-        <div className="fixed z-[1] top-0 right-0 w-screen h-screen overflow-hidden">
-            <div className="absolute w-full h-full bg-[rgba(0,0,0,0.5)] z-[-1]"></div>
-            <div className="w-full h-full flex justify-center items-center">
-                <div className="bg-background w-[350px] h-[480px] flex flex-col gap-4 justify-center items-center rounded-lg overflow-hidden">
-                    <Guide />
-                    <div className="min-h-20 h-fit pb-4 flex flex-col gap-4">
+        <div className="fixed z-[1] top-0 right-0 w-screen h-screen overflow-y-auto overscroll-contain">
+            <div
+                className="login-backdrop absolute w-full h-full z-[-1]"
+                style={{
+                    backgroundImage: `linear-gradient(rgba(10, 10, 10, 0.46), rgba(10, 10, 10, 0.72)), url(${loginWallpaper})`,
+                }}
+            ></div>
+            <div className="login-screen-shell w-full min-h-full flex justify-center items-start sm:items-center p-3 sm:p-6">
+                <div className="login-shell login-card bg-background/72 w-full max-w-[1080px] max-h-none sm:max-h-[calc(100vh-48px)] grid overflow-visible sm:overflow-hidden border border-white/10 rounded-[28px]">
+                    <div className="login-card-glow absolute inset-x-10 top-6 h-24 rounded-full bg-amber-100/12 blur-3xl pointer-events-none"></div>
+                    <Guide wallpaper={loginWallpaper} />
+                    <div className="login-panel relative flex flex-col overflow-visible sm:overflow-hidden">
+                        <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent)] pointer-events-none"></div>
+                        <div className="flex items-center justify-between px-5 pt-5 pb-3 sm:px-7">
+                            <div className="flex flex-col">
+                                <span className="text-[11px] uppercase tracking-[0.32em] text-muted-foreground">
+                                    {t("app-brand")}
+                                </span>
+                                <span className="text-lg font-semibold">
+                                    {t("APP_NAME")}
+                                </span>
+                                <span className="login-mobile-tip mt-2 text-xs leading-5 text-muted-foreground">
+                                    {t("login-choose-mode-tip")}
+                                </span>
+                            </div>
+                            <a
+                                className="text-xs text-muted-foreground underline underline-offset-4"
+                                target="_blank"
+                                href="https://Rakko.cn"
+                                rel="noopener"
+                            >
+                                {t("see-introduce")}
+                            </a>
+                        </div>
+                        <div className="login-panel-body px-4 pb-4 sm:px-6 sm:pb-6">
+                            <div className="login-panel-stack flex flex-col gap-4">
                         {loading ? (
-                            <div>
-                                <i className="icon-[mdi--loading] animate-spin"></i>
+                                    <div className="text-sm flex items-center gap-2 rounded-2xl border bg-card/60 px-4 py-4">
+                                <i className="icon-[mdi--loading] animate-spin text-primary"></i>
                                 {t("login")}
                             </div>
                         ) : (
                             <>
-                                {/* Github */}
-                                <div className="flex flex-col gap-1">
+                                        <div className="login-section login-section-surface flex flex-col gap-3 rounded-[22px] border bg-card/70 p-4">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <div className="text-base font-semibold">
+                                                        {t("login-with-github-token")}
+                                                    </div>
+                                                    <div className="mt-1 text-xs text-muted-foreground leading-5">
+                                                        {t("login-github-token-description")}
+                                                    </div>
+                                                </div>
+                                                <div className="login-badge">
+                                                    GitHub
+                                                </div>
+                                            </div>
                                     <button
                                         type="button"
                                         className={`${primaryButtonStyle}`}
-                                        onClick={async () => {
-                                            const StorageAPI =
-                                                await loadStorageAPI();
-                                            StorageAPI.loginWith("github");
-                                        }}
-                                    >
-                                        <i className="icon-[mdi--github]"></i>
-                                        <div className="flex-1">
-                                            {t("login-to-github")}
-                                        </div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="underline text-xs cursor-pointer"
                                         onClick={async () => {
                                             const StorageAPI =
                                                 await loadStorageAPI();
@@ -69,83 +97,44 @@ export default function Login() {
                                             );
                                         }}
                                     >
-                                        {t("or-use-an-exist-token")}
+                                        <i className="icon-[mdi--key-variant]"></i>
+                                                <div className="flex-1">
+                                                    {t("login-with-github-token")}
+                                                </div>
                                     </button>
+                                            <Collapsible.Root className="group rounded-2xl border border-border/70 bg-background/60 transition-[background-color,border-color,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=open]:bg-background/80 data-[state=open]:shadow-sm">
+                                                <Collapsible.Trigger className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-xs font-medium cursor-pointer">
+                                            <span>{t("login-token-guide-title")}</span>
+                                            <i className="icon-[mdi--chevron-down] transition-transform duration-200 group-data-[state=open]:rotate-180"></i>
+                                        </Collapsible.Trigger>
+                                        <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
+                                                    <div className="border-t border-border/60 px-4 py-4 text-xs leading-5 text-muted-foreground flex flex-col gap-2">
+                                                <div>{t("login-token-guide-step1")}</div>
+                                                <div>{t("login-token-guide-step2")}</div>
+                                                <div>{t("login-token-guide-step3")}</div>
+                                                <div>{t("login-token-guide-step4")}</div>
+                                                <div>{t("login-token-guide-step5")}</div>
+                                            </div>
+                                        </Collapsible.Content>
+                                    </Collapsible.Root>
                                 </div>
-                                {/* Gitee */}
-                                <div className="flex flex-col gap-1">
+                                        <div className="login-section login-section-surface flex flex-col gap-3 rounded-[22px] border bg-card/70 p-4">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <div className="text-base font-semibold">
+                                                        {t("offline-mode")}
+                                                    </div>
+                                                    <div className="mt-1 text-xs text-muted-foreground leading-5">
+                                                        {t("login-offline-description")}
+                                                    </div>
+                                                </div>
+                                                <div className="login-badge login-badge-muted">
+                                                    Local
+                                                </div>
+                                            </div>
                                     <button
                                         type="button"
-                                        className={`${primaryButtonStyle} !bg-[#b7312d] !hover:bg-[#b7312d]/80`}
-                                        onClick={async () => {
-                                            const StorageAPI =
-                                                await loadStorageAPI();
-                                            StorageAPI.loginWith("gitee");
-                                        }}
-                                    >
-                                        <svg
-                                            fill="currentColor"
-                                            width="32"
-                                            height="32"
-                                            viewBox="0 0 24 24"
-                                            role="img"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path d="M11.984 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.016 0zm6.09 5.333c.328 0 .593.266.592.593v1.482a.594.594 0 0 1-.593.592H9.777c-.982 0-1.778.796-1.778 1.778v5.63c0 .327.266.592.593.592h5.63c.982 0 1.778-.796 1.778-1.778v-.296a.593.593 0 0 0-.592-.593h-4.15a.592.592 0 0 1-.592-.592v-1.482a.593.593 0 0 1 .593-.592h6.815c.327 0 .593.265.593.592v3.408a4 4 0 0 1-4 4H5.926a.593.593 0 0 1-.593-.593V9.778a4.444 4.444 0 0 1 4.445-4.444h8.296z" />
-                                        </svg>
-                                        <div className="flex-1">
-                                            {t("login-to-gitee")}
-                                        </div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="underline text-xs cursor-pointer"
-                                        onClick={async () => {
-                                            const StorageAPI =
-                                                await loadStorageAPI();
-                                            StorageAPI.loginManuallyWith(
-                                                "gitee",
-                                            );
-                                        }}
-                                    >
-                                        {t("or-use-an-exist-token")}
-                                    </button>
-                                </div>
-                                {/* Web DAV */}
-                                <div>
-                                    <button
-                                        type="button"
-                                        className={`${secondaryButtonStyle} ${betaClassName}`}
-                                        onClick={async () => {
-                                            const StorageAPI =
-                                                await loadStorageAPI();
-                                            StorageAPI.loginWith("webdav");
-                                        }}
-                                    >
-                                        <i className="icon-[mdi--floppy-disk]"></i>
-                                        <div className="flex-1">Web DAV</div>
-                                    </button>
-                                </div>
-                                {/* S3 */}
-                                <div>
-                                    <button
-                                        type="button"
-                                        className={`${secondaryButtonStyle} ${betaClassName}`}
-                                        onClick={async () => {
-                                            const StorageAPI =
-                                                await loadStorageAPI();
-                                            StorageAPI.loginWith("s3");
-                                        }}
-                                    >
-                                        <i className="icon-[mdi--database]"></i>
-                                        <div className="flex-1">S3</div>
-                                    </button>
-                                </div>
-                                {/* Offline */}
-                                <div>
-                                    <button
-                                        type="button"
-                                        className={`${secondaryButtonStyle} !w-full`}
+                                        className={`${secondaryButtonStyle}`}
                                         onClick={async () => {
                                             const StorageAPI =
                                                 await loadStorageAPI();
@@ -153,13 +142,34 @@ export default function Login() {
                                         }}
                                     >
                                         <i className="icon-[mdi--local]"></i>
-                                        <div className="flex-1">
-                                            {t("offline-mode")}
-                                        </div>
+                                                <div className="flex-1">
+                                                    {t("offline-mode")}
+                                                </div>
                                     </button>
+                                </div>
+                                        <div className="login-help-card login-section login-section-surface rounded-[22px] border bg-gradient-to-br from-muted/55 to-background/78 p-4 text-xs leading-5 flex-col gap-3 backdrop-blur-sm">
+                                            <div className="font-semibold text-foreground text-sm">
+                                        {t("login-help-title")}
+                                    </div>
+                                            <div className="login-help-row">
+                                        <span className="font-medium text-foreground">
+                                            {t("login-help-github-title")}
+                                        </span>
+                                        {" "}
+                                            {t("login-help-github-body")}
+                                    </div>
+                                            <div className="login-help-row">
+                                        <span className="font-medium text-foreground">
+                                            {t("login-help-offline-title")}
+                                        </span>
+                                        {" "}
+                                            {t("login-help-offline-body")}
+                                    </div>
                                 </div>
                             </>
                         )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -168,25 +178,50 @@ export default function Login() {
     );
 }
 
-function Guide({ className }: { className?: string }) {
+function Guide({ wallpaper }: { wallpaper: string }) {
     const t = useIntl();
     return (
         <div
-            className={
-                "w-full p-4 flex-1 border-b bg-stone-800 text-white flex flex-col items-center justify-center gap-4 relative"
-            }
+            className="login-hero text-white relative overflow-hidden"
         >
-            <h1 className="text-3xl font-bold">{t("APP_NAME")}</h1>
-            <p className="text-sm text-center">{t("app-introduce")}</p>
-            <div className="text-xs opacity-60">{t("pwa-install-tip")}</div>
-            <a
-                className="absolute bottom-4 right-4 text-xs opacity-60 underline"
-                target="_blank"
-                href="https://glink25.github.io/post/Cent---%E4%BD%A0%E5%8F%AF%E8%83%BD%E5%8F%AA%E9%9C%80%E8%A6%81%E4%B8%80%E4%B8%AA%E8%AE%B0%E8%B4%A6%E8%BD%AF%E4%BB%B6/"
-                rel="noopener"
-            >
-                {t("see-introduce")}
-            </a>
+            <div
+                className="login-hero-wallpaper absolute inset-0 scale-105"
+                style={{
+                    backgroundImage: `url(${wallpaper})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center 22%",
+                }}
+            ></div>
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(24,17,17,0.18),rgba(24,17,17,0.72))]"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(255,196,148,0.18),transparent_26%)]"></div>
+            <div className="absolute inset-x-10 top-[-42px] h-24 rounded-full bg-white/12 blur-2xl"></div>
+            <div className="login-hero-spark absolute right-8 top-6 h-18 w-18 rounded-full border border-white/18 bg-white/8"></div>
+            <div className="relative flex h-full flex-col justify-between p-6 sm:p-8">
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/18 bg-black/18 px-3 py-1 text-[11px] tracking-[0.24em] uppercase text-white/88 backdrop-blur-sm">
+                    KurisuRakko
+                </div>
+                <div className="flex flex-col gap-4">
+                    <div className="login-kicker">
+                        {t("app-brand")}
+                    </div>
+                    <h1 className="max-w-[10ch] text-4xl leading-none font-semibold sm:text-5xl drop-shadow-[0_10px_36px_rgba(0,0,0,0.42)]">
+                        {t("APP_NAME")}
+                    </h1>
+                    <p className="max-w-[32ch] text-sm leading-6 text-white/88 sm:text-base">
+                        {t("app-introduce")}
+                    </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="login-stat">
+                        <span className="login-stat-label">Sync</span>
+                        <span className="login-stat-value">GitHub Token</span>
+                    </div>
+                    <div className="login-stat">
+                        <span className="login-stat-label">Mode</span>
+                        <span className="login-stat-value">PWA / Local</span>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

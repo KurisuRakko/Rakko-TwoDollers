@@ -1,4 +1,4 @@
-import { StorageAPI, StorageDeferredAPI } from "@/api/storage";
+import { StorageAPI } from "@/api/storage";
 import PopupLayout from "@/layouts/popup-layout";
 import { useIntl } from "@/locale";
 import { useUserStore } from "@/store/user";
@@ -12,15 +12,11 @@ import modal from "../modal";
 import ScheduledSettingsItems from "../scheduled/settings-item";
 import { Button } from "../ui/button";
 import AboutSettingsItem, { AdvancedGuideItem } from "./about";
-import AssistantSettingsItem from "./assistant";
 import LabSettingsItem from "./lab";
 import LanguageSettingsItem from "./language";
-import MapSettingsItem from "./map-settings";
-import PresetSettingsItem from "./preset";
-import QuickEntrySettingsItem from "./quick-entry";
 import ThemeSettingsItem from "./theme";
 import UserSettingsItem from "./user";
-import VoiceSettingsItem from "./voice";
+import WallpaperSettingsItem from "./wallpaper";
 
 function UserInfo() {
     const t = useIntl();
@@ -96,8 +92,6 @@ export default function SettingsForm({
 }) {
     const t = useIntl();
 
-    const showRelyr = Boolean(import.meta.env.VITE_RELAYR_URL);
-
     return (
         <PopupLayout
             onBack={onCancel}
@@ -118,14 +112,6 @@ export default function SettingsForm({
                         </div>
                     </div>
                     <div>
-                        <div className="text-xs opacity-60 px-8">{t("ai")}</div>
-                        <div className="flex flex-col divide-y">
-                            <AssistantSettingsItem />
-                            {showRelyr && <QuickEntrySettingsItem />}
-                            <VoiceSettingsItem />
-                        </div>
-                    </div>
-                    <div>
                         <div className="text-xs opacity-60 px-8">
                             {t("billing-functions")}
                         </div>
@@ -143,11 +129,10 @@ export default function SettingsForm({
                             {t("other-settings")}
                         </div>
                         <div className="flex flex-col divide-y">
-                            <PresetSettingsItem />
-                            <MapSettingsItem />
+                            <ThemeSettingsItem />
+                            <WallpaperSettingsItem />
                             <LabSettingsItem />
                             <AboutSettingsItem />
-                            <ThemeSettingsItem />
                             <LanguageSettingsItem />
                             <AdvancedGuideItem />
                         </div>

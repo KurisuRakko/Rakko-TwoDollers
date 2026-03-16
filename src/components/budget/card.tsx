@@ -63,7 +63,7 @@ export default function BudgetCard({
         return (
             <div
                 className={cn(
-                    "rounded-lg border flex flex-col w-full px-4 py-2 cursor-pointer",
+                    "home-budget-card rounded-2xl border flex flex-col w-full px-4 py-3 cursor-pointer",
                     className,
                 )}
                 onClick={() => {
@@ -104,7 +104,7 @@ export default function BudgetCard({
     return (
         <div
             className={cn(
-                "rounded-lg border flex flex-col w-full px-4 py-2 cursor-pointer",
+                "home-budget-card rounded-2xl border flex flex-col w-full px-4 py-3 cursor-pointer",
                 className,
             )}
             onClick={() => {
@@ -114,7 +114,7 @@ export default function BudgetCard({
             <Collapsible.Root className="group">
                 <div className="w-full flex items-center justify-between">
                     <div className="font-semibold">{budget.title}</div>
-                    <div className="text-sm">
+                    <div className="text-sm opacity-70">
                         {todayEncountered && time && (
                             <>
                                 {t("today-left")}:
@@ -138,7 +138,7 @@ export default function BudgetCard({
                         <div>
                             {(encountered?.categoriesUsed?.length ?? 0) > 0 && (
                                 <Collapsible.Trigger
-                                    className="h-4 flex justify-end w-full group"
+                                    className="mt-1 h-4 flex justify-end w-full group"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                     }}

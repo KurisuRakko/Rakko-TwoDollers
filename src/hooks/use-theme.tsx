@@ -27,7 +27,6 @@ function applyThemeClass(theme: Theme) {
     } else if (theme === "light") {
         el.classList.remove("dark");
     } else {
-        // system
         const prefersDark =
             window.matchMedia &&
             window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -41,14 +40,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
     const [theme, setThemeState] = useState<Theme>(() => {
         try {
-            const s = localStorage.getItem(STORAGE_KEY) as Theme | null;
-            return (s ?? "system") as Theme;
+            const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+            return (stored ?? "system") as Theme;
         } catch {
             return "system";
         }
     });
 
-    // apply class initially and when theme changes
     useEffect(() => {
         applyThemeClass(theme);
 
@@ -61,36 +59,44 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
             const handler = () => applyThemeClass("system");
 
             if (mq.addEventListener) mq.addEventListener("change", handler);
-            else if ((mq as any).addListener) (mq as any).addListener(handler);
+            else if ((mq as MediaQueryList & { addListener?: any }).addListener)
+                (mq as MediaQueryList & { addListener?: any }).addListener(
+                    handler,
+                );
 
             return () => {
                 if (mq.removeEventListener)
                     mq.removeEventListener("change", handler);
-                else if ((mq as any).removeListener)
-                    (mq as any).removeListener(handler);
+                else if (
+                    (mq as MediaQueryList & { removeListener?: any })
+                        .removeListener
+                )
+                    (
+                        mq as MediaQueryList & { removeListener?: any }
+                    ).removeListener(handler);
             };
         }
-        return;
     }, [theme]);
 
-    const setTheme = useCallback((t: Theme) => {
+    const setTheme = useCallback((nextTheme: Theme) => {
         try {
-            if (t === "system") localStorage.removeItem(STORAGE_KEY);
-            else localStorage.setItem(STORAGE_KEY, t);
+            if (nextTheme === "system") localStorage.removeItem(STORAGE_KEY);
+            else localStorage.setItem(STORAGE_KEY, nextTheme);
         } catch {
             // ignore storage errors
         }
-        setThemeState(t);
+        setThemeState(nextTheme);
     }, []);
 
     const toggle = useCallback(() => {
         setThemeState((prev) => {
-            const next = prev === "dark" ? "light" : "dark";
+            const nextTheme = prev === "dark" ? "light" : "dark";
             try {
-                // persist only if next is explicit choice; if toggling should switch to explicit, store it
-                localStorage.setItem(STORAGE_KEY, next);
-            } catch {}
-            return next;
+                localStorage.setItem(STORAGE_KEY, nextTheme);
+            } catch {
+                // ignore storage errors
+            }
+            return nextTheme;
         });
     }, []);
 
@@ -105,7 +111,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 export function useTheme() {
-    const ctx = useContext(ThemeContext);
-    if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
-    return ctx;
+    const context = useContext(ThemeContext);
+    if (!context) {
+        throw new Error("useTheme must be used within ThemeProvider");
+    }
+    return context;
 }

@@ -18,13 +18,14 @@ export function FocusTypeSelector({
     const t = useIntl();
     const btnClass = `min-w-[90px] text-sm py-1 flex items-center justify-center  cursor-pointer transition-all duration-200`;
     return (
-        <div className="flex items-center rounded-md shadow border border-input overflow-hidden divide-x">
+        <div className="stat-focus-toggle flex items-center overflow-hidden divide-x">
             <button
                 type="button"
                 className={cn(
                     btnClass,
+                    "stat-focus-button",
                     focusType === "income" &&
-                        "!bg-stone-700 !text-white [&_span]:text-semantic-income-medium",
+                        "stat-focus-button-active [&_span]:text-semantic-income-medium",
                 )}
                 onClick={() => {
                     setFocusType("income");
@@ -41,8 +42,9 @@ export function FocusTypeSelector({
                 type="button"
                 className={cn(
                     btnClass,
+                    "stat-focus-button",
                     focusType === "expense" &&
-                        "!bg-stone-700 !text-white [&_span]:text-semantic-expense-medium",
+                        "stat-focus-button-active [&_span]:text-semantic-expense-medium",
                 )}
                 onClick={() => setFocusType("expense")}
             >
@@ -57,7 +59,8 @@ export function FocusTypeSelector({
                 type="button"
                 className={cn(
                     btnClass,
-                    focusType === "balance" && "!bg-stone-700 !text-white",
+                    "stat-focus-button",
+                    focusType === "balance" && "stat-focus-button-active",
                 )}
                 onClick={() => setFocusType("balance")}
             >

@@ -11,21 +11,22 @@ import {
 export default function ThemeSettingsItem() {
     const t = useIntl();
     const { theme, setTheme } = useTheme();
+
     return (
         <div className="w-full px-4 py-1 text-sm">
             <div className="w-full px-4 flex justify-between items-center text-sm font-medium">
                 <div className="flex items-center gap-2">
-                    <i className="icon-[mdi--clothes-hanger] size-5"></i>
+                    <i className="icon-[mdi--theme-light-dark] size-5"></i>
                     {t("theme")}
                 </div>
                 <Select
                     value={theme}
-                    onValueChange={(v) => {
-                        setTheme(v as Theme);
+                    onValueChange={(value) => {
+                        setTheme(value as Theme);
                     }}
                 >
                     <SelectTrigger className="w-fit text-xs rounded-sm">
-                        <SelectValue></SelectValue>
+                        <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="system">

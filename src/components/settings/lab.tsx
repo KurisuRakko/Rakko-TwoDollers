@@ -14,7 +14,6 @@ import {
 import { Switch } from "../ui/switch";
 import { AssetsSettings } from "./assets";
 import KeyboardHeightSettings from "./keyboard";
-import { PredictSettings } from "./predict";
 
 function Form({ onCancel }: { onCancel?: () => void }) {
     const t = useIntl();
@@ -52,7 +51,6 @@ function Form({ onCancel }: { onCancel?: () => void }) {
                     {t("bill-record-settings")}
                 </div>
                 <div className="flex-shrink-0 divide-y divide-solid flex flex-col overflow-hidden gap-2">
-                    <PredictSettings />
                     <div className="w-full min-h-10 pb-2 flex justify-between items-center px-4">
                         <div className="text-sm">
                             <div>{t("auto-locate-when-add-bill")}</div>

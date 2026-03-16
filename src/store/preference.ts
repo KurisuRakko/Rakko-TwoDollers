@@ -8,10 +8,10 @@ import { getBrowserLang, type LocaleName } from "@/locale/utils";
 
 type State = {
     locale: LocaleName;
+    mainWallpaper?: string;
     autoLocateWhenAddBill?: boolean;
     enterAddBillWhenReduceMotionChanged?: boolean;
     readClipboardWhenReduceMotionChanged?: boolean;
-    smartPredict?: boolean;
     multiplyKey?: string;
     /** 是否禁用路由返回模式 */
     disableHashModeOnAndroidStandaloneMode?: boolean;
@@ -19,10 +19,6 @@ type State = {
     keyboardHeight?: number;
     /** 在账单列表中直接展示附件图片 */
     showAssetsInLedger?: boolean;
-    /** 是否开启语音记账 */
-    voiceRecordingEnabled?: boolean;
-    /** 是否使用键盘输入代替语言识别 */
-    voiceByKeyboard?: boolean;
     /** relayr中转服务配置 */
     relayr?: {
         enable?: boolean;
@@ -66,7 +62,6 @@ export const usePreferenceStore = create<Store>()(
                 locale: getBrowserLang(),
                 autoLocateWhenAddBill: false,
                 readClipboardWhenReduceMotionChanged: false,
-                smartPredict: false,
             };
         },
         {

@@ -8,6 +8,7 @@ import { BookConfirmProvider } from "@/components/book/util";
 import { BudgetEditProvider, BudgetProvider } from "@/components/budget";
 import { BudgetDetailProvider } from "@/components/budget/detail";
 import { CategoryListProvider } from "@/components/category";
+import CustomCSS from "@/components/custom-css";
 import { CurrencyListProvider } from "@/components/currency";
 import { ModalProvider } from "@/components/modal";
 import Navigation from "@/components/navigation";
@@ -20,30 +21,16 @@ import { SortableListProvider } from "@/components/sortable";
 import { SortableGroupProvider } from "@/components/sortable/group";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useInitPreset } from "@/hooks/use-preset";
 import {
     useQuickEntryByClipboard,
-    useQuickEntryByRelayr,
     useQuickGoAdd,
 } from "@/hooks/use-quick-entry";
 import { useScheduled } from "@/hooks/use-scheduled";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { useUrlHandler } from "@/hooks/use-url-handler";
-import { usePreferenceStore } from "@/store/preference";
-import { startBackgroundPredict } from "@/utils/predict";
 
 export default function MainLayout() {
     useQuickGoAdd();
     useQuickEntryByClipboard();
-    useQuickEntryByRelayr();
-    useUrlHandler(); // 处理标准 URL 链接唤起
-
-    useEffect(() => {
-        // predict
-        if (usePreferenceStore.getState().smartPredict) {
-            startBackgroundPredict();
-        }
-    }, []);
 
     // 自动周期记账
     const { applyScheduled } = useScheduled();
@@ -53,13 +40,12 @@ export default function MainLayout() {
         applyScheduledRef.current();
     }, []);
 
-    useInitPreset();
-
     return (
         <ThemeProvider>
             <TooltipProvider>
+                <CustomCSS />
                 <Navigation />
-                <div className="w-full h-full sm:pl-18">
+                <div className="main-layout-content w-full h-full sm:pl-18">
                     <Outlet />
                 </div>
                 <BillEditorProvider />

@@ -82,16 +82,6 @@ export type Scheduled = {
     latest?: number;
 };
 
-// AI配置类型
-export type AIConfig = {
-    id: string;
-    name: string;
-    apiKey: string; // base64 encoded
-    apiUrl: string;
-    model: string;
-    apiType: "open-ai-compatible" | "google-ai-studio"; // 支持OpenAI兼容和Google AI Studio两种API格式
-};
-
 // 个人配置，不需要转换，可以略过
 export type PersonalMeta = {
     names?: Record<string, string>;
@@ -99,13 +89,6 @@ export type PersonalMeta = {
     tagGroups?: BillTagGroup[];
     scheduleds?: Scheduled[];
     customCSS?: string;
-    assistant?: {
-        bigmodel?: {
-            apiKey?: string;
-        };
-        configs?: AIConfig[];
-        defaultConfigId?: string;
-    };
 };
 
 export type CustomCurrency = {

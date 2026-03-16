@@ -57,6 +57,14 @@ export default function Page() {
 
     const [currentDate, setCurrentDate] = useState(dayjs());
     const ledgerRef = useRef<any>(null);
+    const syncStateLabel =
+        sync === "wait"
+            ? t("home-sync-wait")
+            : sync === "syncing"
+              ? t("syncing")
+              : sync === "success"
+                ? t("sync-success")
+                : t("home-sync-failed");
 
     const currentDateBills = useMemo(() => {
         const today = filterOrderedBillListByTimeRange(bills, [
@@ -128,39 +136,94 @@ export default function Page() {
         ledgerAnimationShows = true;
     }, []);
     return (
-        <div className="w-full h-full p-2 flex flex-col overflow-hidden page-show">
-            <div className="flex flex-wrap flex-col w-full gap-2">
-                <div className="bg-stone-800 text-background dark:bg-foreground/20 dark:text-foreground relative h-20 w-full flex justify-end rounded-lg sm:flex-1 p-4">
-                    <span className="absolute top-2 left-4">
-                        {denseDate(currentDate)}
-                    </span>
-                    <AnimatedNumber
-                        value={currentDateAmount}
-                        className="font-bold text-4xl "
-                    />
-                    {currentBook && (
-                        <button
-                            type="button"
-                            className="absolute bottom-2 left-4 text-xs opacity-60 flex items-center gap-1 cursor-pointer"
-                            onClick={() => {
-                                showBookGuide();
-                            }}
-                        >
-                            <i className="icon-[mdi--book]"></i>
-                            {currentBook.name}
-                        </button>
-                    )}
+        <div className="home-page w-full h-full p-2 flex flex-col overflow-hidden page-show">
+            <div className="home-hero-grid">
+                <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[28px] p-5 text-foreground">
+                    <div className="home-hero-orb home-hero-orb-primary"></div>
+                    <div className="home-hero-orb home-hero-orb-secondary"></div>
+                    <div className="relative z-[1] flex h-full flex-col gap-5">
+                        <div className="home-hero-head flex items-start justify-between gap-3">
+                            <div className="flex flex-col gap-2">
+                                <span className="home-kicker">
+                                    {denseDate(currentDate)}
+                                </span>
+                                <div className="home-title-line">
+                                    {t("sum")}
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                className="home-book-chip"
+                                onClick={() => {
+                                    showBookGuide();
+                                }}
+                            >
+                                <i className="icon-[mdi--book-open-variant-outline]"></i>
+                                {currentBook?.name ?? t("ledger-books")}
+                            </button>
+                        </div>
+                        <div className="home-hero-main flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                            <div className="home-hero-value-stack flex flex-col gap-3">
+                                <AnimatedNumber
+                                    value={currentDateAmount}
+                                    className="home-hero-amount font-bold"
+                                />
+                                <div className="home-sync-pill">
+                                    <i
+                                        className={cn(
+                                            syncIconClassName,
+                                            "size-[18px]",
+                                        )}
+                                    ></i>
+                                    {syncStateLabel}
+                                </div>
+                            </div>
+                            <div className="home-hero-stats">
+                                <div className="home-mini-card">
+                                    <div className="home-mini-label">
+                                        {t("home-today-records")}
+                                    </div>
+                                    <div className="home-mini-value">
+                                        {currentDateBills.length}
+                                    </div>
+                                </div>
+                                <div className="home-mini-card">
+                                    <div className="home-mini-label">
+                                        {t("home-budget-title")}
+                                    </div>
+                                    <div className="home-mini-value">
+                                        {budgets.length || 0}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <Promotion />
-                <div className="w-full flex flex-col gap-1">
+            </div>
+
+            <Promotion />
+
+            {budgets.length > 0 && (
+                <div className="home-budget-shell">
+                    <div className="home-section-head">
+                        <div className="home-section-title">
+                            {t("home-budget-title")}
+                        </div>
+                        {budgetCount > 1 && (
+                            <PaginationIndicator
+                                count={budgetCount}
+                                current={curBudgetIndex}
+                            />
+                        )}
+                    </div>
                     <div
                         ref={budgetContainer}
-                        className="w-full flex overflow-x-auto gap-2 scrollbar-hidden snap-mandatory snap-x"
+                        className="w-full flex overflow-x-auto gap-3 scrollbar-hidden snap-mandatory snap-x"
                     >
                         {budgets.map((budget) => {
                             return (
                                 <BudgetCard
-                                    className="flex-shrink-0 snap-start"
+                                    className="home-budget-card flex-shrink-0 snap-start"
                                     key={budget.id}
                                     budget={budget}
                                 />
@@ -168,71 +231,82 @@ export default function Page() {
                         })}
                     </div>
                 </div>
-            </div>
-            <div className="flex justify-between items-center pl-7 pr-5 py-1 h-8">
-                <button
-                    className="cursor-pointer flex items-center"
-                    type="button"
-                    onClick={() => {
-                        if (loading) {
-                            return;
-                        }
-                        useLedgerStore.getState().initCurrentBook();
-                    }}
-                >
-                    <div className={cn("opacity-0", loading && "opacity-100")}>
-                        <Loading className="[&_i]:size-[18px]" />
+            )}
+
+            <div className="home-ledger-stage">
+                <div className="home-toolbar">
+                    <div className="home-toolbar-copy">
+                        <div className="home-toolbar-title">
+                            {t("home-ledger-title")}
+                        </div>
+                        <div className="home-toolbar-subtitle">
+                            {t("home-today-records")}: {currentDateBills.length}
+                        </div>
                     </div>
-                </button>
-                <div>
-                    {budgetCount > 1 && (
-                        <PaginationIndicator
-                            count={budgetCount}
-                            current={curBudgetIndex}
-                        />
-                    )}
-                </div>
-                <HintTooltip
-                    persistKey={"cloudSyncHintShows"}
-                    content={"等待云同步完成后，其他设备即可获取最新的账单数据"}
-                >
                     <button
                         type="button"
-                        className="cursor-pointer flex items-center"
+                        className="home-toolbar-button"
                         onClick={() => {
-                            StorageAPI.toSync();
+                            if (loading) {
+                                return;
+                            }
+                            useLedgerStore.getState().initCurrentBook();
                         }}
                     >
-                        {sync === "syncing" ? (
-                            <CloudLoopIcon width={18} height={18} />
-                        ) : (
-                            <i
-                                className={cn(syncIconClassName, "size-[18px]")}
-                            ></i>
-                        )}
-                    </button>
-                </HintTooltip>
-            </div>
-            <div className="flex-1 translate-0 pb-[10px] overflow-hidden">
-                <div className="w-full h-full">
-                    {bills.length > 0 ? (
-                        <Ledger
-                            ref={ledgerRef}
-                            bills={bills}
-                            className={cn(bills.length > 0 && "relative")}
-                            enableDivideAsOrdered
-                            showTime
-                            onItemShow={onItemShow}
-                            onVisibleDateChange={setCurrentDate}
-                            onDateClick={onDateClick}
-                            presence={presence}
-                            showAssets={showAssets}
-                        />
-                    ) : (
-                        <div className="text-xs p-4 text-center">
-                            {t("nothing-here-add-one-bill")}
+                        <div
+                            className={cn("opacity-0", loading && "opacity-100")}
+                        >
+                            <Loading className="[&_i]:size-[18px]" />
                         </div>
-                    )}
+                    </button>
+                    <HintTooltip
+                        persistKey={"cloudSyncHintShows"}
+                        content={"等待云同步完成后，其他设备即可获取最新的账单数据"}
+                    >
+                        <button
+                            type="button"
+                            className="home-toolbar-button"
+                            onClick={() => {
+                                StorageAPI.toSync();
+                            }}
+                        >
+                            {sync === "syncing" ? (
+                                <CloudLoopIcon width={18} height={18} />
+                            ) : (
+                                <i
+                                    className={cn(
+                                        syncIconClassName,
+                                        "size-[18px]",
+                                    )}
+                                ></i>
+                            )}
+                        </button>
+                    </HintTooltip>
+                </div>
+                <div className="home-ledger-shell flex-1 translate-0 overflow-hidden">
+                    <div className="w-full h-full">
+                        {bills.length > 0 ? (
+                            <Ledger
+                                ref={ledgerRef}
+                                bills={bills}
+                                className={cn(
+                                    bills.length > 0 &&
+                                        "relative home-ledger-list",
+                                )}
+                                enableDivideAsOrdered
+                                showTime
+                                onItemShow={onItemShow}
+                                onVisibleDateChange={setCurrentDate}
+                                onDateClick={onDateClick}
+                                presence={presence}
+                                showAssets={showAssets}
+                            />
+                        ) : (
+                            <div className="home-empty-state text-xs p-4 text-center">
+                                {t("nothing-here-add-one-bill")}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

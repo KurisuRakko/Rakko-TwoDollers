@@ -21,17 +21,15 @@ export default function Navigation() {
     return createPortal(
         <div
             className="floating-tab fixed w-screen h-18 flex items-center justify-around sm:h-screen
-         sm:w-18 sm:flex-col sm:justify-start z-[0] 
+         sm:w-18 sm:flex-col sm:justify-start z-[20] pointer-events-auto
          bottom-[calc(.25rem+env(safe-area-inset-bottom))]
          sm:top-[env(safe-area-inset-top)] sm:left-[calc(.25rem+env(safe-area-inset-left))]"
         >
             {/* search */}
             <button
                 type="button"
-                className={`w-14 h-14 sm:w-10 sm:h-10 cursor-pointer flex items-center justify-center rounded-full shadow-md m-2 transition-all hover:bg-[#9a9ba2] active:bg-[#cdcdd0] dark:hover:bg-[#aba8a5] ${
-                    currentTab === "/search"
-                        ? "bg-[#cdcdd0] dark:bg-[#918c89]"
-                        : "bg-background dark:bg-stone-500"
+                className={`nav-flat-button w-14 h-14 sm:w-10 sm:h-10 cursor-pointer flex items-center justify-center rounded-full m-2 ${
+                    currentTab === "/search" ? "nav-flat-button-active" : ""
                 }`}
                 onClick={() => switchTab("/search")}
             >
@@ -39,11 +37,11 @@ export default function Navigation() {
             </button>
 
             {/* middle group */}
-            <div className="flex items-center rounded-full p-1 bg-background dark:bg-stone-500 w-56 h-14 m-2 shadow-md sm:flex-col sm:w-10 sm:h-50 sm:-order-1">
+            <div className="nav-flat-group flex items-center rounded-full w-56 h-14 m-2 sm:flex-col sm:w-10 sm:h-50 sm:-order-1">
                 <button
                     type="button"
-                    className={`flex-1 h-full w-full transition rounded-full flex items-center justify-center cursor-pointer hover:bg-[#9a9ba2] active:bg-[#cdcdd0] ${
-                        currentTab === "/" ? "bg-foreground/20" : ""
+                    className={`nav-flat-tab flex-1 h-full w-full flex items-center justify-center cursor-pointer ${
+                        currentTab === "/" ? "nav-flat-tab-active" : ""
                     }`}
                     onClick={() => switchTab("/")}
                 >
@@ -59,8 +57,8 @@ export default function Navigation() {
 
                 <button
                     type="button"
-                    className={`flex-1 h-full w-full transition-all rounded-full flex items-center justify-center cursor-pointer hover:bg-[#9a9ba2] active:bg-[#cdcdd0] ${
-                        currentTab === "/stat" ? "bg-foreground/20" : ""
+                    className={`nav-flat-tab flex-1 h-full w-full flex items-center justify-center cursor-pointer ${
+                        currentTab === "/stat" ? "nav-flat-tab-active" : ""
                     }`}
                     onClick={() => switchTab("/stat")}
                 >
@@ -73,7 +71,7 @@ export default function Navigation() {
             {/* settings */}
             <button
                 type="button"
-                className="w-14 h-14 sm:w-10 sm:h-10 cursor-pointer flex items-center justify-center rounded-full shadow-md m-2 transition-all hover:bg-[#9a9ba2] active:bg-[#cdcdd0] bg-background dark:bg-stone-500 dark:hover:bg-[#aba8a5]"
+                className="nav-flat-button w-14 h-14 sm:w-10 sm:h-10 cursor-pointer flex items-center justify-center rounded-full m-2"
                 onClick={() => {
                     showSettings();
                 }}

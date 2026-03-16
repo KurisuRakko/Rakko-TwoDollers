@@ -1,15 +1,15 @@
-import { useTheme } from "next-themes";
 import { createPortal } from "react-dom";
 import { Toaster as Sonner } from "sonner";
+import { useTheme } from "@/hooks/use-theme";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-    const { theme = "system" } = useTheme();
+    const { theme } = useTheme();
 
     return createPortal(
         <Sonner
-            theme={theme as ToasterProps["theme"]}
+            theme={theme}
             className="toaster group !mt-[env(safe-area-inset-top)] !mb-[env(safe-area-inset-bottom)] pointer-events-auto"
             toastOptions={{
                 classNames: {
