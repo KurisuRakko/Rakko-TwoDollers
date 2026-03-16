@@ -35,12 +35,18 @@ import { useIntl } from "@/locale";
 import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { cn } from "@/utils";
+import Navigation from "@/components/navigation";
 
 export default function Page() {
     const t = useIntl();
     const { id } = useParams();
 
-    const { bills } = useLedgerStore();
+    const { bills } = useLedgerStore(
+        useShallow((state) => ({
+            bills: state.bills,
+        })),
+    );
+
     const endTime = useMemo(() => Date.now(), []); //bills[0]?.time ?? dayjs();
     const startTime = bills[bills.length - 1]?.time ?? dayjs();
 
@@ -262,7 +268,8 @@ export default function Page() {
     const { allCurrencies, baseCurrency } = useCurrency();
 
     return (
-        <div className="stat-page w-full h-full p-2 flex flex-col items-center justify-start sm:justify-center gap-4 overflow-hidden page-show">
+        <div className="stat-page w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex flex-col items-center justify-start sm:justify-center gap-4 overflow-hidden page-show">
+            <Navigation />
             <div className="stat-page-shell w-full mx-2 max-w-[600px] flex flex-col gap-3">
                 <div className="stat-top-shell w-full flex flex-col gap-3">
                     <div className="stat-filter-row w-full flex">

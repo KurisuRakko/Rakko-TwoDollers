@@ -24,6 +24,7 @@ import { useIsDesktop } from "@/hooks/use-media-query";
 import { useSnap } from "@/hooks/use-snap";
 import { amountToNumber } from "@/ledger/bill";
 import { useIntl } from "@/locale";
+import Navigation from "@/components/navigation";
 import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
@@ -247,6 +248,7 @@ export default function Page() {
                 isExpanded && "p-0 gap-0",
             )}
         >
+            <Navigation hidden={isExpanded} />
             <AnimatePresence initial={false}>
                 {!isExpanded && (
                     <motion.div

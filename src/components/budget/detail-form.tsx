@@ -55,10 +55,7 @@ function BudgetProgress({
                     }}
                 ></div>
                 <div
-                    className={cn(
-                        "inner h-2 rounded-full absolute left-0 top-0",
-                        p > timePercent ? "bg-red-700" : "bg-green-600",
-                    )}
+                    className="inner h-2 rounded-full absolute left-0 top-0 bg-primary/60"
                     style={{
                         width: `${p * 100}%`,
                     }}
@@ -138,7 +135,7 @@ export function BudgetBar({
                             {t("total-left")}: {totalLeft.toFixed(2)}
                         </div>
                     ) : (
-                        <div className="text-semantic-expense">
+                        <div className="font-semibold opacity-90">
                             {t("overspending")}: {totalLeft.toFixed(2)}
                         </div>
                     )}
@@ -280,7 +277,7 @@ function BudgetDetail({
                                     <div
                                         key={i}
                                         className={`w-1 h-1 rounded-full ${
-                                            r ? "bg-green-700" : "bg-red-700"
+                                            r ? "bg-primary/80" : "bg-muted-foreground/40"
                                         }`}
                                     />
                                 ))}

@@ -224,7 +224,7 @@ button {
 }
 
 .main-layout-content {
-	padding-bottom: calc(96px + env(safe-area-inset-bottom));
+	/* padding-bottom moved to specific pages via container */
 }
 
 .home-page {

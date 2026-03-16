@@ -25,6 +25,7 @@ import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
+import Navigation from "@/components/navigation";
 
 const SORTS = [
     // 最近的在最上面
@@ -222,7 +223,8 @@ export default function Page() {
         await toSearch();
     };
     return (
-        <div className="search-page w-full h-full p-2 flex justify-center overflow-hidden page-show">
+        <div className="search-page w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex justify-center overflow-hidden page-show">
+            <Navigation />
             <div className="search-page-shell h-full w-full px-2 max-w-[600px] flex flex-col">
                 <div className="search w-full flex justify-center pt-4">
                     <div className="search-input-surface w-full h-12 flex items-center px-4">

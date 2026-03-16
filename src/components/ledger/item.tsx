@@ -108,13 +108,10 @@ export default function BillItem({
             {/* 金额 */}
             <div className="text-right">
                 <div
-                    className={`text-lg font-bold truncate flex-shrink-0 flex flex-col items-end ${
-                        bill.type === "expense"
-                            ? "text-semantic-expense"
-                            : bill.type === "income"
-                              ? "text-semantic-income"
-                              : ""
-                    }`}
+                    className={cn(
+                        "text-lg font-bold truncate flex-shrink-0 flex flex-col items-end opacity-90",
+                        bill.type === "expense" ? "text-red-500/80" : "text-green-500/80"
+                    )}
                 >
                     <Money value={amountToNumber(bill.amount)} accurate />
 

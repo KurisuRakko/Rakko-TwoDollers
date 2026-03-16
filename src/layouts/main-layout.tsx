@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Outlet } from "react-router";
+import { cn } from "@/utils";
 import { BillEditorProvider } from "@/components/bill-editor";
 import { BillInfoProvider } from "@/components/bill-info";
 import { TagListProvider } from "@/components/bill-tag";
@@ -27,6 +28,7 @@ import {
 } from "@/hooks/use-quick-entry";
 import { useScheduled } from "@/hooks/use-scheduled";
 import { ThemeProvider } from "@/hooks/use-theme";
+import { useIsLogin } from "@/store/user";
 
 export default function MainLayout() {
     useQuickGoAdd();
@@ -40,12 +42,13 @@ export default function MainLayout() {
         applyScheduledRef.current();
     }, []);
 
+    const isLogin = useIsLogin();
+
     return (
         <ThemeProvider>
             <TooltipProvider>
                 <CustomCSS />
-                <Navigation />
-                <div className="main-layout-content w-full h-full min-h-0 box-border sm:pl-18">
+                <div className={cn("main-layout-content w-full h-full min-h-0 box-border", isLogin && "sm:pl-18")}>
                     <Outlet />
                 </div>
                 <BillEditorProvider />

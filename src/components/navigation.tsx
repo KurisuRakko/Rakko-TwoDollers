@@ -6,13 +6,15 @@ import { goAddBill } from "./bill-editor";
 import { afterAddBillPromotion } from "./promotion";
 import { showSettings } from "./settings";
 
-export default function Navigation() {
+export default function Navigation({ hidden }: { hidden?: boolean }) {
     const location = useLocation();
     const navigate = useNavigate();
 
     const currentTab = useMemo(() => {
         return ["/stat", "/", "/search"].find((x) => location.pathname === x);
     }, [location.pathname]);
+
+    if (hidden) return null;
 
     const switchTab = (value: "/" | "/stat" | "/search") => {
         navigate(`${value}`);
@@ -23,7 +25,8 @@ export default function Navigation() {
             className="floating-tab fixed w-screen h-18 flex items-center justify-around sm:h-screen
          sm:w-18 sm:flex-col sm:justify-start z-[20] pointer-events-auto
          bottom-[calc(.25rem+env(safe-area-inset-bottom))]
-         sm:top-[env(safe-area-inset-top)] sm:left-[calc(.25rem+env(safe-area-inset-left))]"
+         sm:top-[env(safe-area-inset-top)] sm:left-[calc(.25rem+env(safe-area-inset-left))]
+         backdrop-blur-md bg-background/30 rounded-full sm:rounded-none"
         >
             {/* search */}
             <button
