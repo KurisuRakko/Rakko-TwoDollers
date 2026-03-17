@@ -207,7 +207,9 @@ export default function Page() {
                         const firstCategoryId = categories.find(
                             (c) => c.type === edit.type,
                         )?.id;
-                        bill.categoryId = firstCategoryId;
+                        if (firstCategoryId) {
+                            bill.categoryId = firstCategoryId;
+                        }
                     }
                 }
                 if (edit.tagIds !== undefined) {
