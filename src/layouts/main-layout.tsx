@@ -55,6 +55,14 @@ export default function MainLayout() {
             const books = await useBookStore.getState().updateBookList();
             if (books.length === 0) {
                 await useBookStore.getState().addBook("Personal");
+                const updatedBooks = await useBookStore
+                    .getState()
+                    .updateBookList();
+                if (updatedBooks.length > 0) {
+                    await useBookStore
+                        .getState()
+                        .switchToBook(updatedBooks[0].id);
+                }
             }
         };
         init();
