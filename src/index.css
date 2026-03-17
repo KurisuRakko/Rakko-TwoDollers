@@ -131,8 +131,8 @@ button {
 	--sidebar-accent-foreground: #202124;
 	--sidebar-border: #d7dce3;
 	--sidebar-ring: #8ab4f8;
-	--home-surface: rgb(255 255 255 / 0.22);
-	--home-surface-strong: rgb(255 255 255 / 0.34);
+	--home-surface: rgb(255 255 255 / 0.52);
+	--home-surface-strong: rgb(255 255 255 / 0.68);
 	--home-surface-muted: rgb(255 255 255 / 0.16);
 	--home-border-strong: rgb(255 255 255 / 0.2);
 	--home-shadow: 0 16px 36px rgb(15 23 42 / 0.08);
@@ -175,8 +175,8 @@ button {
 	--sidebar-accent-foreground: #f1f3f4;
 	--sidebar-border: rgb(255 255 255 / 0.08);
 	--sidebar-ring: #8ab4f8;
-	--home-surface: rgb(14 18 24 / 0.36);
-	--home-surface-strong: rgb(18 22 28 / 0.48);
+	--home-surface: rgb(14 18 24 / 0.62);
+	--home-surface-strong: rgb(18 22 28 / 0.76);
 	--home-surface-muted: rgb(255 255 255 / 0.08);
 	--home-border-strong: rgb(255 255 255 / 0.12);
 	--home-shadow: 0 16px 36px rgb(0 0 0 / 0.22);
@@ -737,7 +737,7 @@ button {
 
 .editor-dialog-content {
 	border: 1px solid var(--home-border-strong);
-	background: var(--home-surface-strong);
+	background: color-mix(in srgb, var(--home-surface-strong) 85%, var(--background));
 	box-shadow: var(--home-shadow-raised);
 }
 
@@ -746,8 +746,8 @@ button {
 	border: 1px solid var(--home-border-strong);
 	background: linear-gradient(
 		180deg,
-		rgb(24 28 36 / 0.72),
-		rgb(16 19 26 / 0.58)
+		rgb(24 28 36 / 0.88),
+		rgb(16 19 26 / 0.76)
 	);
 	box-shadow: var(--home-shadow-raised);
 	backdrop-filter: blur(26px) saturate(1.16);
