@@ -26,8 +26,11 @@ import {
 } from "@/hooks/use-quick-entry";
 import { useScheduled } from "@/hooks/use-scheduled";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { useIsLogin } from "@/store/user";
+import { useBookStore } from "@/store/book";
+import { useIsLogin, useUserStore } from "@/store/user";
 import { cn } from "@/utils";
+
+const DEFAULT_BOOK_NAME = "personal";
 
 export default function MainLayout() {
     useQuickGoAdd();
@@ -42,31 +45,39 @@ export default function MainLayout() {
     }, []);
 
     const isLogin = useIsLogin();
+    const userLoading = useUserStore((state) => state.loading);
 
-    // Auto login & default book
+    // Auto initialize the default book and recover a missing book selection.
     useEffect(() => {
+        if (userLoading) {
+            return;
+        }
+
         const init = async () => {
-            const { StorageAPI } = await import("@/api/storage");
             if (!isLogin) {
-                await StorageAPI.loginWith("offline");
+                return;
             }
 
-            const { useBookStore } = await import("@/store/book");
-            const books = await useBookStore.getState().updateBookList();
+            const bookStore = useBookStore.getState();
+            let books = await bookStore.updateBookList();
+
             if (books.length === 0) {
-                await useBookStore.getState().addBook("Personal");
-                const updatedBooks = await useBookStore
-                    .getState()
-                    .updateBookList();
-                if (updatedBooks.length > 0) {
-                    await useBookStore
-                        .getState()
-                        .switchToBook(updatedBooks[0].id);
-                }
+                await bookStore.addBook(DEFAULT_BOOK_NAME);
+                books = await bookStore.updateBookList();
+            }
+
+            const { currentBookId } = useBookStore.getState();
+            const nextBook =
+                books.find((book) => book.id === currentBookId) ??
+                books.find((book) => book.name === DEFAULT_BOOK_NAME) ??
+                books[0];
+
+            if (nextBook && nextBook.id !== currentBookId) {
+                await bookStore.switchToBook(nextBook.id);
             }
         };
         init();
-    }, [isLogin]);
+    }, [isLogin, userLoading]);
 
     return (
         <ThemeProvider>

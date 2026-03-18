@@ -359,7 +359,7 @@ export default function BudgetEditForm({
                                                             />
                                                         </FormControl>
                                                         <FormLabel className="font-normal">
-                                                            {item.name}
+                                                            {item.displayName}
                                                         </FormLabel>
                                                     </FormItem>
                                                 );

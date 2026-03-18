@@ -130,6 +130,9 @@ export const S3Endpoint: SyncEndpointFactory = {
                 ];
                 return users;
             },
+            uploadUserAvatar: async () => {
+                throw new Error("uploadUserAvatar is not implemented for s3");
+            },
             getOnlineAsset: (src, store) => repo.getAsset(src, store),
             fetchAllBooks: async () => {
                 const res = await repo.fetchAllStore();

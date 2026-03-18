@@ -8,6 +8,7 @@ export default function PopupLayout({
     onBack,
     className,
     hideBack,
+    disableBottomInset,
     right,
 }: {
     title?: string | ReactNode;
@@ -15,13 +16,15 @@ export default function PopupLayout({
     onBack?: () => void;
     className?: string;
     hideBack?: boolean;
+    disableBottomInset?: boolean;
     right?: ReactNode;
 }) {
     const t = useIntl();
     return (
         <div
             className={cn(
-                "popup-layout-shell flex-1 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
+                "popup-layout-shell flex-1 min-h-0 flex flex-col overflow-hidden pt-[env(safe-area-inset-top)]",
+                !disableBottomInset && "pb-[env(safe-area-inset-bottom)]",
                 className,
             )}
         >

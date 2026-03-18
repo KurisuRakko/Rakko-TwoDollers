@@ -46,9 +46,7 @@ export default function BillInfo({
     const tags = edit?.tagIds
         ?.map((id) => allTags.find((t) => t.id === id))
         .filter((v) => v !== undefined);
-    const { name, id } = creator ?? { name: undefined, id: undefined };
-    const { id: selfId } = useUserStore();
-    const isMe = id === selfId;
+    const creatorName = creator?.displayName ?? `${edit?.creatorId ?? ""}`;
 
     const { scheduleds } = useScheduled();
 
@@ -169,9 +167,7 @@ export default function BillInfo({
                         </div>
                         <div className="bill-info-row flex justify-between items-center my-1 gap-2">
                             <div>{t("creator")}:</div>
-                            <div className="bill-info-value">
-                                {isMe ? t("me") : name}
-                            </div>
+                            <div className="bill-info-value">{creatorName}</div>
                         </div>
                         <div className="bill-info-row flex justify-between items-center my-1 gap-2">
                             <div>{t("time")}:</div>

@@ -18,7 +18,6 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 
 const MAX_WALLPAPER_SIZE = 2 * 1024 * 1024;
-const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const OUTPUT_LONG_EDGE = 1800;
 
@@ -33,6 +32,33 @@ type CropDraft = {
 
 const clamp = (value: number, min: number, max: number) => {
     return Math.min(Math.max(value, min), max);
+};
+
+const getMinZoom = (
+    viewportWidth: number,
+    viewportHeight: number,
+    naturalWidth: number,
+    naturalHeight: number,
+) => {
+    if (
+        viewportWidth === 0 ||
+        viewportHeight === 0 ||
+        naturalWidth === 0 ||
+        naturalHeight === 0
+    ) {
+        return 1;
+    }
+
+    const coverScale = Math.max(
+        viewportWidth / naturalWidth,
+        viewportHeight / naturalHeight,
+    );
+    const containScale = Math.min(
+        viewportWidth / naturalWidth,
+        viewportHeight / naturalHeight,
+    );
+
+    return containScale / coverScale;
 };
 
 const getViewportAspectRatio = () => {
@@ -136,9 +162,25 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
         width: 0,
         height: 0,
     });
+    const [cropStageSize, setCropStageSize] = useState({
+        width: 0,
+        height: 0,
+    });
     const [cropAspectRatio, setCropAspectRatio] = useState(() =>
         getViewportAspectRatio(),
     );
+    const minZoom = useMemo(() => {
+        if (!cropDraft) {
+            return 1;
+        }
+
+        return getMinZoom(
+            viewportSize.width,
+            viewportSize.height,
+            cropDraft.naturalWidth,
+            cropDraft.naturalHeight,
+        );
+    }, [cropDraft, viewportSize.height, viewportSize.width]);
 
     useEffect(() => {
         setDraft(savedWallpaper ?? "");
@@ -153,6 +195,27 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
 
             const updateSize = () => {
                 setViewportSize({
+                    width: element.clientWidth,
+                    height: element.clientHeight,
+                });
+            };
+
+            updateSize();
+            const observer = new ResizeObserver(updateSize);
+            observer.observe(element);
+            return () => observer.disconnect();
+        },
+        [],
+    );
+
+    const cropStageObserveRef = useCallback(
+        (element: HTMLDivElement | null) => {
+            if (!element) {
+                return;
+            }
+
+            const updateSize = () => {
+                setCropStageSize({
                     width: element.clientWidth,
                     height: element.clientHeight,
                 });
@@ -194,12 +257,15 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                 return prev;
             }
             return clampCropPosition(
-                prev,
+                {
+                    ...prev,
+                    zoom: clamp(prev.zoom, minZoom, MAX_ZOOM),
+                },
                 viewportSize.width,
                 viewportSize.height,
             );
         });
-    }, [viewportSize.height, viewportSize.width]);
+    }, [minZoom, viewportSize.height, viewportSize.width]);
 
     const cropImageStyle = useMemo(() => {
         if (
@@ -224,6 +290,28 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
             transform: `translate3d(${cropDraft.x}px, ${cropDraft.y}px, 0)`,
         };
     }, [cropDraft, viewportSize.height, viewportSize.width]);
+
+    const cropViewportStyle = useMemo(() => {
+        if (cropStageSize.width === 0 || cropStageSize.height === 0) {
+            return undefined;
+        }
+
+        const maxWidth = Math.min(cropStageSize.width, 520);
+        const maxHeight = cropStageSize.height;
+
+        let width = maxWidth;
+        let height = width / cropAspectRatio;
+
+        if (height > maxHeight) {
+            height = maxHeight;
+            width = height * cropAspectRatio;
+        }
+
+        return {
+            width: `${width}px`,
+            height: `${height}px`,
+        };
+    }, [cropAspectRatio, cropStageSize.height, cropStageSize.width]);
 
     const saveWallpaper = () => {
         const value = draft.trim();
@@ -273,7 +361,15 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
             src: dataUrl,
             naturalWidth: image.naturalWidth,
             naturalHeight: image.naturalHeight,
-            zoom: 1,
+            zoom: Math.max(
+                1,
+                getMinZoom(
+                    viewportSize.width,
+                    viewportSize.height,
+                    image.naturalWidth,
+                    image.naturalHeight,
+                ),
+            ),
             x: 0,
             y: 0,
         });
@@ -306,13 +402,6 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
             (viewportSize.width - renderedWidth) / 2 + cropDraft.x;
         const imageTop =
             (viewportSize.height - renderedHeight) / 2 + cropDraft.y;
-        const sx = ((0 - imageLeft) / renderedWidth) * cropDraft.naturalWidth;
-        const sy = ((0 - imageTop) / renderedHeight) * cropDraft.naturalHeight;
-        const sWidth =
-            (viewportSize.width / renderedWidth) * cropDraft.naturalWidth;
-        const sHeight =
-            (viewportSize.height / renderedHeight) * cropDraft.naturalHeight;
-
         const outputSize = getOutputSize(cropAspectRatio);
         const canvas = document.createElement("canvas");
         canvas.width = outputSize.width;
@@ -324,16 +413,18 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
             return;
         }
 
+        const scaleX = outputSize.width / viewportSize.width;
+        const scaleY = outputSize.height / viewportSize.height;
+
+        context.fillStyle = "#111111";
+        context.fillRect(0, 0, outputSize.width, outputSize.height);
+
         context.drawImage(
             image,
-            sx,
-            sy,
-            sWidth,
-            sHeight,
-            0,
-            0,
-            outputSize.width,
-            outputSize.height,
+            imageLeft * scaleX,
+            imageTop * scaleY,
+            renderedWidth * scaleX,
+            renderedHeight * scaleY,
         );
         const cropped = canvas.toDataURL("image/jpeg", 0.92);
 
@@ -516,11 +607,14 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                             {t("wallpaper-crop-tip")}
                         </div>
 
-                        <div className="flex flex-1 items-center justify-center px-4 py-4">
+                        <div
+                            ref={cropStageObserveRef}
+                            className="flex min-h-0 flex-1 items-center justify-center px-4 py-4"
+                        >
                             <div
                                 ref={cropViewportObserveRef}
-                                className="relative w-full max-w-[520px] overflow-hidden rounded-[28px] border bg-stone-950 shadow-2xl touch-none"
-                                style={{ aspectRatio: `${cropAspectRatio}` }}
+                                className="relative max-w-full max-h-full overflow-hidden rounded-[28px] border bg-stone-950 shadow-2xl touch-none"
+                                style={cropViewportStyle}
                                 onPointerDown={onCropPointerDown}
                                 onPointerMove={onCropPointerMove}
                                 onPointerUp={onCropPointerUp}
@@ -553,12 +647,15 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                                 <div className="flex items-center justify-between text-xs opacity-65">
                                     <span>{t("wallpaper-crop-zoom")}</span>
                                     <span>
-                                        {Math.round(cropDraft.zoom * 100)}%
+                                        {Math.round(
+                                            (cropDraft.zoom / minZoom) * 100,
+                                        )}
+                                        %
                                     </span>
                                 </div>
                                 <input
                                     type="range"
-                                    min={MIN_ZOOM}
+                                    min={minZoom}
                                     max={MAX_ZOOM}
                                     step="0.01"
                                     value={cropDraft.zoom}

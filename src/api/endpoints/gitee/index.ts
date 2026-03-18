@@ -47,7 +47,7 @@ export const GiteeEndpoint: SyncEndpointFactory = {
         });
 
         const toBookName = (bookId: string) => {
-            const [owner, repo] = bookId.split("/");
+            const [_owner, repo] = bookId.split("/");
             return repo.replace(`${config.repoPrefix}-`, "");
         };
 
@@ -77,6 +77,11 @@ export const GiteeEndpoint: SyncEndpointFactory = {
             },
             getUserInfo: repo.getUserInfo,
             getCollaborators: repo.getCollaborators,
+            uploadUserAvatar: async () => {
+                throw new Error(
+                    "uploadUserAvatar is not implemented for gitee",
+                );
+            },
             getOnlineAsset: (src, store) => repo.getAsset(src, store),
 
             fetchAllBooks: async (...args) => {

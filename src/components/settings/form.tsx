@@ -1,92 +1,63 @@
-import { StorageAPI } from "@/api/storage";
+import { useCurrentUserDisplay } from "@/hooks/use-user-display";
 import PopupLayout from "@/layouts/popup-layout";
 import { useIntl } from "@/locale";
-import { useUserStore } from "@/store/user";
 import TagSettingsItem from "../bill-tag";
 import { BookSettings } from "../book";
 import Budget from "../budget";
 import CategorySettingsItem from "../category";
 import CurrencySettingsItem from "../currency";
 import DataManagerSettingsItem from "../data-manager";
-import modal from "../modal";
 import ScheduledSettingsItems from "../scheduled/settings-item";
-import { Button } from "../ui/button";
+import UserAvatarImage from "../user-avatar";
 import AboutSettingsItem, { AdvancedGuideItem } from "./about";
 import LabSettingsItem from "./lab";
 import LanguageSettingsItem from "./language";
 import ThemeSettingsItem from "./theme";
 import UserSettingsItem from "./user";
+import { showUserCenter } from "./user-center";
 import WallpaperSettingsItem from "./wallpaper";
 
 function UserInfo() {
     const t = useIntl();
-    const { id, avatar_url, name, expired } = useUserStore();
-    const toLogOut = async () => {
-        await modal.prompt({ title: t("logout-warning") });
+    const { id, avatarSource, displayName, originalName, expired } =
+        useCurrentUserDisplay();
 
-        const [close] = modal.loading({
-            label: t("clearing-data"),
-        });
-
-        try {
-            await StorageAPI.toSync();
-        } catch (e) {
-            console.error(e);
-        }
-
-        await StorageAPI.clearAll();
-        close();
-        location.reload();
-    };
     return (
-        <div className="flex items-center justify-between gap-2 px-8 py-4">
-            <div className="flex-1 flex items-center gap-2 overflow-hidden">
-                <img
-                    src={avatar_url}
-                    alt={`${id}`}
-                    className="w-12 h-12 rounded-full border"
+        <div className="px-8 py-4">
+            <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-2xl border bg-background/72 px-4 py-4 text-left shadow-sm transition-colors hover:bg-accent/30"
+                onClick={() => {
+                    showUserCenter();
+                }}
+            >
+                <UserAvatarImage
+                    source={avatarSource}
+                    alt={displayName}
+                    className="h-14 w-14 flex-shrink-0 rounded-full border object-cover"
                 />
-
-                <div className="flex flex-col overflow-hidden">
-                    <div className="flex">
-                        <div className="font-semibold flex-1 truncate">
-                            {name}
+                <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="text-xs opacity-60">{t("user-center")}</div>
+                    <div className="font-semibold truncate">{displayName}</div>
+                    {displayName !== originalName && (
+                        <div className="text-sm opacity-60 truncate">
+                            {t("original-account-name")}: {originalName}
                         </div>
-                        <div
-                            className="px-2 flex-shrink-0"
-                            title={`Signed with ${StorageAPI.name}`}
-                        >
-                            <div className="text-xs border rounded px-1">
-                                {StorageAPI.name}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="text-sm opacity-60">{id}</div>
+                    )}
+                    <div className="text-sm opacity-60 truncate">{id}</div>
                 </div>
-            </div>
-            <div className="flex items-center gap-2">
                 {expired && (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                            StorageAPI.loginWith(StorageAPI.type);
-                        }}
-                    >
-                        <i className="icon-[mdi--reload]"></i>
+                    <div className="rounded border px-2 py-1 text-xs text-orange-600">
                         {t("re-login")}
-                    </Button>
+                    </div>
                 )}
-                <Button size="sm" variant="destructive" onClick={toLogOut}>
-                    {t("logout")}
-                </Button>
-            </div>
+                <i className="icon-[mdi--chevron-right] size-5 flex-shrink-0 opacity-60" />
+            </button>
         </div>
     );
 }
 
 export default function SettingsForm({
-    onConfirm,
     onCancel,
 }: {
     onConfirm?: (isEdit: boolean) => void;
@@ -113,6 +84,7 @@ export default function SettingsForm({
                             <DataManagerSettingsItem />
                         </div>
                     </div>
+
                     <div>
                         <div className="text-xs opacity-60 px-8">
                             {t("billing-functions")}

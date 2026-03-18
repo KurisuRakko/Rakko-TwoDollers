@@ -39,7 +39,7 @@ type Persist<S> = (
 export const useUserStore = create<UserStore>()(
     (persist as Persist<UserStore>)(
         (set, get) => {
-            const loading = Boolean(false);
+            const loading = true;
             const updateUserInfo = async () => {
                 const { StorageAPI } = await loadStorageAPI();
                 await Promise.resolve();
@@ -161,6 +161,13 @@ export const useUserStore = create<UserStore>()(
             name: "user-store",
             storage: createJSONStorage(() => localStorage),
             version: 0,
+            partialize(state) {
+                return {
+                    avatar_url: state.avatar_url,
+                    name: state.name,
+                    id: state.id,
+                } as any;
+            },
         },
     ),
 );

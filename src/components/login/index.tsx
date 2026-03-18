@@ -29,6 +29,10 @@ export default function Login() {
         })),
     );
 
+    if (loading && !forceLoginUI) {
+        return null;
+    }
+
     if (isLogin && !forceLoginUI) {
         return null;
     }

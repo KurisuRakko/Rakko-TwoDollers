@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
     useCallback,
     useEffect,
@@ -19,20 +19,25 @@ import { PaginationIndicator } from "@/components/indicator";
 import Ledger from "@/components/ledger";
 import Loading from "@/components/loading";
 import Navigation from "@/components/navigation";
+import { showUserCenter } from "@/components/settings/user-center";
+import UserAvatarImage from "@/components/user-avatar";
 import { useBudget } from "@/hooks/use-budget";
 import { useIsDesktop } from "@/hooks/use-media-query";
 import { useSnap } from "@/hooks/use-snap";
+import { useCurrentUserDisplay } from "@/hooks/use-user-display";
 import { amountToNumber } from "@/ledger/bill";
 import { useIntl } from "@/locale";
 import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
-import { useUserStore } from "@/store/user";
+import { useIsLogin, useUserStore } from "@/store/user";
 import { cn } from "@/utils";
 import { filterOrderedBillListByTimeRange } from "@/utils/filter";
 import { denseDate } from "@/utils/time";
 
 let ledgerAnimationShows = false;
+const HOME_AVATAR_LAYOUT_ID = "home-current-user-avatar";
+const shownStartupBooks = new Set<string>();
 
 // Spring configuration for iOS-like feel
 const springTransition = {
@@ -42,20 +47,151 @@ const springTransition = {
     mass: 1,
 };
 
+function HomeAvatarButton({
+    avatarSource,
+    displayName,
+    title,
+    layoutId,
+    className,
+    onClick,
+}: {
+    avatarSource: string;
+    displayName: string;
+    title: string;
+    layoutId?: string;
+    className?: string;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            className={cn("home-avatar-button", className)}
+            onClick={onClick}
+            title={title}
+            aria-label={title}
+        >
+            <motion.div
+                layoutId={layoutId}
+                transition={springTransition}
+                className="home-avatar-visual"
+            >
+                <UserAvatarImage
+                    source={avatarSource}
+                    alt={displayName}
+                    className="home-avatar-image"
+                />
+            </motion.div>
+        </button>
+    );
+}
+
+function HomeStartupOverlay({
+    avatarSource,
+    displayName,
+    status,
+    layoutId,
+    reducedMotion,
+}: {
+    avatarSource: string;
+    displayName: string;
+    status: string;
+    layoutId?: string;
+    reducedMotion: boolean;
+}) {
+    return (
+        <motion.div
+            className="home-startup-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reducedMotion ? 0.16 : 0.24 }}
+        >
+            <motion.div
+                className="home-startup-panel"
+                initial={
+                    reducedMotion
+                        ? { opacity: 1 }
+                        : { opacity: 0, y: 18, scale: 0.98 }
+                }
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={
+                    reducedMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: -8, scale: 0.99 }
+                }
+                transition={
+                    reducedMotion
+                        ? { duration: 0.16 }
+                        : {
+                              opacity: { duration: 0.2 },
+                              y: { duration: 0.28, ease: "easeOut" },
+                              scale: { duration: 0.28, ease: "easeOut" },
+                          }
+                }
+            >
+                <motion.div
+                    layoutId={layoutId}
+                    transition={springTransition}
+                    className="home-startup-avatar-shell"
+                >
+                    <UserAvatarImage
+                        source={avatarSource}
+                        alt={displayName}
+                        className="home-startup-avatar-image"
+                    />
+                </motion.div>
+                <motion.div
+                    className="home-startup-copy"
+                    exit={
+                        reducedMotion
+                            ? { opacity: 0 }
+                            : { opacity: 0, y: -10, filter: "blur(6px)" }
+                    }
+                    transition={{ duration: 0.18 }}
+                >
+                    <div className="home-startup-name">{displayName}</div>
+                    <div className="home-startup-status">{status}</div>
+                    <div className="home-startup-spinner" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </motion.div>
+            </motion.div>
+        </motion.div>
+    );
+}
+
 export default function Page() {
     const t = useIntl();
 
-    const { bills, loading, sync } = useLedgerStore();
-    const currentBook = useBookStore(
-        useShallow((state) => {
-            const { currentBookId, books } = state;
-            return books.find((b) => b.id === currentBookId);
-        }),
+    const { bills, loading: ledgerLoading, sync } = useLedgerStore();
+    const {
+        currentBookId,
+        books,
+        loading: bookLoading,
+    } = useBookStore(
+        useShallow((state) => ({
+            currentBookId: state.currentBookId,
+            books: state.books,
+            loading: state.loading,
+        })),
     );
+    const currentBook = useMemo(() => {
+        return books.find((book) => book.id === currentBookId);
+    }, [books, currentBookId]);
     const showAssets = usePreferenceStore(
         useShallow((state) => state.showAssetsInLedger),
     );
     const { id: userId } = useUserStore();
+    const isLogin = useIsLogin();
+    const { avatarSource, displayName } = useCurrentUserDisplay();
+    const prefersReducedMotion = Boolean(useReducedMotion());
+    const avatarLayoutId = prefersReducedMotion
+        ? undefined
+        : HOME_AVATAR_LAYOUT_ID;
     const syncIconClassName =
         sync === "wait"
             ? "icon-[mdi--cloud-minus-outline]"
@@ -71,6 +207,9 @@ export default function Page() {
     const [showSyncSuccess, setShowSyncSuccess] = useState(false);
     const [syncPillMounted, setSyncPillMounted] = useState(false);
     const [syncPillLeaving, setSyncPillLeaving] = useState(false);
+    const [startupBookId, setStartupBookId] = useState<string | null>(null);
+    const [startupExiting, setStartupExiting] = useState(false);
+    const [startupAnimationEnded, setStartupAnimationEnded] = useState(true);
     const isDesktop = useIsDesktop();
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -249,10 +388,78 @@ export default function Page() {
         };
     }, [showSyncPill]);
 
+    const isCurrentBookInitializing =
+        Boolean(currentBookId) && (bookLoading || ledgerLoading);
+    const shouldBookPickerTakeOver = isLogin && currentBookId === undefined;
+    const startupStatusLabel =
+        !isCurrentBookInitializing && (sync === "wait" || sync === "syncing")
+            ? t("home-startup-syncing")
+            : t("home-startup-loading");
+
+    useEffect(() => {
+        if (!isLogin || !currentBookId) {
+            setStartupBookId(null);
+            setStartupExiting(false);
+            setStartupAnimationEnded(true);
+            return;
+        }
+
+        if (
+            shownStartupBooks.has(currentBookId) ||
+            startupBookId === currentBookId ||
+            startupExiting ||
+            !isCurrentBookInitializing
+        ) {
+            return;
+        }
+
+        setStartupBookId(currentBookId);
+        setStartupExiting(false);
+        setStartupAnimationEnded(false);
+    }, [
+        currentBookId,
+        isCurrentBookInitializing,
+        isLogin,
+        startupBookId,
+        startupExiting,
+    ]);
+
+    useEffect(() => {
+        if (!startupBookId) {
+            return;
+        }
+
+        if (!currentBookId || currentBookId !== startupBookId) {
+            setStartupBookId(null);
+            setStartupExiting(false);
+            setStartupAnimationEnded(true);
+            return;
+        }
+
+        if (isCurrentBookInitializing || startupExiting) {
+            return;
+        }
+
+        shownStartupBooks.add(startupBookId);
+        setStartupExiting(true);
+    }, [
+        currentBookId,
+        isCurrentBookInitializing,
+        startupBookId,
+        startupExiting,
+    ]);
+
+    const showStartupOverlay =
+        Boolean(startupBookId) &&
+        currentBookId === startupBookId &&
+        !startupExiting &&
+        !startupAnimationEnded &&
+        !shouldBookPickerTakeOver;
+
     return (
         <div
             className={cn(
-                "home-page w-full h-full px-2 pt-2 pb-0 flex flex-col overflow-hidden page-show",
+                "home-page relative w-full h-full px-2 pt-2 pb-0 flex flex-col overflow-hidden page-show",
                 isExpanded && "p-0 gap-0",
             )}
         >
@@ -297,33 +504,51 @@ export default function Page() {
                                                 {t("sum")}
                                             </div>
                                         </div>
-                                        <button
-                                            type="button"
-                                            className="home-book-chip"
-                                            onClick={() => {
-                                                if (
-                                                    StorageAPI.type === "github"
-                                                ) {
-                                                    showBookGuide();
-                                                } else {
-                                                    useUserStore
-                                                        .getState()
-                                                        .setForceLoginUI(true);
-                                                }
-                                            }}
-                                        >
-                                            <i
-                                                className={cn(
-                                                    StorageAPI.type === "github"
-                                                        ? "icon-[mdi--book-open-variant-outline]"
-                                                        : "icon-[mdi--account-outline]",
-                                                )}
-                                            ></i>
-                                            {StorageAPI.type === "github"
-                                                ? (currentBook?.name ??
-                                                  t("ledger-books"))
-                                                : t("login")}
-                                        </button>
+                                        <div className="home-summary-actions">
+                                            <button
+                                                type="button"
+                                                className="home-book-chip"
+                                                onClick={() => {
+                                                    if (
+                                                        StorageAPI.type ===
+                                                        "github"
+                                                    ) {
+                                                        showBookGuide();
+                                                    } else {
+                                                        useUserStore
+                                                            .getState()
+                                                            .setForceLoginUI(
+                                                                true,
+                                                            );
+                                                    }
+                                                }}
+                                            >
+                                                <i
+                                                    className={cn(
+                                                        StorageAPI.type ===
+                                                            "github"
+                                                            ? "icon-[mdi--book-open-variant-outline]"
+                                                            : "icon-[mdi--account-outline]",
+                                                    )}
+                                                ></i>
+                                                {StorageAPI.type === "github"
+                                                    ? (currentBook?.name ??
+                                                      t("ledger-books"))
+                                                    : t("login-action")}
+                                            </button>
+                                            {isLogin && (
+                                                <HomeAvatarButton
+                                                    avatarSource={avatarSource}
+                                                    displayName={displayName}
+                                                    title={t("user-center")}
+                                                    layoutId={avatarLayoutId}
+                                                    className="home-avatar-button-hero"
+                                                    onClick={() => {
+                                                        showUserCenter();
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="home-hero-main flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                                         <div className="home-hero-value-stack flex flex-col gap-1">
@@ -425,7 +650,7 @@ export default function Page() {
                                     StorageAPI.toSync();
                                 }}
                             >
-                                {loading ? (
+                                {ledgerLoading ? (
                                     <Loading className="[&_i]:size-[18px]" />
                                 ) : sync === "syncing" ? (
                                     <CloudLoopIcon width={18} height={18} />
@@ -439,6 +664,18 @@ export default function Page() {
                                 )}
                             </button>
                         </HintTooltip>
+                        {isExpanded && !isDesktop && isLogin && (
+                            <HomeAvatarButton
+                                avatarSource={avatarSource}
+                                displayName={displayName}
+                                title={t("user-center")}
+                                layoutId={avatarLayoutId}
+                                className="home-toolbar-avatar-button"
+                                onClick={() => {
+                                    showUserCenter();
+                                }}
+                            />
+                        )}
                         {isExpanded && !isDesktop && (
                             <button
                                 type="button"
@@ -482,6 +719,28 @@ export default function Page() {
                     </div>
                 </div>
             </motion.div>
+            <AnimatePresence
+                initial={false}
+                onExitComplete={() => {
+                    if (!startupExiting) {
+                        return;
+                    }
+
+                    setStartupBookId(null);
+                    setStartupExiting(false);
+                    setStartupAnimationEnded(true);
+                }}
+            >
+                {showStartupOverlay && (
+                    <HomeStartupOverlay
+                        avatarSource={avatarSource}
+                        displayName={displayName}
+                        status={startupStatusLabel}
+                        layoutId={avatarLayoutId}
+                        reducedMotion={prefersReducedMotion}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -112,6 +112,10 @@ export type GlobalMeta = {
     budgets?: Budget[];
     // 用户自定义配置，可以略过
     personal?: Record<string, PersonalMeta>;
+    // 当前账本内按用户id覆盖的共享显示名
+    userDisplayNames?: Record<string, string>;
+    // 当前账本内按用户id覆盖的共享头像
+    userAvatars?: Record<string, string>;
     // 自定义分类，所有新增的分类都应该放在这里
     categories?: BillCategory[];
     // 自定义Tag，所有tag都应该放在这里

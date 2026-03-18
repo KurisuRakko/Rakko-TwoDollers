@@ -45,6 +45,11 @@ export type SyncEndpoint = {
 
     getUserInfo: (id?: string) => Promise<UserInfo>;
     getCollaborators: (id: string) => Promise<UserInfo[]>;
+    uploadUserAvatar: (
+        bookId: string,
+        userId: string,
+        file: File,
+    ) => Promise<string>;
 
     getOnlineAsset?: (src: string, store: string) => Promise<Blob | undefined>;
 

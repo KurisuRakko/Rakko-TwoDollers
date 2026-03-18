@@ -25,7 +25,7 @@ type LedgerStoreState = {
     actions: Action<Bill>[];
     infos?: {
         meta: GlobalMeta;
-        creators?: (UserInfo & { originalName: string })[];
+        creators?: UserInfo[];
     };
 
     loading: boolean;
@@ -111,16 +111,9 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
             .then((creators) => {
                 set(
                     produce((state: LedgerStore) => {
-                        const uid = useUserStore.getState().id;
-                        const personalMeta = state.infos?.meta.personal?.[uid];
-                        const names = personalMeta?.names;
                         state.infos = {
                             ...state.infos!,
-                            creators: (creators ?? []).map((c) => ({
-                                ...c,
-                                originalName: c.name,
-                                name: names?.[c.id] ?? c.name,
-                            })),
+                            creators: creators ?? [],
                         };
                     }),
                 );

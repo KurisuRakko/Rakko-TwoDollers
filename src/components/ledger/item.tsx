@@ -6,8 +6,6 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useTag } from "@/hooks/use-tag";
 import { amountToNumber } from "@/ledger/bill";
 import type { Bill } from "@/ledger/type";
-import { useIntl } from "@/locale";
-import { useUserStore } from "@/store/user";
 import { cn } from "@/utils";
 import { denseTime } from "@/utils/time";
 import CategoryIcon from "../category/icon";
@@ -29,18 +27,14 @@ export default function BillItem({
     showTime,
     showAssets,
 }: BillItemProps) {
-    const t = useIntl();
     const { categories } = useCategory();
     const { tags: allTags } = useTag();
     const category = useMemo(
         () => categories.find((c) => c.id === bill.categoryId),
         [bill.categoryId, categories],
     );
-
-    const { id: selfId } = useUserStore();
     const creators = useCreators();
     const creator = creators.find((c) => c.id === bill.creatorId);
-    const isMe = creator?.id === selfId;
     const tags = bill.tagIds
         ?.map((id) => allTags.find((t) => t.id === id))
         .filter((v) => v !== undefined);
@@ -81,9 +75,7 @@ export default function BillItem({
                         </div>
                     </div>
                     <div className="flex text-xs">
-                        <div>
-                            {isMe ? t("me") : (creator?.name ?? "unknown-user")}
-                        </div>
+                        <div>{creator?.displayName ?? `${bill.creatorId}`}</div>
                         {bill.comment && (
                             <>
                                 <div className="px-1">|</div>

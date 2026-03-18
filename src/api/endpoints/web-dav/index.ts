@@ -123,6 +123,11 @@ export const WebDAVEndpoint: SyncEndpointFactory = {
                 ];
                 return users;
             },
+            uploadUserAvatar: async () => {
+                throw new Error(
+                    "uploadUserAvatar is not implemented for webdav",
+                );
+            },
             getOnlineAsset: (src, store) => repo.getAsset(src, store),
             fetchAllBooks: async () => {
                 const res = await repo.fetchAllStore();

@@ -125,7 +125,9 @@ export default function BillFilterForm({
             return t("all");
         }
         return ids
-            .map((id) => allCreators.find((v) => v.id === id)?.name ?? id)
+            .map(
+                (id) => allCreators.find((v) => v.id === id)?.displayName ?? id,
+            )
             .join(",");
     };
 
@@ -479,7 +481,7 @@ export default function BillFilterForm({
                                     });
                                 }}
                             >
-                                {item.name}
+                                {item.displayName}
                             </DropdownMenuCheckboxItem>
                         ))}
                     </DropdownMenuContent>

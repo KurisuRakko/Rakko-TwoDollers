@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import useCategory from "@/hooks/use-category";
 import { useCurrency } from "@/hooks/use-currency";
+import { useDialogViewportVar } from "@/hooks/use-dialog-viewport";
 import { useTag } from "@/hooks/use-tag";
 import { useWheelScrollX } from "@/hooks/use-wheel-scroll";
 import PopupLayout from "@/layouts/popup-layout";
@@ -52,6 +53,7 @@ export default function EditorForm({
     onCancel?: () => void;
 }) {
     const t = useIntl();
+    useDialogViewportVar();
     const isCreate = edit === undefined;
     const goBack = () => {
         onCancel?.();
@@ -205,7 +207,8 @@ export default function EditorForm({
             input={monitorFocused}
         >
             <PopupLayout
-                className="editor-popup h-full gap-3 overflow-hidden scrollbar-hidden"
+                className="editor-popup h-full min-h-0 overflow-hidden scrollbar-hidden"
+                disableBottomInset
                 onBack={goBack}
                 title={
                     <div className="editor-header-shell pl-[54px] w-full min-h-12 rounded-lg flex pt-2 pb-0 overflow-hidden scrollbar-hidden">
@@ -299,227 +302,244 @@ export default function EditorForm({
                     </div>
                 }
             >
-                {/* categories */}
-                <div className="editor-category-shell flex-shrink overflow-y-auto min-h-[80px] scrollbar-hidden flex flex-col px-2 text-sm font-medium gap-2">
-                    <div className="editor-category-panel flex flex-col min-h-[80px] shrink overflow-y-auto scrollbar-hidden w-full">
-                        <div
-                            className={cn(
-                                "grid gap-1",
-                                categoriesGridClassName(categories),
-                            )}
-                        >
-                            {categories.map((item) => (
-                                <CategoryItem
-                                    key={item.id}
-                                    category={item}
-                                    selected={billState.categoryId === item.id}
-                                    onMouseDown={() => {
-                                        setBillState((v) => ({
-                                            ...v,
-                                            categoryId: item.id,
-                                        }));
-                                    }}
-                                />
-                            ))}
-                            <button
-                                type="button"
-                                className="editor-chip-button rounded-xl border flex-1 py-1 px-2 h-10 flex gap-2 items-center justify-center whitespace-nowrap cursor-pointer"
-                                onClick={() => {
-                                    showCategoryList(billState.type);
-                                }}
-                            >
-                                <i className="icon-[mdi--settings]"></i>
-                                {t("edit")}
-                            </button>
-                        </div>
-                    </div>
-                    {(subCategories?.length ?? 0) > 0 && (
-                        <div className="editor-subcategory-panel flex flex-col min-h-[68px] shrink max-h-fit overflow-y-auto rounded-2xl p-2 scrollbar-hidden">
-                            <div
-                                className={cn(
-                                    "grid gap-1",
-                                    categoriesGridClassName(subCategories),
-                                )}
-                            >
-                                {subCategories?.map((subCategory) => {
-                                    return (
+                <div className="editor-body flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
+                    <div className="editor-scroll-area min-h-0 flex-1 overflow-y-auto px-2 pb-2 text-sm font-medium scrollbar-hidden">
+                        <div className="editor-category-shell flex flex-col">
+                            <div className="editor-category-panel flex flex-col w-full">
+                                <div
+                                    className={cn(
+                                        "grid gap-1",
+                                        categoriesGridClassName(categories),
+                                    )}
+                                >
+                                    {categories.map((item) => (
                                         <CategoryItem
-                                            key={subCategory.id}
-                                            category={subCategory}
+                                            key={item.id}
+                                            category={item}
                                             selected={
-                                                billState.categoryId ===
-                                                subCategory.id
+                                                billState.categoryId === item.id
                                             }
                                             onMouseDown={() => {
                                                 setBillState((v) => ({
                                                     ...v,
-                                                    categoryId: subCategory.id,
+                                                    categoryId: item.id,
                                                 }));
                                             }}
                                         />
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                </div>
-                {/* tags */}
-                <div
-                    ref={tagSelectorRef}
-                    className="editor-tag-row w-full min-h-[48px] flex-shrink-0 flex-grow-0 flex gap-1 py-2 items-center overflow-x-auto px-2 text-sm font-medium scrollbar-hidden"
-                >
-                    <TagGroupSelector
-                        isCreate={isCreate}
-                        selectedTags={billState.tagIds}
-                        onSelectChange={(newTagIds, extra) => {
-                            setBillState((prev) => ({
-                                ...prev,
-                                tagIds: newTagIds,
-                            }));
-                            if (extra?.preferCurrency) {
-                                changeCurrency(extra.preferCurrency);
-                            }
-                        }}
-                    />
-                    <button
-                        type="button"
-                        className="editor-chip-button rounded-xl border py-1 px-3 h-10 flex gap-2 items-center justify-center whitespace-nowrap cursor-pointer"
-                        onClick={() => {
-                            showTagList();
-                        }}
-                    >
-                        <i className="icon-[mdi--tag-text-outline]"></i>
-                        {t("edit-tags")}
-                    </button>
-                </div>
-
-                {/* keyboard area */}
-                <div
-                    className={cn(
-                        "h-[calc(480px+160px*(var(--bekh,0.5)-0.5))] sm:h-[calc(380px+160px*(var(--bekh,0.5)-0.5))] min-h-[264px] max-h-[calc(100%-124px)]",
-                        "editor-keyboard-shell keyboard-field flex gap-3 flex-col justify-start sm:rounded-b-[24px] p-3 pb-[max(env(safe-area-inset-bottom),12px)] mt-auto",
-                    )}
-                >
-                    <div className="editor-meta-bar flex justify-between items-center">
-                        <div className="flex gap-2 items-center h-10">
-                            <div className="flex items-center h-full">
-                                {(billState.images?.length ?? 0) > 0 && (
-                                    <div className="pr-2 flex gap-[6px] items-center overflow-x-auto max-w-22 h-full scrollbar-hidden">
-                                        {billState.images?.map((img, index) => (
-                                            <Deletable
-                                                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                                                key={index}
-                                                onDelete={() => {
-                                                    setBillState((v) => ({
-                                                        ...v,
-                                                        images: v.images?.filter(
-                                                            (m) => m !== img,
-                                                        ),
-                                                    }));
-                                                }}
-                                            >
-                                                <SmartImage
-                                                    source={img}
-                                                    alt=""
-                                                    className="w-6 h-6 object-cover rounded"
-                                                />
-                                            </Deletable>
-                                        ))}
-                                    </div>
-                                )}
-                                {(billState.images?.length ?? 0) < 3 && (
+                                    ))}
                                     <button
                                         type="button"
-                                        className="editor-meta-button px-2 flex justify-center items-center rounded-full transition-all cursor-pointer"
-                                        onClick={chooseImage}
+                                        className="editor-chip-button rounded-xl border flex-1 py-1 px-2 h-10 flex gap-2 items-center justify-center whitespace-nowrap cursor-pointer"
+                                        onClick={() => {
+                                            showCategoryList(billState.type);
+                                        }}
                                     >
-                                        <i className="icon-xs icon-[mdi--image-plus-outline]"></i>
+                                        <i className="icon-[mdi--settings]"></i>
+                                        {t("edit")}
                                     </button>
-                                )}
+                                </div>
                             </div>
-                            <div className="editor-meta-button rounded-full transition-all">
-                                <DatePicker
-                                    fixedTime
-                                    value={billState.time}
-                                    onChange={(time) => {
-                                        setBillState((prev) => {
-                                            if (!prev.currency) {
+                            {(subCategories?.length ?? 0) > 0 && (
+                                <div className="editor-subcategory-panel flex flex-col rounded-2xl p-2">
+                                    <div
+                                        className={cn(
+                                            "grid gap-1",
+                                            categoriesGridClassName(
+                                                subCategories,
+                                            ),
+                                        )}
+                                    >
+                                        {subCategories?.map((subCategory) => {
+                                            return (
+                                                <CategoryItem
+                                                    key={subCategory.id}
+                                                    category={subCategory}
+                                                    selected={
+                                                        billState.categoryId ===
+                                                        subCategory.id
+                                                    }
+                                                    onMouseDown={() => {
+                                                        setBillState((v) => ({
+                                                            ...v,
+                                                            categoryId:
+                                                                subCategory.id,
+                                                        }));
+                                                    }}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                            <div
+                                ref={tagSelectorRef}
+                                className="editor-tag-row w-full min-h-[48px] flex gap-1 py-2 items-center overflow-x-auto overflow-y-hidden px-2 text-sm font-medium scrollbar-hidden"
+                            >
+                                <TagGroupSelector
+                                    isCreate={isCreate}
+                                    selectedTags={billState.tagIds}
+                                    onSelectChange={(newTagIds, extra) => {
+                                        setBillState((prev) => ({
+                                            ...prev,
+                                            tagIds: newTagIds,
+                                        }));
+                                        if (extra?.preferCurrency) {
+                                            changeCurrency(
+                                                extra.preferCurrency,
+                                            );
+                                        }
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    className="editor-chip-button rounded-xl border py-1 px-3 h-10 flex gap-2 items-center justify-center whitespace-nowrap cursor-pointer"
+                                    onClick={() => {
+                                        showTagList();
+                                    }}
+                                >
+                                    <i className="icon-[mdi--tag-text-outline]"></i>
+                                    {t("edit-tags")}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        className={cn(
+                            "h-[calc(480px+160px*(var(--bekh,0.5)-0.5))] sm:h-[calc(380px+160px*(var(--bekh,0.5)-0.5))] min-h-[264px] max-h-[calc(100%-124px)]",
+                            "editor-keyboard-shell keyboard-field flex flex-shrink-0 gap-3 flex-col justify-start overflow-hidden sm:rounded-b-[24px] p-3 pb-[max(env(safe-area-inset-bottom),12px)]",
+                        )}
+                    >
+                        <div className="editor-meta-bar flex justify-between items-center gap-2">
+                            <div className="flex gap-2 items-center h-10">
+                                <div className="flex items-center h-full">
+                                    {(billState.images?.length ?? 0) > 0 && (
+                                        <div className="pr-2 flex gap-[6px] items-center overflow-x-auto max-w-22 h-full scrollbar-hidden">
+                                            {billState.images?.map(
+                                                (img, index) => (
+                                                    <Deletable
+                                                        // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                                                        key={index}
+                                                        onDelete={() => {
+                                                            setBillState(
+                                                                (v) => ({
+                                                                    ...v,
+                                                                    images: v.images?.filter(
+                                                                        (m) =>
+                                                                            m !==
+                                                                            img,
+                                                                    ),
+                                                                }),
+                                                            );
+                                                        }}
+                                                    >
+                                                        <SmartImage
+                                                            source={img}
+                                                            alt=""
+                                                            className="w-6 h-6 object-cover rounded"
+                                                        />
+                                                    </Deletable>
+                                                ),
+                                            )}
+                                        </div>
+                                    )}
+                                    {(billState.images?.length ?? 0) < 3 && (
+                                        <button
+                                            type="button"
+                                            className="editor-meta-button px-2 flex justify-center items-center rounded-full transition-all cursor-pointer"
+                                            onClick={chooseImage}
+                                        >
+                                            <i className="icon-xs icon-[mdi--image-plus-outline]"></i>
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="editor-meta-button rounded-full transition-all">
+                                    <DatePicker
+                                        fixedTime
+                                        value={billState.time}
+                                        onChange={(time) => {
+                                            setBillState((prev) => {
+                                                if (!prev.currency) {
+                                                    return {
+                                                        ...prev,
+                                                        time: time,
+                                                    };
+                                                }
+                                                const { predict } = convert(
+                                                    amountToNumber(
+                                                        prev.currency?.amount ??
+                                                            prev.amount,
+                                                    ),
+                                                    prev.currency.target,
+                                                    baseCurrency.id,
+                                                    time,
+                                                );
                                                 return {
                                                     ...prev,
                                                     time: time,
+                                                    amount: numberToAmount(
+                                                        predict,
+                                                    ),
+                                                    currency: {
+                                                        base: baseCurrency.id,
+                                                        target: prev.currency
+                                                            .target,
+                                                        amount:
+                                                            prev.currency
+                                                                ?.amount ??
+                                                            prev.amount,
+                                                    },
                                                 };
-                                            }
-                                            const { predict } = convert(
-                                                amountToNumber(
-                                                    prev.currency?.amount ??
-                                                        prev.amount,
-                                                ),
-                                                prev.currency.target,
-                                                baseCurrency.id,
-                                                time,
-                                            );
-                                            return {
-                                                ...prev,
-                                                time: time,
-                                                amount: numberToAmount(predict),
-                                                currency: {
-                                                    base: baseCurrency.id,
-                                                    target: prev.currency
-                                                        .target,
-                                                    amount:
-                                                        prev.currency?.amount ??
-                                                        prev.amount,
-                                                },
-                                            };
-                                        });
-                                    }}
-                                />
+                                            });
+                                        }}
+                                    />
+                                </div>
                             </div>
+                            <RemarkHint
+                                onSelect={(v) => {
+                                    setBillState((prev) => ({
+                                        ...prev,
+                                        comment: `${prev.comment} ${v}`,
+                                    }));
+                                }}
+                            >
+                                <div className="flex h-full flex-1 min-w-0">
+                                    <IOSUnscrolledInput
+                                        value={billState.comment}
+                                        onChange={(e) => {
+                                            setBillState((v) => ({
+                                                ...v,
+                                                comment: e.target.value,
+                                            }));
+                                        }}
+                                        type="text"
+                                        className="editor-comment-input w-full bg-transparent text-right outline-none"
+                                        placeholder={t("comment")}
+                                        enterKeyHint="done"
+                                    />
+                                </div>
+                            </RemarkHint>
                         </div>
-                        <RemarkHint
-                            onSelect={(v) => {
-                                setBillState((prev) => ({
-                                    ...prev,
-                                    comment: `${prev.comment} ${v}`,
-                                }));
-                            }}
-                        >
-                            <div className="flex h-full flex-1">
-                                <IOSUnscrolledInput
-                                    value={billState.comment}
-                                    onChange={(e) => {
-                                        setBillState((v) => ({
-                                            ...v,
-                                            comment: e.target.value,
-                                        }));
-                                    }}
-                                    type="text"
-                                    className="editor-comment-input w-full bg-transparent text-right outline-none"
-                                    placeholder={t("comment")}
-                                    enterKeyHint="done"
-                                />
-                            </div>
-                        </RemarkHint>
-                    </div>
 
-                    <button
-                        type="button"
-                        className="editor-confirm-button flex h-[72px] min-h-[48px] justify-center items-center rounded-2xl font-bold text-lg cursor-pointer"
-                        onClick={toConfirm}
-                    >
-                        <i className="icon-[mdi--check] icon-md"></i>
-                    </button>
-                    <Calculator.Keyboard
-                        className={cn("flex-1")}
-                        onKey={(v) => {
-                            if (v === "r") {
-                                toConfirm();
-                                setTimeout(() => {
-                                    goAddBill();
-                                }, 10);
-                            }
-                        }}
-                    />
+                        <button
+                            type="button"
+                            className="editor-confirm-button flex h-[72px] min-h-[48px] justify-center items-center rounded-2xl font-bold text-lg cursor-pointer"
+                            onClick={toConfirm}
+                        >
+                            <i className="icon-[mdi--check] icon-md"></i>
+                        </button>
+                        <Calculator.Keyboard
+                            className={cn("flex-1")}
+                            onKey={(v) => {
+                                if (v === "r") {
+                                    toConfirm();
+                                    setTimeout(() => {
+                                        goAddBill();
+                                    }, 10);
+                                }
+                            }}
+                        />
+                    </div>
                 </div>
             </PopupLayout>
         </Calculator.Root>

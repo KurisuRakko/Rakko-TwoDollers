@@ -11,6 +11,15 @@ export async function blobToBase64(blob: Blob): Promise<string> {
     });
 }
 
+export async function readFileAsDataUrl(file: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}
+
 /**
  * 将 Base64 字符串（Data URL 格式）转换为 File 对象。
  * * @param base64 完整的 Base64 Data URL 字符串，例如 "data:image/png;base64,iVBORw0KGgo..."

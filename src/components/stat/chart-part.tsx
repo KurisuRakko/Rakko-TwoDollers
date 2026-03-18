@@ -76,8 +76,8 @@ export function useChartPart({
                         return {
                             id,
                             name:
-                                creators.find((u) => `${u.id}` === id)?.name ??
-                                `${id}`,
+                                creators.find((u) => `${u.id}` === id)
+                                    ?.displayName ?? `${id}`,
                         };
                     },
                     gap: viewType === "yearly" ? "month" : undefined,

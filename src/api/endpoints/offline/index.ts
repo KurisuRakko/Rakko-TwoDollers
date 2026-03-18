@@ -1,13 +1,52 @@
 import { BillIndexedDBStorage } from "@/database/storage";
 import { t } from "@/locale";
-import type { SyncEndpointFactory } from "../type";
+import { readFileAsDataUrl } from "@/utils/file";
+import { DEFAULT_OFFLINE_USER_NAME } from "@/utils/user-display";
+import type { SyncEndpointFactory, UserInfo } from "../type";
 import { OfflineStorage } from "./core";
 
-const Me = {
-    id: "me",
-    name: "Me",
-    avatar_url: "/icon.png",
-    // "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+const OFFLINE_USER_KEY = "OFFLINE_USER";
+const OFFLINE_USER_AVATAR = "/icon.png";
+
+type OfflineUserRecord = {
+    id: string;
+};
+
+const createOfflineUserRecord = (): OfflineUserRecord => {
+    const rawId =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+    return {
+        id: `local-${rawId}`,
+    };
+};
+
+const getOfflineUser = (): UserInfo => {
+    const cached = localStorage.getItem(OFFLINE_USER_KEY);
+    if (cached) {
+        try {
+            const parsed = JSON.parse(cached) as Partial<OfflineUserRecord>;
+            if (typeof parsed.id === "string" && parsed.id.length > 0) {
+                return {
+                    id: parsed.id,
+                    name: DEFAULT_OFFLINE_USER_NAME,
+                    avatar_url: OFFLINE_USER_AVATAR,
+                };
+            }
+        } catch (error) {
+            console.warn("Failed to parse offline user record:", error);
+        }
+    }
+
+    const record = createOfflineUserRecord();
+    localStorage.setItem(OFFLINE_USER_KEY, JSON.stringify(record));
+    return {
+        id: record.id,
+        name: DEFAULT_OFFLINE_USER_NAME,
+        avatar_url: OFFLINE_USER_AVATAR,
+    };
 };
 
 export const OfflineEndpoint: SyncEndpointFactory = {
@@ -28,9 +67,12 @@ export const OfflineEndpoint: SyncEndpointFactory = {
                 return;
             },
             getUserInfo: async () => {
-                return Me;
+                return getOfflineUser();
             },
-            getCollaborators: async () => [Me],
+            getCollaborators: async () => [getOfflineUser()],
+            uploadUserAvatar: async (_bookId, _userId, file) => {
+                return readFileAsDataUrl(file);
+            },
             getOnlineAsset: undefined,
 
             fetchAllBooks: repo.fetchAllStore.bind(repo),

@@ -5,6 +5,7 @@ import type { Bill } from "@/ledger/type";
 import { t } from "@/locale";
 import { createTidal } from "@/tidal";
 import { createGithubSyncer } from "@/tidal/github";
+import { blobToBase64 } from "@/utils/file";
 import type { SyncEndpointFactory } from "../type";
 import { createLoginAPI } from "./login";
 
@@ -15,6 +16,11 @@ const config = {
 };
 
 const LoginAPI = createLoginAPI();
+
+const sanitizePathSegment = (value: string) => {
+    const sanitized = value.replace(/[^a-zA-Z0-9._-]/g, "_");
+    return sanitized.length > 0 ? sanitized : "user";
+};
 
 const manuallyLogin = async ({ modal }: { modal: Modal }) => {
     const token = await modal.prompt({
@@ -71,12 +77,82 @@ export const GithubEndpoint: SyncEndpointFactory = {
             await finished;
         });
 
+        const uploadUserAvatar = async (
+            bookId: string,
+            userId: string,
+            file: File,
+        ) => {
+            const [owner, repo] = bookId.split("/");
+            if (!owner || !repo) {
+                throw new Error(`invalid book id: ${bookId}`);
+            }
+
+            const { accessToken } = await LoginAPI.getToken();
+            const requestHeaders = {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github+json",
+                "Content-Type": "application/json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            };
+            const avatarPath = `assets/avatars/${sanitizePathSegment(userId)}/${Date.now()}.jpg`;
+
+            const uploadResponse = await fetch(
+                `https://api.github.com/repos/${owner}/${repo}/contents/${avatarPath}`,
+                {
+                    method: "PUT",
+                    headers: requestHeaders,
+                    body: JSON.stringify({
+                        message: `[Avatar] update for ${userId}`,
+                        content: await blobToBase64(file),
+                    }),
+                },
+            );
+
+            if (!uploadResponse.ok) {
+                throw new Error(
+                    `upload user avatar failed: ${uploadResponse.status}`,
+                );
+            }
+
+            const uploadData = await uploadResponse.json();
+            const downloadUrl = uploadData?.content?.download_url;
+            if (typeof downloadUrl === "string" && downloadUrl.length > 0) {
+                return downloadUrl;
+            }
+
+            const contentResponse = await fetch(
+                `https://api.github.com/repos/${owner}/${repo}/contents/${avatarPath}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        Accept: "application/vnd.github+json",
+                        "X-GitHub-Api-Version": "2022-11-28",
+                    },
+                },
+            );
+            if (!contentResponse.ok) {
+                throw new Error(
+                    `read uploaded avatar failed: ${contentResponse.status}`,
+                );
+            }
+            const contentData = await contentResponse.json();
+            if (
+                typeof contentData?.download_url === "string" &&
+                contentData.download_url.length > 0
+            ) {
+                return contentData.download_url;
+            }
+
+            throw new Error("avatar download url missing");
+        };
+
         return {
             logout: async () => {
                 repo.detach();
             },
             getUserInfo: repo.getUserInfo,
             getCollaborators: repo.getCollaborators,
+            uploadUserAvatar,
             getOnlineAsset: (src, store) => repo.getAsset(src, store),
 
             fetchAllBooks: async (...args) => {

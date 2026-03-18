@@ -305,32 +305,50 @@ export const createGithubSyncer = (config: {
         return key;
     };
 
-    const getAsset = async (fileKey: AssetKey, storeFullName: string) => {
-        // If fileKey is raw.githubusercontent url, fetch it
-        if (!fileKey.startsWith("https://raw.githubusercontent.com")) {
-            throw new Error("Unsupported asset key");
-        }
-        const [owner, repo, ref, ...paths] = fileKey
-            .replace("https://raw.githubusercontent.com/", "")
-            .replace("HEAD/", "")
-            .split("/");
+    const getAsset = async (fileKey: AssetKey, _storeFullName: string) => {
         const { accessToken } = await auth();
-        const res = await fetch(
-            `https://api.github.com/repos/${owner}/${repo}/contents/${paths.join("/")}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    Accept: "application/vnd.github.v3.raw",
-                    "X-GitHub-Api-Version": "2022-11-28",
+        const headers = {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: "application/vnd.github.v3.raw",
+            "X-GitHub-Api-Version": "2022-11-28",
+        };
+
+        if (fileKey.startsWith("https://raw.githubusercontent.com/")) {
+            const [owner, repo, ref, ...paths] = fileKey
+                .replace("https://raw.githubusercontent.com/", "")
+                .replace("HEAD/", "")
+                .split("/");
+            const assetPath = paths.join("/");
+            const res = await fetch(
+                `https://api.github.com/repos/${owner}/${repo}/contents/${assetPath}?ref=${encodeURIComponent(ref)}`,
+                {
+                    headers,
                 },
-            },
-        );
-        const blob = await res.blob();
-        // Convert blob to File so caller can use it
-        const name = pathToName(paths.join("/"));
-        return blob;
-        // const file = new File([blob], name);
-        // return file;
+            );
+            if (!res.ok) {
+                throw new Error(
+                    `getAsset failed for ${fileKey}: ${res.status}`,
+                );
+            }
+            return res.blob();
+        }
+
+        if (
+            fileKey.startsWith("https://api.github.com/repos/") &&
+            fileKey.includes("/contents/")
+        ) {
+            const res = await fetch(fileKey, {
+                headers,
+            });
+            if (!res.ok) {
+                throw new Error(
+                    `getAsset failed for ${fileKey}: ${res.status}`,
+                );
+            }
+            return res.blob();
+        }
+
+        throw new Error("Unsupported asset key");
     };
 
     const assetEntryToPath = (a: FileEntry<string>) => {
