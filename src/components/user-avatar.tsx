@@ -11,6 +11,26 @@ import { cacheInDB } from "@/utils/cache";
 import { GetOnlineAssetsCacheKey } from "@/utils/constant";
 import { DEFAULT_USER_AVATAR } from "@/utils/user-display";
 
+const getPersistedCurrentBookId = () => {
+    if (typeof window === "undefined") {
+        return undefined;
+    }
+
+    try {
+        const raw = window.localStorage.getItem("book-store");
+        if (!raw) {
+            return undefined;
+        }
+
+        const parsed = JSON.parse(raw) as {
+            state?: { currentBookId?: string };
+        };
+        return parsed.state?.currentBookId;
+    } catch {
+        return undefined;
+    }
+};
+
 const isPrivateAssetSource = (source: string) => {
     if (source.startsWith("data:") || source.startsWith("blob:")) {
         return false;
@@ -47,7 +67,9 @@ export default function UserAvatarImage({
     const objectUrlRef = useRef<string | null>(null);
 
     useEffect(() => {
-        const bookId = useBookStore.getState().currentBookId;
+        const bookId =
+            useBookStore.getState().currentBookId ||
+            getPersistedCurrentBookId();
         setUrl(fallbackSource);
 
         if (

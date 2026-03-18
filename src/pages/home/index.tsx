@@ -20,6 +20,10 @@ import Ledger from "@/components/ledger";
 import Loading from "@/components/loading";
 import Navigation from "@/components/navigation";
 import { showUserCenter } from "@/components/settings/user-center";
+import {
+    hideHomeStartupOverlay,
+    showHomeStartupOverlay,
+} from "@/components/startup-overlay/controller";
 import UserAvatarImage from "@/components/user-avatar";
 import { useBudget } from "@/hooks/use-budget";
 import { useIsDesktop } from "@/hooks/use-media-query";
@@ -38,6 +42,8 @@ import { denseDate } from "@/utils/time";
 let ledgerAnimationShows = false;
 const HOME_AVATAR_LAYOUT_ID = "home-current-user-avatar";
 const shownStartupBooks = new Set<string>();
+const STARTUP_OVERLAY_MIN_VISIBLE_MS = 320;
+const STARTUP_OVERLAY_BUSY_GRACE_MS = 640;
 
 // Spring configuration for iOS-like feel
 const springTransition = {
@@ -45,6 +51,13 @@ const springTransition = {
     stiffness: 300,
     damping: 30,
     mass: 1,
+};
+
+const avatarSharedTransition = {
+    type: "spring" as const,
+    stiffness: 180,
+    damping: 28,
+    mass: 1.15,
 };
 
 function HomeAvatarButton({
@@ -66,13 +79,14 @@ function HomeAvatarButton({
         <button
             type="button"
             className={cn("home-avatar-button", className)}
+            data-startup-avatar-target={layoutId}
             onClick={onClick}
             title={title}
             aria-label={title}
         >
             <motion.div
                 layoutId={layoutId}
-                transition={springTransition}
+                transition={avatarSharedTransition}
                 className="home-avatar-visual"
             >
                 <UserAvatarImage
@@ -82,85 +96,6 @@ function HomeAvatarButton({
                 />
             </motion.div>
         </button>
-    );
-}
-
-function HomeStartupOverlay({
-    avatarSource,
-    displayName,
-    status,
-    layoutId,
-    reducedMotion,
-}: {
-    avatarSource: string;
-    displayName: string;
-    status: string;
-    layoutId?: string;
-    reducedMotion: boolean;
-}) {
-    return (
-        <motion.div
-            className="home-startup-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reducedMotion ? 0.16 : 0.24 }}
-        >
-            <motion.div
-                className="home-startup-panel"
-                initial={
-                    reducedMotion
-                        ? { opacity: 1 }
-                        : { opacity: 0, y: 18, scale: 0.98 }
-                }
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={
-                    reducedMotion
-                        ? { opacity: 0 }
-                        : { opacity: 0, y: -8, scale: 0.99 }
-                }
-                transition={
-                    reducedMotion
-                        ? { duration: 0.16 }
-                        : {
-                              opacity: { duration: 0.2 },
-                              y: { duration: 0.28, ease: "easeOut" },
-                              scale: { duration: 0.28, ease: "easeOut" },
-                          }
-                }
-            >
-                <motion.div
-                    layoutId={layoutId}
-                    transition={springTransition}
-                    className="home-startup-avatar-shell"
-                >
-                    <UserAvatarImage
-                        source={avatarSource}
-                        alt={displayName}
-                        className="home-startup-avatar-image"
-                    />
-                </motion.div>
-                <motion.div
-                    className="home-startup-copy"
-                    exit={
-                        reducedMotion
-                            ? { opacity: 0 }
-                            : { opacity: 0, y: -10, filter: "blur(6px)" }
-                    }
-                    transition={{ duration: 0.18 }}
-                >
-                    <div className="home-startup-name">{displayName}</div>
-                    <div className="home-startup-status">{status}</div>
-                    <div className="home-startup-spinner" aria-hidden="true">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </motion.div>
-            </motion.div>
-        </motion.div>
     );
 }
 
@@ -209,7 +144,10 @@ export default function Page() {
     const [syncPillLeaving, setSyncPillLeaving] = useState(false);
     const [startupBookId, setStartupBookId] = useState<string | null>(null);
     const [startupExiting, setStartupExiting] = useState(false);
-    const [startupAnimationEnded, setStartupAnimationEnded] = useState(true);
+    const [startupShownAt, setStartupShownAt] = useState<number | null>(null);
+    const [startupObservedInitializing, setStartupObservedInitializing] =
+        useState(false);
+    const [startupTimingTick, setStartupTimingTick] = useState(0);
     const isDesktop = useIsDesktop();
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -400,22 +338,25 @@ export default function Page() {
         if (!isLogin || !currentBookId) {
             setStartupBookId(null);
             setStartupExiting(false);
-            setStartupAnimationEnded(true);
+            setStartupShownAt(null);
+            setStartupObservedInitializing(false);
+            setStartupTimingTick(0);
             return;
         }
 
         if (
             shownStartupBooks.has(currentBookId) ||
             startupBookId === currentBookId ||
-            startupExiting ||
-            !isCurrentBookInitializing
+            startupExiting
         ) {
             return;
         }
 
         setStartupBookId(currentBookId);
         setStartupExiting(false);
-        setStartupAnimationEnded(false);
+        setStartupShownAt(Date.now());
+        setStartupObservedInitializing(isCurrentBookInitializing);
+        setStartupTimingTick(0);
     }, [
         currentBookId,
         isCurrentBookInitializing,
@@ -425,36 +366,114 @@ export default function Page() {
     ]);
 
     useEffect(() => {
+        if (!startupBookId || !isCurrentBookInitializing) {
+            return;
+        }
+
+        setStartupObservedInitializing(true);
+    }, [isCurrentBookInitializing, startupBookId]);
+
+    useEffect(() => {
         if (!startupBookId) {
             return;
         }
 
+        void startupTimingTick;
+
         if (!currentBookId || currentBookId !== startupBookId) {
             setStartupBookId(null);
             setStartupExiting(false);
-            setStartupAnimationEnded(true);
+            setStartupShownAt(null);
+            setStartupObservedInitializing(false);
+            setStartupTimingTick(0);
             return;
         }
 
-        if (isCurrentBookInitializing || startupExiting) {
+        if (startupExiting) {
             return;
+        }
+
+        const shownFor = startupShownAt ? Date.now() - startupShownAt : 0;
+        const needsMinimumVisibility =
+            shownFor < STARTUP_OVERLAY_MIN_VISIBLE_MS;
+        const shouldKeepWaitingForInitialization =
+            !startupObservedInitializing &&
+            shownFor < STARTUP_OVERLAY_BUSY_GRACE_MS;
+
+        if (isCurrentBookInitializing) {
+            return;
+        }
+
+        if (needsMinimumVisibility || shouldKeepWaitingForInitialization) {
+            const nextCheckIn = Math.max(
+                STARTUP_OVERLAY_MIN_VISIBLE_MS - shownFor,
+                STARTUP_OVERLAY_BUSY_GRACE_MS - shownFor,
+                16,
+            );
+            const timer = window.setTimeout(() => {
+                setStartupTimingTick((tick) => tick + 1);
+            }, nextCheckIn);
+
+            return () => {
+                window.clearTimeout(timer);
+            };
         }
 
         shownStartupBooks.add(startupBookId);
         setStartupExiting(true);
+        setStartupShownAt(null);
+        setStartupObservedInitializing(false);
+        setStartupTimingTick(0);
     }, [
         currentBookId,
         isCurrentBookInitializing,
+        startupObservedInitializing,
         startupBookId,
         startupExiting,
+        startupShownAt,
+        startupTimingTick,
     ]);
 
     const showStartupOverlay =
         Boolean(startupBookId) &&
         currentBookId === startupBookId &&
         !startupExiting &&
-        !startupAnimationEnded &&
         !shouldBookPickerTakeOver;
+
+    useEffect(() => {
+        if (!showStartupOverlay) {
+            hideHomeStartupOverlay();
+            return;
+        }
+
+        showHomeStartupOverlay({
+            avatarSource,
+            displayName,
+            layoutId: avatarLayoutId,
+            status: startupStatusLabel,
+        });
+    }, [
+        avatarLayoutId,
+        avatarSource,
+        displayName,
+        showStartupOverlay,
+        startupStatusLabel,
+    ]);
+
+    useEffect(() => {
+        if (!startupExiting) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            setStartupBookId(null);
+            setStartupExiting(false);
+        }, 240);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [startupExiting]);
 
     return (
         <div
@@ -719,28 +738,6 @@ export default function Page() {
                     </div>
                 </div>
             </motion.div>
-            <AnimatePresence
-                initial={false}
-                onExitComplete={() => {
-                    if (!startupExiting) {
-                        return;
-                    }
-
-                    setStartupBookId(null);
-                    setStartupExiting(false);
-                    setStartupAnimationEnded(true);
-                }}
-            >
-                {showStartupOverlay && (
-                    <HomeStartupOverlay
-                        avatarSource={avatarSource}
-                        displayName={displayName}
-                        status={startupStatusLabel}
-                        layoutId={avatarLayoutId}
-                        reducedMotion={prefersReducedMotion}
-                    />
-                )}
-            </AnimatePresence>
         </div>
     );
 }
