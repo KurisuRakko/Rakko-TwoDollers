@@ -1,4 +1,5 @@
 import type { ECElementEvent } from "echarts/core";
+import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import useCategory from "@/hooks/use-category";
 import { useCreators } from "@/hooks/use-creator";
@@ -13,6 +14,7 @@ import {
     structureOption,
     userTrendOption,
 } from "@/utils/charts";
+import { getStageProps } from "@/utils/motion";
 import CategoryIcon from "../category/icon";
 import Chart, { type ChartInstance } from "../chart";
 import { Button } from "../ui/button";
@@ -37,6 +39,7 @@ export function useChartPart({
     displayCurrency?: string;
 }) {
     const t = useIntl();
+    const prefersReducedMotion = Boolean(useReducedMotion());
 
     const { convert, baseCurrency } = useCurrency();
     const rateToDisplayCurrency = useMemo(() => {
@@ -206,7 +209,13 @@ export function useChartPart({
     if (isEmpty) {
         const Part = (
             <>
-                <div className="stat-card stat-chart-card stat-empty-card flex-shrink-0 w-full min-h-[220px]">
+                <motion.div
+                    {...getStageProps({
+                        index: 2,
+                        reducedMotion: prefersReducedMotion,
+                    })}
+                    className="stat-card stat-chart-card stat-empty-card flex-shrink-0 w-full min-h-[220px]"
+                >
                     <div className="stat-empty-icon">
                         <i className="icon-[mdi--chart-timeline-variant] size-7"></i>
                     </div>
@@ -214,9 +223,15 @@ export function useChartPart({
                     <div className="stat-empty-copy">
                         {t("nothing-here-add-one-bill")}
                     </div>
-                </div>
+                </motion.div>
                 {focusType !== "balance" && (
-                    <div className="stat-card stat-chart-card stat-empty-card flex-shrink-0 w-full min-h-[220px]">
+                    <motion.div
+                        {...getStageProps({
+                            index: 3,
+                            reducedMotion: prefersReducedMotion,
+                        })}
+                        className="stat-card stat-chart-card stat-empty-card flex-shrink-0 w-full min-h-[220px]"
+                    >
                         <div className="stat-empty-icon">
                             <i className="icon-[mdi--chart-donut] size-7"></i>
                         </div>
@@ -228,7 +243,7 @@ export function useChartPart({
                         <div className="stat-empty-copy">
                             {t("nothing-here-add-one-bill")}
                         </div>
-                    </div>
+                    </motion.div>
                 )}
             </>
         );
@@ -238,7 +253,13 @@ export function useChartPart({
 
     const Part = (
         <>
-            <div className="stat-card stat-chart-card flex-shrink-0 w-full min-h-[220px] sm:min-h-[260px] relative">
+            <motion.div
+                {...getStageProps({
+                    index: 2,
+                    reducedMotion: prefersReducedMotion,
+                })}
+                className="stat-card stat-chart-card flex-shrink-0 w-full min-h-[220px] sm:min-h-[260px] relative"
+            >
                 <div className="absolute top-4 left-4 z-2">
                     {viewType !== "custom" && (
                         <button
@@ -280,9 +301,15 @@ export function useChartPart({
                         className="w-full h-[220px] sm:h-[260px]"
                     />
                 )}
-            </div>
+            </motion.div>
             {focusType !== "balance" && (
-                <div className="stat-card stat-chart-card flex-shrink-0 w-full relative">
+                <motion.div
+                    {...getStageProps({
+                        index: 3,
+                        reducedMotion: prefersReducedMotion,
+                    })}
+                    className="stat-card stat-chart-card flex-shrink-0 w-full relative"
+                >
                     <div className="absolute top-4 left-4 z-2">
                         {
                             <button
@@ -384,10 +411,16 @@ export function useChartPart({
                             </div>
                         </div>
                     )}
-                </div>
+                </motion.div>
             )}
             {!asList && selectedCategoryChart && (
-                <div className="stat-card stat-chart-card flex-shrink-0 w-full">
+                <motion.div
+                    {...getStageProps({
+                        index: 4,
+                        reducedMotion: prefersReducedMotion,
+                    })}
+                    className="stat-card stat-chart-card flex-shrink-0 w-full"
+                >
                     <div className="w-full h-[220px] sm:h-[260px]">
                         <Chart
                             option={selectedCategoryChart}
@@ -410,7 +443,7 @@ export function useChartPart({
                             <i className="icon-[mdi--arrow-up-right]"></i>
                         </Button>
                     </div>
-                </div>
+                </motion.div>
             )}
         </>
     );

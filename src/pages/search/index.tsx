@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { orderBy } from "lodash-es";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Collapsible } from "radix-ui";
 import {
     startTransition,
@@ -38,6 +38,12 @@ import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
+import {
+    getStageProps,
+    reducedStateSurfaceVariants,
+    stateSurfaceVariants,
+    surfaceTransition,
+} from "@/utils/motion";
 import { formatDate, formatTime } from "@/utils/time";
 
 const SORTS = [
@@ -127,6 +133,7 @@ export default function Page() {
     const { state } = useLocation();
     const navigate = useNavigate();
     const { addFilter } = useCustomFilters();
+    const prefersReducedMotion = Boolean(useReducedMotion());
 
     const [form, setForm] = useState<BillFilter>(() => {
         const filter = state?.filter as BillFilter | undefined;
@@ -396,15 +403,22 @@ export default function Page() {
         : activeFilterCount > 0
           ? t("search-active-filters", { n: activeFilterCount })
           : t("search-results-live");
+    const stateVariants = prefersReducedMotion
+        ? reducedStateSurfaceVariants
+        : stateSurfaceVariants;
+    const stateTransition = prefersReducedMotion
+        ? { duration: 0.16 }
+        : surfaceTransition;
 
     return (
-        <div className="search-page relative w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex justify-center overflow-hidden page-show">
+        <div className="search-page relative w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex justify-center overflow-hidden">
             <Navigation />
             <div className="search-page-shell h-full w-full max-w-[720px] flex flex-col">
                 <motion.div
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                    {...getStageProps({
+                        index: 0,
+                        reducedMotion: prefersReducedMotion,
+                    })}
                     className="search-hero-card"
                 >
                     <div className="search-hero-content">
@@ -476,44 +490,63 @@ export default function Page() {
                     </div>
                 </motion.div>
 
-                <Collapsible.Root
-                    open={filterOpen}
-                    onOpenChange={setFilterOpen}
-                    className="search-filter-shell"
+                <motion.div
+                    {...getStageProps({
+                        index: 1,
+                        reducedMotion: prefersReducedMotion,
+                        y: 16,
+                    })}
                 >
-                    <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
-                        <BillFilterForm
-                            form={form}
-                            setForm={setForm}
-                            className="border-b-0"
-                            showComment
-                        />
-                    </Collapsible.Content>
-                    <div className="search-filter-actions">
-                        <div className="search-filter-title">
-                            {t("search-advanced-title")}
-                            {activeFilterCount > 0 && (
-                                <span className="search-filter-count">
-                                    {activeFilterCount}
-                                </span>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Collapsible.Trigger asChild>
-                                <Button variant="ghost" size="sm">
-                                    <i className="icon-[mdi--tune]"></i>
-                                    {filterOpen ? t("collapse") : t("expand")}
+                    <Collapsible.Root
+                        open={filterOpen}
+                        onOpenChange={setFilterOpen}
+                        className="search-filter-shell"
+                    >
+                        <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
+                            <BillFilterForm
+                                form={form}
+                                setForm={setForm}
+                                className="border-b-0"
+                                showComment
+                            />
+                        </Collapsible.Content>
+                        <div className="search-filter-actions">
+                            <div className="search-filter-title">
+                                {t("search-advanced-title")}
+                                {activeFilterCount > 0 && (
+                                    <span className="search-filter-count">
+                                        {activeFilterCount}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Collapsible.Trigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                        <i className="icon-[mdi--tune]"></i>
+                                        {filterOpen
+                                            ? t("collapse")
+                                            : t("expand")}
+                                    </Button>
+                                </Collapsible.Trigger>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={toReset}
+                                >
+                                    {t("reset")}
                                 </Button>
-                            </Collapsible.Trigger>
-                            <Button variant="ghost" size="sm" onClick={toReset}>
-                                {t("reset")}
-                            </Button>
+                            </div>
                         </div>
-                    </div>
-                </Collapsible.Root>
+                    </Collapsible.Root>
+                </motion.div>
 
                 {showSummaryRow && (
-                    <div
+                    <motion.div
+                        {...getStageProps({
+                            index: 2,
+                            reducedMotion: prefersReducedMotion,
+                            y: 14,
+                        })}
                         className={cn(
                             "search-summary-row",
                             enableSelect && "search-summary-row-select",
@@ -623,17 +656,25 @@ export default function Page() {
                                 </>
                             )}
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
-                <div className="search-results-shell min-h-0 flex-1">
+                <motion.div
+                    {...getStageProps({
+                        index: showSummaryRow ? 3 : 2,
+                        reducedMotion: prefersReducedMotion,
+                    })}
+                    className="search-results-shell min-h-0 flex-1"
+                >
                     <AnimatePresence mode="wait" initial={false}>
                         {showIdleState ? (
                             <motion.div
                                 key="search-idle"
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
+                                variants={stateVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={stateTransition}
                                 className="search-empty-state"
                             >
                                 <div className="search-empty-icon">
@@ -649,9 +690,11 @@ export default function Page() {
                         ) : searchState === "searching" ? (
                             <motion.div
                                 key="search-loading"
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
+                                variants={stateVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={stateTransition}
                                 className="search-loading-state"
                             >
                                 <Skeleton className="h-16 rounded-[18px]" />
@@ -661,9 +704,11 @@ export default function Page() {
                         ) : showEmptyState ? (
                             <motion.div
                                 key="search-empty"
-                                initial={{ opacity: 0, y: 12 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
+                                variants={stateVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={stateTransition}
                                 className="search-empty-state"
                             >
                                 <div className="search-empty-icon">
@@ -679,9 +724,11 @@ export default function Page() {
                         ) : (
                             <motion.div
                                 key="search-results"
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
+                                variants={stateVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={stateTransition}
                                 className="h-full"
                             >
                                 <Ledger
@@ -699,7 +746,7 @@ export default function Page() {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </div>
+                </motion.div>
             </div>
             <BatchEditProvider />
         </div>

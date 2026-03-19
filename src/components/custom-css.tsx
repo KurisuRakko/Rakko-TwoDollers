@@ -48,6 +48,7 @@ body.main-layout-active::after {
 body.main-layout-active .nav-flat-button,
 body.main-layout-active .nav-flat-group,
 body.main-layout-active .nav-add-button,
+body.main-layout-active .floating-tab,
 body.main-layout-active .home-hero-panel,
 body.main-layout-active .home-mini-card,
 body.main-layout-active .home-promotion-shell,

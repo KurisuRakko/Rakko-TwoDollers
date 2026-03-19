@@ -1,6 +1,11 @@
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { useId } from "react";
 import { useIntl } from "@/locale";
 import { cn } from "@/utils";
-import { toFixed, toThousand } from "@/utils/number";
+import {
+    microInteractionTransition,
+    sharedElementTransition,
+} from "@/utils/motion";
 import Money from "../money";
 
 export const FocusTypes = ["income", "expense", "balance"] as const;
@@ -16,61 +21,99 @@ export function FocusTypeSelector({
     money: number[];
 }) {
     const t = useIntl();
+    const prefersReducedMotion = Boolean(useReducedMotion());
+    const layoutGroupId = useId();
     const btnClass = `min-w-[90px] text-sm py-1 flex items-center justify-center  cursor-pointer transition-all duration-200`;
     return (
-        <div className="stat-focus-toggle flex items-center overflow-hidden divide-x">
-            <button
-                type="button"
-                className={cn(
-                    btnClass,
-                    "stat-focus-button",
-                    focusType === "income" &&
-                        "stat-focus-button-active [&_span]:text-semantic-income-medium",
-                )}
-                onClick={() => {
-                    setFocusType("income");
-                }}
-            >
-                <div className="flex flex-col items-center justify-center">
-                    <span className="text-semantic-income">
-                        +<Money value={money[0]} />
-                    </span>
-                    <div className="text-[10px] opacity-60"> {t("income")}</div>
-                </div>
-            </button>
-            <button
-                type="button"
-                className={cn(
-                    btnClass,
-                    "stat-focus-button",
-                    focusType === "expense" &&
-                        "stat-focus-button-active [&_span]:text-semantic-expense-medium",
-                )}
-                onClick={() => setFocusType("expense")}
-            >
-                <div className="flex flex-col items-center justify-center">
-                    <span className="text-semantic-expense">
-                        -<Money value={money[1]} />
-                    </span>
-                    <div className="text-[10px] opacity-60">{t("expense")}</div>
-                </div>
-            </button>
-            <button
-                type="button"
-                className={cn(
-                    btnClass,
-                    "stat-focus-button",
-                    focusType === "balance" && "stat-focus-button-active",
-                )}
-                onClick={() => setFocusType("balance")}
-            >
-                <div className="flex flex-col items-center justify-center">
-                    <span>
-                        <Money value={money[2]} />
-                    </span>
-                    <div className="text-[10px] opacity-60">{t("Balance")}</div>
-                </div>
-            </button>
-        </div>
+        <LayoutGroup id={layoutGroupId}>
+            <div className="stat-focus-toggle flex items-center overflow-hidden divide-x">
+                <motion.button
+                    type="button"
+                    whileTap={{ scale: prefersReducedMotion ? 1 : 0.98 }}
+                    transition={microInteractionTransition}
+                    className={cn(
+                        btnClass,
+                        "stat-focus-button",
+                        focusType === "income" &&
+                            "stat-focus-button-active [&_span]:text-semantic-income-medium",
+                    )}
+                    onClick={() => {
+                        setFocusType("income");
+                    }}
+                >
+                    {focusType === "income" && (
+                        <motion.span
+                            layoutId="stat-focus-indicator"
+                            transition={sharedElementTransition}
+                            className="nav-active-indicator"
+                        />
+                    )}
+                    <div className="flex flex-col items-center justify-center">
+                        <span className="text-semantic-income">
+                            +<Money value={money[0]} />
+                        </span>
+                        <div className="text-[10px] opacity-60">
+                            {" "}
+                            {t("income")}
+                        </div>
+                    </div>
+                </motion.button>
+                <motion.button
+                    type="button"
+                    whileTap={{ scale: prefersReducedMotion ? 1 : 0.98 }}
+                    transition={microInteractionTransition}
+                    className={cn(
+                        btnClass,
+                        "stat-focus-button",
+                        focusType === "expense" &&
+                            "stat-focus-button-active [&_span]:text-semantic-expense-medium",
+                    )}
+                    onClick={() => setFocusType("expense")}
+                >
+                    {focusType === "expense" && (
+                        <motion.span
+                            layoutId="stat-focus-indicator"
+                            transition={sharedElementTransition}
+                            className="nav-active-indicator"
+                        />
+                    )}
+                    <div className="flex flex-col items-center justify-center">
+                        <span className="text-semantic-expense">
+                            -<Money value={money[1]} />
+                        </span>
+                        <div className="text-[10px] opacity-60">
+                            {t("expense")}
+                        </div>
+                    </div>
+                </motion.button>
+                <motion.button
+                    type="button"
+                    whileTap={{ scale: prefersReducedMotion ? 1 : 0.98 }}
+                    transition={microInteractionTransition}
+                    className={cn(
+                        btnClass,
+                        "stat-focus-button",
+                        focusType === "balance" && "stat-focus-button-active",
+                    )}
+                    onClick={() => setFocusType("balance")}
+                >
+                    {focusType === "balance" && (
+                        <motion.span
+                            layoutId="stat-focus-indicator"
+                            transition={sharedElementTransition}
+                            className="nav-active-indicator"
+                        />
+                    )}
+                    <div className="flex flex-col items-center justify-center">
+                        <span>
+                            <Money value={money[2]} />
+                        </span>
+                        <div className="text-[10px] opacity-60">
+                            {t("Balance")}
+                        </div>
+                    </div>
+                </motion.button>
+            </div>
+        </LayoutGroup>
     );
 }

@@ -14,7 +14,7 @@ clientsClaim();
 self.skipWaiting();
 
 // 预缓存由 VitePWA 注入的所有静态资源
-const PRECACHE_EXCLUDES = ["wallpaper-default.jpg"];
+const PRECACHE_EXCLUDES = ["wallpaper-default.jpeg"];
 const precacheManifest = self.__WB_MANIFEST.filter((entry) => {
     const url = typeof entry === "string" ? entry : entry.url;
     return !PRECACHE_EXCLUDES.some((assetName) => url.endsWith(assetName));

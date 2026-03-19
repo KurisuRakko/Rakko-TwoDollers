@@ -7,87 +7,84 @@ import {
     type PanInfo,
     type Transition,
     usePresence,
+    useReducedMotion,
 } from "motion/react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIsDesktop } from "@/hooks/use-media-query";
 import { cn } from "@/utils";
+import { fadeTransition, IOS_PAGE_EASE, sheetTransition } from "@/utils/motion";
 import { registerSlideGesture } from "./gesture";
 import { getStrictContext } from "./get-strict-context";
 import { useControlledState } from "./use-controlled-state";
 
-// component/DialogAnimation.jsx
+const getAnimationVariants = ({
+    fade,
+    isDesktop,
+    reducedMotion,
+}: {
+    fade: boolean;
+    isDesktop: boolean;
+    reducedMotion: boolean;
+}) => {
+    if (reducedMotion) {
+        return {
+            initial: {
+                opacity: 0,
+                transform: "translate3d(0, 0, 0)",
+                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
+            },
+            animate: {
+                opacity: 1,
+                transform: "translate3d(0, 0, 0)",
+                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0.44)",
+            },
+            exit: {
+                opacity: 0,
+                transform: "translate3d(0, 0, 0)",
+                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
+            },
+        };
+    }
 
-// 1. 定义动画变体
-const animationVariants = {
-    // --- 桌面动画 (从下到上) ---
-    desktop: {
-        // 隐藏状态 (未打开)
-        initial: {
-            transform: "translateY(100vh)",
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
-        },
-        // 动画状态 (打开时)
-        animate: {
-            transform: "translateY(0px)",
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0.5)",
-        },
-        // 退出状态 (关闭时)
-        exit: {
-            transform: "translateY(100vh)",
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
-        }, // 保持 y 轴运动
-    },
+    if (fade || isDesktop) {
+        return {
+            initial: {
+                opacity: 0,
+                transform: "translate3d(0, 18px, 0) scale(0.97)",
+                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
+            },
+            animate: {
+                opacity: 1,
+                transform: "translate3d(0, 0, 0) scale(1)",
+                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0.5)",
+            },
+            exit: {
+                opacity: 0,
+                transform: "translate3d(0, 12px, 0) scale(0.985)",
+                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
+            },
+        };
+    }
 
-    // --- 移动端动画 (从右到左) ---
-    mobile: {
-        // 隐藏状态 (未打开)
+    return {
         initial: {
-            transform: `translateX(${window.innerWidth}px)`,
+            transform: "translate3d(100vw, 0, 0)",
             boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
         },
-        // 动画状态 (打开时)
         animate: {
-            transform: `translateX(0px)`,
+            transform: "translate3d(0, 0, 0)",
             boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0.5)",
         },
-        // 退出状态 (关闭时)
         exit: {
-            transform: `translateX(${window.innerWidth}px)`,
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
-        }, // 保持 x 轴运动
-    },
-    fade: {
-        // 隐藏状态 (未打开)
-        initial: {
-            opacity: "0",
-            transform: `scale(0.9)`,
+            transform: "translate3d(100vw, 0, 0)",
             boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
         },
-        // 动画状态 (打开时)
-        animate: {
-            opacity: "1",
-            transform: `scale(1)`,
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0.5)",
-        },
-        // 退出状态 (关闭时)
-        exit: {
-            opacity: "0",
-            transform: `scale(0.9)`,
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
-        },
-    },
+    };
 };
 
-const TRANSITION_DURATION = 400;
+const TRANSITION_DURATION = 380;
 const TRANSITION_EASING = "ease";
-
-// 2. 定义过渡属性 (Transition)
-const transitionProps: Transition = {
-    type: "tween", // "tween" 类型允许使用 cubic-bezier
-    ease: [0.32, 0.72, 0, 1], // 这是 iOS "push" 动画的精确贝塞尔曲线
-    duration: 0.4, // iOS 动画通常在 0.35s - 0.4s 之间
-};
 
 /**
  * 将 Motion.js 风格的 transition 转换为 Web Animations API 的参数
@@ -97,7 +94,6 @@ function transformMotionToNative(transition: Transition) {
         duration = 0.3,
         ease = "easeOut",
         delay = 0,
-        times,
         repeat = 0,
         repeatType = "loop",
     } = transition;
@@ -208,21 +204,25 @@ type DialogOverlayProps = Omit<
 > &
     HTMLMotionProps<"div">;
 
-function DialogOverlay({
-    transition = { duration: 0.2, ease: "easeInOut" },
-    ...props
-}: DialogOverlayProps) {
+function DialogOverlay({ transition, ...props }: DialogOverlayProps) {
+    const reducedMotion = Boolean(useReducedMotion());
+    const resolvedTransition =
+        transition ??
+        (reducedMotion
+            ? { duration: 0.16 }
+            : { duration: 0.24, ease: IOS_PAGE_EASE });
+
     return (
         <DialogPrimitive.Overlay data-slot="dialog-overlay" asChild forceMount>
-            <div
+            <motion.div
                 key="dialog-overlay"
                 {...props}
                 style={{ ...props.style }}
-                className={cn("!transition-none opacity-0", props.className)}
-                // initial={{ opacity: 0 }}
-                // animate={{ opacity: 1 }}
-                // exit={{ opacity: 0 }}
-                // transition={transition}
+                className={cn("!transition-none", props.className)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={resolvedTransition}
             />
         </DialogPrimitive.Overlay>
     );
@@ -257,24 +257,37 @@ function DialogContent({
     onEscapeKeyDown,
     onPointerDownOutside,
     onInteractOutside,
-    transition = transitionProps,
+    transition,
     fade,
     swipe,
     ...props
 }: DialogContentProps) {
     const isDesktop = useIsDesktop();
+    const reducedMotion = Boolean(useReducedMotion());
     const contentRef = useRef<HTMLDivElement>(null);
     const [isPresent, safeToRemove] = usePresence(); // 关键：获取是否正在被销毁
 
-    // 动态选择变体
-    const currentVariant = fade
-        ? animationVariants.fade
-        : isDesktop
-          ? animationVariants.desktop
-          : animationVariants.mobile;
+    const currentVariant = useMemo(() => {
+        return getAnimationVariants({
+            fade: Boolean(fade),
+            isDesktop,
+            reducedMotion,
+        });
+    }, [fade, isDesktop, reducedMotion]);
+    const resolvedTransition = useMemo(() => {
+        if (transition) {
+            return transition;
+        }
+
+        if (reducedMotion) {
+            return { duration: 0.18 };
+        }
+
+        return fade || isDesktop ? fadeTransition : sheetTransition;
+    }, [fade, isDesktop, reducedMotion, transition]);
     const transitionNative = useMemo(
-        () => transformMotionToNative(transition),
-        [transition],
+        () => transformMotionToNative(resolvedTransition),
+        [resolvedTransition],
     );
 
     const { setIsOpen, setProgress } = useDialog();
@@ -340,7 +353,7 @@ function DialogContent({
     );
 
     useEffect(() => {
-        if (isDesktop || fade) return;
+        if (isDesktop || fade || reducedMotion) return;
         const root = contentRef.current;
         if (!root) {
             return;
@@ -414,7 +427,7 @@ function DialogContent({
             },
         });
         return stop;
-    }, [isDesktop, fade, onClose]);
+    }, [isDesktop, fade, onClose, reducedMotion]);
 
     const initialPlayed = useRef(false);
     const exitPlayed = useRef(false);

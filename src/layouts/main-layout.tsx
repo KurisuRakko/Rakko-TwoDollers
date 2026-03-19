@@ -1,4 +1,5 @@
-import { type TouchEvent, useEffect, useRef } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { type TouchEvent, useEffect, useMemo, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { BillEditorProvider } from "@/components/bill-editor";
 import { BillInfoProvider } from "@/components/bill-info";
@@ -30,6 +31,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { useBookStore } from "@/store/book";
 import { useIsLogin, useUserStore } from "@/store/user";
 import { cn } from "@/utils";
+import { getPageEnterProps, type MotionPageDirection } from "@/utils/motion";
 
 const DEFAULT_BOOK_NAME = "personal";
 const MAIN_SWIPE_ROUTES = ["/stat", "/", "/search"] as const;
@@ -95,6 +97,7 @@ export default function MainLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const isDesktop = useIsDesktop();
+    const prefersReducedMotion = Boolean(useReducedMotion());
     const swipeContainerRef = useRef<HTMLDivElement>(null);
     const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const swipeLockedRef = useRef(false);
@@ -103,6 +106,7 @@ export default function MainLayout() {
     const swipeAnimatingRef = useRef(false);
     const swipeAnimationFrameRef = useRef<number | null>(null);
     const swipeTimerRef = useRef<number | null>(null);
+    const previousRouteRef = useRef<MainSwipeRoute | undefined>(undefined);
 
     const resetSwipe = () => {
         swipeStartRef.current = null;
@@ -342,6 +346,32 @@ export default function MainLayout() {
         settleSwipe(0, cleanupSwipeStyles);
     };
 
+    const pageDirection = useMemo<MotionPageDirection>(() => {
+        const currentRoute = resolveMainSwipeRoute(location.pathname);
+        const previousRoute = previousRouteRef.current;
+
+        if (!currentRoute || !previousRoute || currentRoute === previousRoute) {
+            return 0;
+        }
+
+        return MAIN_SWIPE_ROUTES.indexOf(currentRoute) >
+            MAIN_SWIPE_ROUTES.indexOf(previousRoute)
+            ? 1
+            : -1;
+    }, [location.pathname]);
+
+    const pageEnterProps = useMemo(() => {
+        return getPageEnterProps({
+            direction: pageDirection,
+            isDesktop,
+            reducedMotion: prefersReducedMotion,
+        });
+    }, [isDesktop, pageDirection, prefersReducedMotion]);
+
+    useEffect(() => {
+        previousRouteRef.current = resolveMainSwipeRoute(location.pathname);
+    }, [location.pathname]);
+
     return (
         <ThemeProvider>
             <TooltipProvider>
@@ -349,7 +379,7 @@ export default function MainLayout() {
                 <div
                     ref={swipeContainerRef}
                     className={cn(
-                        "main-layout-content w-full h-full min-h-0 box-border",
+                        "main-layout-content w-full h-full min-h-0 box-border relative overflow-hidden",
                         isLogin && "sm:pl-18",
                     )}
                     onTouchStart={handleTouchStart}
@@ -357,7 +387,15 @@ export default function MainLayout() {
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchCancel}
                 >
-                    <Outlet />
+                    <motion.div
+                        key={location.pathname}
+                        className="h-full"
+                        initial={pageEnterProps.initial}
+                        animate={pageEnterProps.animate}
+                        transition={pageEnterProps.transition}
+                    >
+                        <Outlet />
+                    </motion.div>
                 </div>
                 <BillEditorProvider />
                 <BillInfoProvider />

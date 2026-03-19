@@ -36,6 +36,11 @@ import { usePreferenceStore } from "@/store/preference";
 import { useIsLogin, useUserStore } from "@/store/user";
 import { cn } from "@/utils";
 import { filterOrderedBillListByTimeRange } from "@/utils/filter";
+import {
+    getStageProps,
+    panelSpringTransition,
+    sharedElementTransition,
+} from "@/utils/motion";
 import { getStoredSyncEndpointType } from "@/utils/storage-runtime";
 import { denseDate } from "@/utils/time";
 
@@ -50,21 +55,6 @@ const PULL_SYNC_THRESHOLD = 86;
 const PULL_SYNC_MAX = 124;
 
 type PullSyncState = "idle" | "pulling" | "armed" | "syncing" | "settling";
-
-// Spring configuration for iOS-like feel
-const springTransition = {
-    type: "spring" as const,
-    stiffness: 300,
-    damping: 30,
-    mass: 1,
-};
-
-const avatarSharedTransition = {
-    type: "spring" as const,
-    stiffness: 180,
-    damping: 28,
-    mass: 1.15,
-};
 
 function HomeAvatarButton({
     avatarSource,
@@ -92,7 +82,7 @@ function HomeAvatarButton({
         >
             <motion.div
                 layoutId={layoutId}
-                transition={avatarSharedTransition}
+                transition={sharedElementTransition}
                 className="home-avatar-visual"
             >
                 <UserAvatarImage
@@ -188,6 +178,10 @@ export default function Page() {
         !manualSyncExiting &&
         !isExpanded &&
         (pullSyncState !== "idle" || pullDistance > 0);
+    const pullIndicatorProgress = Math.min(
+        1,
+        pullDistance / PULL_SYNC_THRESHOLD,
+    );
 
     const currentDateBills = useMemo(() => {
         const today = filterOrderedBillListByTimeRange(bills, [
@@ -645,7 +639,7 @@ export default function Page() {
     return (
         <div
             className={cn(
-                "home-page relative w-full h-full px-2 pt-2 pb-0 flex flex-col overflow-hidden page-show",
+                "home-page relative w-full h-full px-2 pt-2 pb-0 flex flex-col overflow-hidden",
                 isExpanded && "p-0 gap-0",
             )}
             onTouchEnd={handleTouchEnd}
@@ -661,14 +655,14 @@ export default function Page() {
                             opacity: 1,
                             height: "auto",
                             marginBottom: 14,
-                            transition: springTransition,
+                            transition: panelSpringTransition,
                         }}
                         exit={{
                             opacity: 0,
                             height: 0,
                             marginBottom: 0,
                             transition: {
-                                ...springTransition,
+                                ...panelSpringTransition,
                                 opacity: { duration: 0.2 },
                             },
                         }}
@@ -681,7 +675,14 @@ export default function Page() {
                             onTouchEnd={handleTouchEnd}
                             onTouchCancel={handleTouchCancel}
                         >
-                            <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[24px] p-4 text-foreground">
+                            <motion.div
+                                {...getStageProps({
+                                    index: 0,
+                                    reducedMotion: prefersReducedMotion,
+                                    y: 20,
+                                })}
+                                className="home-summary-card home-hero-panel relative overflow-hidden rounded-[24px] p-4 text-foreground"
+                            >
                                 <div className="home-hero-orb home-hero-orb-primary"></div>
                                 <div className="home-hero-orb home-hero-orb-secondary"></div>
                                 <div className="relative z-[1] flex h-full flex-col justify-between">
@@ -747,12 +748,18 @@ export default function Page() {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         </div>
 
                         {/* Budget Section */}
                         {budgets.length > 0 && (
-                            <div className="home-budget-shell">
+                            <motion.div
+                                {...getStageProps({
+                                    index: 1,
+                                    reducedMotion: prefersReducedMotion,
+                                })}
+                                className="home-budget-shell"
+                            >
                                 <div className="home-section-head">
                                     <div className="home-section-title">
                                         {t("home-budget-title")}
@@ -778,7 +785,7 @@ export default function Page() {
                                         );
                                     })}
                                 </div>
-                            </div>
+                            </motion.div>
                         )}
                     </motion.div>
                 )}
@@ -793,7 +800,10 @@ export default function Page() {
                     transform: `translate3d(0, ${Math.max(
                         0,
                         pullDistance * 0.72,
-                    )}px, 0)`,
+                    )}px, 0) scale(${0.92 + pullIndicatorProgress * 0.08})`,
+                    opacity: pullIndicatorVisible
+                        ? 0.7 + pullIndicatorProgress * 0.3
+                        : 0,
                 }}
             >
                 <div className="home-pull-sync-badge">
@@ -804,7 +814,7 @@ export default function Page() {
 
             <motion.div
                 layout
-                transition={springTransition}
+                transition={panelSpringTransition}
                 className={cn(
                     "home-ledger-stage flex-1 flex flex-col min-height-0 overflow-hidden",
                     isExpanded && "rounded-none !p-0 !gap-0",
@@ -814,7 +824,12 @@ export default function Page() {
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
             >
-                <div
+                <motion.div
+                    {...getStageProps({
+                        index: isExpanded ? 0 : 2,
+                        reducedMotion: prefersReducedMotion,
+                        y: 14,
+                    })}
                     className={cn(
                         "home-toolbar",
                         isExpanded &&
@@ -883,8 +898,12 @@ export default function Page() {
                             </button>
                         )}
                     </div>
-                </div>
-                <div
+                </motion.div>
+                <motion.div
+                    {...getStageProps({
+                        index: isExpanded ? 0 : 3,
+                        reducedMotion: prefersReducedMotion,
+                    })}
                     className={cn(
                         "home-ledger-shell flex-1 translate-0 overflow-hidden",
                         isExpanded && "rounded-none !p-0 border-none",
@@ -914,7 +933,7 @@ export default function Page() {
                             </div>
                         )}
                     </div>
-                </div>
+                </motion.div>
             </motion.div>
         </div>
     );

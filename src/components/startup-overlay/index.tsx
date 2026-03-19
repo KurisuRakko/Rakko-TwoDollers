@@ -2,23 +2,14 @@ import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import UserAvatarImage from "@/components/user-avatar";
 import { cn } from "@/utils";
+import {
+    panelSpringTransition,
+    sharedElementTransition,
+    surfaceTransition,
+} from "@/utils/motion";
 import type { StartupOverlayMode } from "./controller";
 import { setStartupOverlayAvatarRect } from "./controller";
 import "./style.css";
-
-const startupOverlaySpring = {
-    type: "spring" as const,
-    stiffness: 300,
-    damping: 30,
-    mass: 1,
-};
-
-const startupOverlayAvatarTransition = {
-    type: "spring" as const,
-    stiffness: 180,
-    damping: 28,
-    mass: 1.15,
-};
 
 export default function StartupOverlay({
     avatarSource,
@@ -192,7 +183,7 @@ export default function StartupOverlay({
                     reducedMotion
                         ? { duration: 0.16 }
                         : {
-                              ...startupOverlaySpring,
+                              ...panelSpringTransition,
                               opacity: { duration: 0.2 },
                           }
                 }
@@ -209,7 +200,7 @@ export default function StartupOverlay({
                         transition={
                             reducedMotion
                                 ? { duration: 0.16 }
-                                : startupOverlayAvatarTransition
+                                : sharedElementTransition
                         }
                         animate={avatarAnimate}
                         className="startup-overlay__avatar-shell"
@@ -225,7 +216,9 @@ export default function StartupOverlay({
                     className="startup-overlay__copy"
                     initial={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                     animate={copyAnimate}
-                    transition={{ duration: 0.18 }}
+                    transition={
+                        reducedMotion ? { duration: 0.16 } : surfaceTransition
+                    }
                 >
                     <div className="startup-overlay__name">{displayName}</div>
                     <div className="startup-overlay__status">{status}</div>
@@ -259,7 +252,7 @@ export default function StartupOverlay({
                             ? avatarAnimate.transition
                             : reducedMotion
                               ? { duration: 0.16 }
-                              : startupOverlayAvatarTransition
+                              : sharedElementTransition
                     }
                 >
                     <UserAvatarImage

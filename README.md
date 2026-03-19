@@ -2,215 +2,63 @@
 
 简体中文 | [English](./README_EN.md)
 
-> 你可能只需要一个记账软件。
+> 基于 Cent 二次开发的个人记账 PWA。
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-green.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![PWA](https://img.shields.io/badge/PWA-supported-blue.svg)]()
-[![GitHub Repo](https://img.shields.io/badge/data-storage_on_GitHub-black?logo=github)]()
+[![PWA](https://img.shields.io/badge/PWA-supported-blue.svg)](https://Rakko.cn)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-KurisuRakko%2FRakko--TwoDollers-black?logo=github)](https://github.com/KurisuRakko/Rakko-TwoDollers)
 
-Rakko-TwoDollars 是一个 **完全免费、开源的多人协作记账 Web App**，  
-基于 **GitHub 仓库** 实现数据同步与版本控制，无需服务器，即可实现跨平台实时同步。
+Rakko-TwoDollars 是一个开源记账 Web App，保留了 Cent「纯前端、数据自持、通过 GitHub 同步」的核心思路，并围绕我自己的使用习惯做了较大幅度的界面与交互改造。
 
-🔗 **官网**：[https://Rakko.cn](https://Rakko.cn)  
-💾 **作者**：KurisuRakko  
-📖 **项目名**：Rakko-TwoDollars  
+- 官网：[https://Rakko.cn](https://Rakko.cn)
+- 当前仓库：[https://github.com/KurisuRakko/Rakko-TwoDollers](https://github.com/KurisuRakko/Rakko-TwoDollers)
+- 上游项目 Cent：[https://github.com/glink25/Cent](https://github.com/glink25/Cent)
 
-> Rakko-TwoDollars
+## 项目说明
 
----
+- 本项目是基于 Cent 修改而来的派生作品，不是原项目官方分支。
+- 我重做了大量前端界面、交互流程和视觉表现。
+- 移除了部分我不需要的功能，也增加了适合当前使用场景的功能。
+- 针对启动流程、页面切换和局部交互补充了新的动画与过渡效果。
+- 当前功能与行为以本仓库代码和发布版本为准，不代表上游项目现状。
 
-## 📈 功能预览
+## 当前特性
 
-| 功能 | 截图 |
-|------|------|
-| 二级分类 & 标签管理 | ![分类示例](https://glink25.github.io/post-assets/mgucw881-cent-accountting.jpg) |
-| 自定义标签系统 | ![标签示例](https://glink25.github.io/post-assets/mgucw884-cent-tag-1.jpg) |
-| 统计与分析视图 | ![统计分析](https://glink25.github.io/post-assets/mgucw884-cent-stat.jpg) |
-| 预算管理 | ![预算视图](https://glink25.github.io/post-assets/mgucw884-cent-budget.jpg) |
-| GitHub 协作 | ![协作功能](https://glink25.github.io/post-assets/mgucw884-github-collaborator.jpg) |
+- 纯前端 PWA，可安装到桌面或移动设备使用
+- 支持本地离线使用，以及基于 GitHub Token 的数据同步
+- 支持多账本、分类、标签、预算、周期账单、多币种等记账能力
+- 提供搜索、统计分析、数据导入导出等常用工具
+- 针对移动端和桌面端都做了界面与动画体验优化
 
->  **最新更新**：Rakko-TwoDollars 现已支持多币种管理、周期记账、预算管理等核心功能。
-
----
-
-## ✨ 特性
-
-### 💾 数据完全自持
-账本数据保存在你的 GitHub/Gitee 私人仓库或 Web DAV 中，无需任何第三方服务器。通过 **GitHub Collaborator** 功能即可实现多人协作，**增量同步**机制只上传/下载变更数据，大幅缩短同步时间。
-
-### 💱 多币种 & 周期记账
-支持 30+ 种国际货币及自定义币种，实时汇率自动转换，适合出国旅行和跨境消费。为订阅服务、自动续费等创建**周期记账**模板，自动生成账单。
-
-### 📊 统计分析 & 可视化
-多维度筛选与趋势分析、自定义分析视图、预算管理与进度监控。
-
-### 🛠️ 更多功能
-- 📱 **PWA 支持**：可安装到桌面，像原生 App 一样使用
-- 📥 **账单导入**：支持微信/支付宝账单导入
-- 🏷️ **二级分类 & 标签**：自定义分类、标签分组、单选/多选、偏好币种
-- 📋 **快捷操作**：iOS 快捷指令、剪贴板记账、批量编辑
-- 🎨 **个性化**：键盘定制
-
-*...以及更多功能等你探索 ✨*
-
-## 🧠 核心原理
-
-Rakko-TwoDollars 是一个“纯前端”的 PWA 应用。  
-除 GitHub Token 同步外，Rakko-TwoDollars 不依赖任何后端服务。
-
-了解详情：[现在开始将Github作为数据库](https://glink25.github.io/post/%E7%8E%B0%E5%9C%A8%E5%BC%80%E5%A7%8B%E5%B0%86Github%E4%BD%9C%E4%B8%BA%E6%95%B0%E6%8D%AE%E5%BA%93/)
-
-### 🗂 数据结构
-
-- 每个账本（Book）即为一个 GitHub/Gitee 仓库。
-- 数据以 JSON 格式存储在仓库中，支持历史版本回滚。
-- 通过仓库名识别账本，实现多账本管理。
-
-### 🔁 增量同步机制
-
-Cent 内置一套自定义的增量同步策略，仅同步增量差异：  
-- 首次同步：完整下载数据。  
-- 后续同步：仅传输新增或修改部分。  
-- 支持离线缓存与断点续传。  
-
-该机制显著提升了同步效率，使得多人协作体验流畅自然。
-
-### 🧩 可扩展同步端点
-
-同步逻辑经过抽象封装，未来将支持：  
-- 自建服务器  
-- 网盘（如 Dropbox、OneDrive）  
-- 本地离线账本  
-
----
-
-
-## 🚀 部署与使用
-
-### 方式一：直接使用线上版本
-
-1. 打开 [https://cent.linkai.work](https://cent.linkai.work)
-2. 使用 GitHub 登录授权
-3. 新建账本（将自动创建一个仓库）
-4. 开始记账 🎉
-
-### 方式二：自行部署
-
-1. Fork 本仓库  
-2. 在 [Cloudflare Pages](https://pages.cloudflare.com/) 或任意静态托管平台部署  
-3. 在登录界面手动输入 GitHub Token 使用  
-4. 所有账本与数据均存储于你的 GitHub 仓库中  
-
-> 出于安全考虑，self-hosted 方式无法支持 Github/Gitee 一键登录，需要自行在Github/Gitee设置页面生成具有Repo读写权限的token，通过手动输入token功能使用。
-Cent使用Cloudflare Workers部署了一个线上鉴权服务，该服务只针对受信任的域名提供服务。如果需要快捷登录服务，可以参考这个项目[cent-github-backend](https://github.com/glink25/cent-github-backend)项目创建自己的后端服务，并自己申请对应平台的OAuth app。
-
----
-
-## 🧪 开发计划
-
-### 已完成
-- ✅ 增量同步核心实现  
-- ✅ 多人协作账本  
-- ✅ 多币种支持与汇率管理
-- ✅ 周期记账
-- ✅ 账单导入（支付宝/微信账单）
-- ✅ 标签系统升级
-- ✅ Web DAV 同步支持
-- ✅ 快捷指令集成
-- ✅ 批量编辑功能
-
-### 进行中
-- 🚧 自动测试体系
-- 🚧 更多同步端点（Dropbox / OneDrive）
-
-### 计划中
-- 📋 数据报表导出（PDF/Excel）
-- 📋 更多实用功能  
-
----
-
-## 💬 贡献与反馈
-
-Cent 欢迎所有开发者与用户参与贡献，提交代码前请参考[贡献指南](docs/contributing/zh.md)：
-
-> QQ交流群：861180883
+## 本地开发
 
 ```bash
-# 克隆项目
-git clone https://github.com/glink25/Cent.git
-
-# 安装依赖
 pnpm install
-
-# 本地运行
 pnpm dev
-
-# 格式校验
 pnpm lint
 ```
 
-## 📜 许可证
+## 署名与许可
 
-本项目采用 Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
- 协议。
- - 允许共享、改编与再发布
- - 必须署名原作者
- - 禁止商业使用
- - 派生作品须使用相同许可协议
+Rakko-TwoDollars 包含并改编自以下开源项目：
 
- ---
+- **Cent**
+- 原作者：**glink25**
+- 原仓库：[https://github.com/glink25/Cent](https://github.com/glink25/Cent)
+- 原始许可：**Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**
 
+为满足 CC BY-NC-SA 4.0 的署名与改动说明要求，这里明确说明：
 
-## ☕️ Buy Me a Coffee
+- 本仓库是基于 Cent 修改而来的派生作品
+- 我对原项目进行了实质性修改，包括但不限于前端重构、功能删改、视觉更新与动画优化
+- 本仓库继续以 **CC BY-NC-SA 4.0** 协议发布
+- 原作者与上游项目不对本仓库中的改动、功能或发布内容作任何背书
 
-感谢您对本项目的支持！Cent目前仅由单人支持开发，您的捐赠将用于维护和持续开发。
+你可以在遵守原协议的前提下分享和改编本项目，但需要：
 
-<details>
-<summary>点击查看</summary>
+- 保留对原项目和当前派生项目的署名
+- 标明你做过的修改
+- 不得用于商业用途
+- 派生作品继续使用相同许可协议
 
-### 💰 支付宝 (Alipay)
-
-
-<img src="https://glink25.github.io/post-assets/sponsor-solana.jpg" width="50%" alt="支付宝收款码">
-
----
-
-### 🌐 Solana (SOL)
-
-**钱包地址:**
-
-`vEzM9jmxChx2AoMMDpHARHZcUjmUCHdBShwF9eJYGEg`
-
-**二维码:**
-
-<img src="https://glink25.github.io/post-assets/sponsor-alipay.jpg" width="50%" alt="solana">
-
----
-</details>
-
-
----
-
-## 🙏 感谢墙 / Donor Wall
-
-感谢所有支持 Cent 项目的捐赠者！您的支持是我持续开发的动力。  
-Thank you to all donors who support the Cent project! Your support is the driving force behind my continued development.
-
-<div align="center">
-
-<table>
-<tr>
-<td align="center">
-  <a href="">
-    <img src="https://api.dicebear.com/7.x/initials/svg?seed=一" width="60" height="60" alt="" style="border-radius: 50%;"/>
-    <br />
-    <sub><b>一**户</b></sub>
-  </a>
-</td>
-</tr>
-</table>
-
-</div>
-
----
+完整许可文本见 [LICENSE](./LICENSE) 或 [CC BY-NC-SA 4.0 官方说明](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)。
