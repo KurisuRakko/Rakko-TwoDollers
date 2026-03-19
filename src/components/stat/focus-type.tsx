@@ -3,7 +3,9 @@ import { useId } from "react";
 import { useIntl } from "@/locale";
 import { cn } from "@/utils";
 import {
+    microHover,
     microInteractionTransition,
+    microPress,
     sharedElementTransition,
 } from "@/utils/motion";
 import Money from "../money";
@@ -29,7 +31,8 @@ export function FocusTypeSelector({
             <div className="stat-focus-toggle flex items-center overflow-hidden divide-x">
                 <motion.button
                     type="button"
-                    whileTap={{ scale: prefersReducedMotion ? 1 : 0.98 }}
+                    whileHover={prefersReducedMotion ? undefined : microHover}
+                    whileTap={prefersReducedMotion ? undefined : microPress}
                     transition={microInteractionTransition}
                     className={cn(
                         btnClass,
@@ -60,7 +63,8 @@ export function FocusTypeSelector({
                 </motion.button>
                 <motion.button
                     type="button"
-                    whileTap={{ scale: prefersReducedMotion ? 1 : 0.98 }}
+                    whileHover={prefersReducedMotion ? undefined : microHover}
+                    whileTap={prefersReducedMotion ? undefined : microPress}
                     transition={microInteractionTransition}
                     className={cn(
                         btnClass,
@@ -88,7 +92,8 @@ export function FocusTypeSelector({
                 </motion.button>
                 <motion.button
                     type="button"
-                    whileTap={{ scale: prefersReducedMotion ? 1 : 0.98 }}
+                    whileHover={prefersReducedMotion ? undefined : microHover}
+                    whileTap={prefersReducedMotion ? undefined : microPress}
                     transition={microInteractionTransition}
                     className={cn(
                         btnClass,

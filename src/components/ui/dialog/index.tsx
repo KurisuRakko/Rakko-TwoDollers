@@ -32,17 +32,14 @@ const getAnimationVariants = ({
             initial: {
                 opacity: 0,
                 transform: "translate3d(0, 0, 0)",
-                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
             },
             animate: {
                 opacity: 1,
                 transform: "translate3d(0, 0, 0)",
-                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0.44)",
             },
             exit: {
                 opacity: 0,
                 transform: "translate3d(0, 0, 0)",
-                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
             },
         };
     }
@@ -51,34 +48,31 @@ const getAnimationVariants = ({
         return {
             initial: {
                 opacity: 0,
-                transform: "translate3d(0, 18px, 0) scale(0.97)",
-                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
+                transform: "translate3d(0, 14px, 0) scale(0.982)",
             },
             animate: {
                 opacity: 1,
                 transform: "translate3d(0, 0, 0) scale(1)",
-                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0.5)",
             },
             exit: {
                 opacity: 0,
-                transform: "translate3d(0, 12px, 0) scale(0.985)",
-                boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
+                transform: "translate3d(0, 10px, 0) scale(0.99)",
             },
         };
     }
 
     return {
         initial: {
-            transform: "translate3d(100vw, 0, 0)",
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
+            opacity: 0,
+            transform: "translate3d(24px, 0, 0)",
         },
         animate: {
+            opacity: 1,
             transform: "translate3d(0, 0, 0)",
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0.5)",
         },
         exit: {
-            transform: "translate3d(100vw, 0, 0)",
-            boxShadow: "0 0 0 150vmax rgba(0, 0, 0, 0)",
+            opacity: 0,
+            transform: "translate3d(18px, 0, 0)",
         },
     };
 };
@@ -301,7 +295,6 @@ function DialogContent({
     const handleDragEnd = useCallback(
         (event: PointerEvent, info: PanInfo) => {
             const { offset, velocity } = info;
-            console.log("drag stopped");
             // ... (拖拽结束逻辑与原先保持一致) ...
 
             const dismissThreshold = 200;
@@ -370,8 +363,6 @@ function DialogContent({
             onProgress(offset, { fullWidth }) {
                 const offsetX = Math.max(0, Math.min(fullWidth, offset.x));
                 root.style.transform = `translate3d(${offsetX}px,0,0)`;
-                const p = offsetX / fullWidth;
-                root.style.boxShadow = `0 0 0 150vmax rgba(0, 0, 0, ${0.5 - 0.5 * p})`;
             },
             onEnd: (offset, { fullWidth }) => {
                 const offsetX = Math.max(0, Math.min(fullWidth, offset.x));
@@ -386,7 +377,6 @@ function DialogContent({
                         [
                             {
                                 transform: "translate3d(100%,0,0)",
-                                boxShadow: "0 0 0 150vmax rgba(0,0,0,0)",
                             },
                         ],
                         {
@@ -409,7 +399,6 @@ function DialogContent({
                         [
                             {
                                 transform: "translate3d(0,0,0)",
-                                boxShadow: "0 0 0 150vmax rgba(0,0,0,0.5)",
                             },
                         ],
                         {
@@ -442,7 +431,7 @@ function DialogContent({
             // 执行“进入”动画
             Array.from(Object.entries(currentVariant.animate)).forEach(
                 ([prop, value]) => {
-                    contentRef.current!.style[prop as any] = value;
+                    contentRef.current!.style[prop as any] = String(value);
                 },
             );
             contentRef.current

@@ -1,7 +1,12 @@
 import dayjs from "dayjs";
-import { motion, useReducedMotion } from "motion/react";
+import {
+    AnimatePresence,
+    LayoutGroup,
+    motion,
+    useReducedMotion,
+} from "motion/react";
 import { Switch } from "radix-ui";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useShallow } from "zustand/shallow";
 import { StorageDeferredAPI } from "@/api/storage";
@@ -37,12 +42,22 @@ import { useIntl } from "@/locale";
 import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { cn } from "@/utils";
-import { getStageProps } from "@/utils/motion";
+import {
+    getStageProps,
+    reducedStateSwapVariants,
+    sharedElementTransition,
+    stateSwapVariants,
+    surfaceTransition,
+} from "@/utils/motion";
 
 export default function Page() {
     const t = useIntl();
     const { id } = useParams();
     const prefersReducedMotion = Boolean(useReducedMotion());
+    const filterLayoutId = useId();
+    const statStateVariants = prefersReducedMotion
+        ? reducedStateSwapVariants
+        : stateSwapVariants;
 
     const { bills } = useLedgerStore(
         useShallow((state) => ({
@@ -269,6 +284,8 @@ export default function Page() {
     };
 
     const { allCurrencies, baseCurrency } = useCurrency();
+    const highestExpenseBill = dataSources.highestExpenseBill;
+    const highestIncomeBill = dataSources.highestIncomeBill;
 
     return (
         <div className="stat-page w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex flex-col items-center justify-start sm:justify-center gap-4 overflow-hidden">
@@ -282,38 +299,51 @@ export default function Page() {
                     className="stat-top-shell w-full flex flex-col gap-3"
                 >
                     <div className="stat-filter-row w-full flex">
-                        <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hidden">
-                            {allFilterViews.map((filter) => {
-                                const displayCurrency =
-                                    filter.displayCurrency === baseCurrency.id
-                                        ? undefined
-                                        : allCurrencies.find(
-                                              (v) =>
-                                                  v.id ===
-                                                  filter.displayCurrency,
-                                          );
-                                return (
-                                    <Button
-                                        key={filter.id}
-                                        size={"sm"}
-                                        className={cn(
-                                            "stat-filter-chip",
-                                            filterViewId !== filter.id
-                                                ? "text-primary/50"
-                                                : "relative after:absolute after:bottom-[2px] after:left-3 after:w-[calc(100%-24px)] after:h-[2px] after:rounded-full after:bg-primary/20",
-                                        )}
-                                        variant="ghost"
-                                        onClick={() => {
-                                            setSliceId(undefined);
-                                            setFilterViewId(filter.id);
-                                        }}
-                                    >
-                                        {displayCurrency?.symbol}
-                                        {filter.name}
-                                    </Button>
-                                );
-                            })}
-                        </div>
+                        <LayoutGroup id={filterLayoutId}>
+                            <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hidden">
+                                {allFilterViews.map((filter) => {
+                                    const displayCurrency =
+                                        filter.displayCurrency ===
+                                        baseCurrency.id
+                                            ? undefined
+                                            : allCurrencies.find(
+                                                  (v) =>
+                                                      v.id ===
+                                                      filter.displayCurrency,
+                                              );
+                                    const isActive = filterViewId === filter.id;
+                                    return (
+                                        <Button
+                                            key={filter.id}
+                                            size={"sm"}
+                                            className={cn(
+                                                "stat-filter-chip relative",
+                                                !isActive && "text-primary/50",
+                                            )}
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setSliceId(undefined);
+                                                setFilterViewId(filter.id);
+                                            }}
+                                        >
+                                            {isActive && (
+                                                <motion.span
+                                                    layoutId="stat-filter-indicator"
+                                                    transition={
+                                                        sharedElementTransition
+                                                    }
+                                                    className="stat-chip-indicator"
+                                                />
+                                            )}
+                                            <span className="relative z-[1] inline-flex items-center gap-1">
+                                                {displayCurrency?.symbol}
+                                                {filter.name}
+                                            </span>
+                                        </Button>
+                                    );
+                                })}
+                            </div>
+                        </LayoutGroup>
                         <div className="stat-filter-actions">
                             <Button
                                 variant="ghost"
@@ -379,146 +409,170 @@ export default function Page() {
             <div className="stat-scroll-shell w-full px-2 flex-1 flex justify-center overflow-y-auto">
                 <div className="stat-content-shell w-full max-w-[600px] flex flex-col items-center gap-4 relative">
                     {Part}
-                    {hasFiltered && tagStructure.length > 0 && (
-                        <motion.div
-                            {...getStageProps({
-                                index: 5,
-                                reducedMotion: prefersReducedMotion,
-                                y: 14,
-                            })}
-                            className="stat-card stat-data-card w-full flex flex-col"
-                        >
-                            <h2 className="font-medium text-lg my-3 text-center">
-                                {t("tag-details")}
-                            </h2>
-                            <div className="table w-full border-collapse">
-                                <div className="table-row-group divide-y">
-                                    {tagStructure.map((struct) => {
-                                        const index =
-                                            FocusTypes.indexOf(focusType);
-                                        const money = [
-                                            struct.income,
-                                            struct.expense,
-                                            struct.income - struct.expense,
-                                        ][index];
-                                        const total = totalMoneys[index];
-                                        return (
-                                            <TagItem
-                                                key={struct.id}
-                                                name={struct.name}
-                                                money={money}
-                                                total={total}
-                                                type={focusType}
-                                                onClick={() => {
-                                                    seeDetails({
-                                                        tags: [struct.id],
-                                                    });
-                                                }}
-                                            ></TagItem>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                    {hasFiltered ? (
-                        <>
+                    <AnimatePresence mode="wait" initial={false}>
+                        {hasFiltered ? (
                             <motion.div
-                                {...getStageProps({
-                                    index: 6,
-                                    reducedMotion: prefersReducedMotion,
-                                    y: 14,
-                                })}
-                                className="w-full"
+                                key="stat-data-stack"
+                                variants={statStateVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={surfaceTransition}
+                                className="w-full flex flex-col gap-4"
                             >
-                                <AnalysisCloud
-                                    bills={
-                                        focusType === "expense"
-                                            ? filteredExpenseBills
-                                            : focusType === "income"
-                                              ? filteredIncomeBills
-                                              : filtered
-                                    }
-                                />
-                            </motion.div>
-                            {analysis && (
+                                {tagStructure.length > 0 && (
+                                    <motion.div
+                                        {...getStageProps({
+                                            index: 5,
+                                            reducedMotion: prefersReducedMotion,
+                                            y: 14,
+                                        })}
+                                        className="stat-card stat-data-card w-full flex flex-col"
+                                    >
+                                        <h2 className="font-medium text-lg my-3 text-center">
+                                            {t("tag-details")}
+                                        </h2>
+                                        <div className="table w-full border-collapse">
+                                            <div className="table-row-group divide-y">
+                                                {tagStructure.map((struct) => {
+                                                    const index =
+                                                        FocusTypes.indexOf(
+                                                            focusType,
+                                                        );
+                                                    const money = [
+                                                        struct.income,
+                                                        struct.expense,
+                                                        struct.income -
+                                                            struct.expense,
+                                                    ][index];
+                                                    const total =
+                                                        totalMoneys[index];
+                                                    return (
+                                                        <TagItem
+                                                            key={struct.id}
+                                                            name={struct.name}
+                                                            money={money}
+                                                            total={total}
+                                                            type={focusType}
+                                                            onClick={() => {
+                                                                seeDetails({
+                                                                    tags: [
+                                                                        struct.id,
+                                                                    ],
+                                                                });
+                                                            }}
+                                                        ></TagItem>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
                                 <motion.div
                                     {...getStageProps({
-                                        index: 7,
+                                        index: 6,
                                         reducedMotion: prefersReducedMotion,
                                         y: 14,
                                     })}
-                                    className="stat-card stat-data-card w-full flex flex-col"
+                                    className="w-full"
                                 >
-                                    <h2 className="font-medium text-lg my-3 text-center">
-                                        {t("analysis")}
-                                    </h2>
-                                    <AnalysisDetail
-                                        analysis={analysis}
-                                        type={focusType}
-                                        unit={analysisUnit}
+                                    <AnalysisCloud
+                                        bills={
+                                            focusType === "expense"
+                                                ? filteredExpenseBills
+                                                : focusType === "income"
+                                                  ? filteredIncomeBills
+                                                  : filtered
+                                        }
                                     />
                                 </motion.div>
-                            )}
-                        </>
-                    ) : (
-                        <motion.div
-                            {...getStageProps({
-                                index: 6,
-                                reducedMotion: prefersReducedMotion,
-                                y: 14,
-                            })}
-                            className="stat-card stat-data-card stat-empty-summary w-full flex flex-col"
-                        >
-                            <div className="stat-empty-title">
-                                {t("analysis")}
-                            </div>
-                            <div className="stat-empty-copy">
-                                {t("nothing-here-add-one-bill")}
-                            </div>
-                        </motion.div>
-                    )}
-                    {hasFiltered && (
-                        <motion.div
-                            {...getStageProps({
-                                index: 8,
-                                reducedMotion: prefersReducedMotion,
-                                y: 14,
-                            })}
-                            className="w-full flex flex-col gap-4"
-                        >
-                            {dataSources.highestExpenseBill && (
-                                <div className="stat-card stat-inline-card">
-                                    {t("highest-expense")}:
-                                    <BillItem
-                                        className="w-full"
-                                        bill={dataSources.highestExpenseBill}
-                                        showTime
-                                        onClick={() =>
-                                            showBillInfo(
-                                                dataSources.highestExpenseBill!,
-                                            )
-                                        }
-                                    />
-                                </div>
-                            )}
-                            {dataSources.highestIncomeBill && (
-                                <div className="stat-card stat-inline-card">
-                                    {t("highest-income")}:
-                                    <BillItem
-                                        className="w-full"
-                                        bill={dataSources.highestIncomeBill}
-                                        showTime
-                                        onClick={() =>
-                                            showBillInfo(
-                                                dataSources.highestIncomeBill!,
-                                            )
-                                        }
-                                    />
-                                </div>
-                            )}
-                        </motion.div>
-                    )}
+                                {analysis && (
+                                    <motion.div
+                                        {...getStageProps({
+                                            index: 7,
+                                            reducedMotion: prefersReducedMotion,
+                                            y: 14,
+                                        })}
+                                        className="stat-card stat-data-card w-full flex flex-col"
+                                    >
+                                        <h2 className="font-medium text-lg my-3 text-center">
+                                            {t("analysis")}
+                                        </h2>
+                                        <AnalysisDetail
+                                            analysis={analysis}
+                                            type={focusType}
+                                            unit={analysisUnit}
+                                        />
+                                    </motion.div>
+                                )}
+                                <motion.div
+                                    {...getStageProps({
+                                        index: 8,
+                                        reducedMotion: prefersReducedMotion,
+                                        y: 14,
+                                    })}
+                                    className="w-full flex flex-col gap-4"
+                                >
+                                    {highestExpenseBill && (
+                                        <div className="stat-card stat-inline-card">
+                                            {t("highest-expense")}:
+                                            <BillItem
+                                                className="w-full"
+                                                bill={highestExpenseBill}
+                                                showTime
+                                                onClick={() =>
+                                                    showBillInfo(
+                                                        highestExpenseBill,
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                    {highestIncomeBill && (
+                                        <div className="stat-card stat-inline-card">
+                                            {t("highest-income")}:
+                                            <BillItem
+                                                className="w-full"
+                                                bill={highestIncomeBill}
+                                                showTime
+                                                onClick={() =>
+                                                    showBillInfo(
+                                                        highestIncomeBill,
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                </motion.div>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="stat-empty-stack"
+                                variants={statStateVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={surfaceTransition}
+                                className="w-full"
+                            >
+                                <motion.div
+                                    {...getStageProps({
+                                        index: 6,
+                                        reducedMotion: prefersReducedMotion,
+                                        y: 14,
+                                    })}
+                                    className="stat-card stat-data-card stat-empty-summary w-full flex flex-col"
+                                >
+                                    <div className="stat-empty-title">
+                                        {t("analysis")}
+                                    </div>
+                                    <div className="stat-empty-copy">
+                                        {t("nothing-here-add-one-bill")}
+                                    </div>
+                                </motion.div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                     <motion.div
                         {...getStageProps({
                             index: 9,

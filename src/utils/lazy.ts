@@ -2,7 +2,10 @@ import { lazy } from "react";
 
 type PreloadMode = "immediate" | "idle" | false;
 
-const schedulePreload = (task: () => void, mode: Exclude<PreloadMode, false>) => {
+const schedulePreload = (
+    task: () => void,
+    mode: Exclude<PreloadMode, false>,
+) => {
     if (typeof window === "undefined") {
         task();
         return;

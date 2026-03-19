@@ -3,7 +3,9 @@ import { useId, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router";
 import {
+    microHover,
     microInteractionTransition,
+    microPress,
     sharedElementTransition,
 } from "@/utils/motion";
 import ComplexAddButton from "./add-button";
@@ -27,8 +29,6 @@ export default function Navigation({ hidden }: { hidden?: boolean }) {
         navigate(`${value}`);
     };
 
-    const tapScale = prefersReducedMotion ? 1 : 0.96;
-
     return createPortal(
         <LayoutGroup id={layoutGroupId}>
             <div
@@ -40,7 +40,8 @@ export default function Navigation({ hidden }: { hidden?: boolean }) {
             >
                 <motion.button
                     type="button"
-                    whileTap={{ scale: tapScale }}
+                    whileHover={prefersReducedMotion ? undefined : microHover}
+                    whileTap={prefersReducedMotion ? undefined : microPress}
                     transition={microInteractionTransition}
                     className={`nav-flat-button w-14 h-14 sm:w-10 sm:h-10 cursor-pointer flex items-center justify-center rounded-full m-2 ${
                         currentTab === "/search" ? "nav-flat-button-active" : ""
@@ -54,15 +55,26 @@ export default function Navigation({ hidden }: { hidden?: boolean }) {
                             className="nav-active-indicator"
                         />
                     )}
-                    <span className="nav-icon">
+                    <motion.span
+                        className="nav-icon"
+                        animate={
+                            currentTab === "/search"
+                                ? { y: -1, scale: 1.06 }
+                                : { y: 0, scale: 1 }
+                        }
+                        transition={microInteractionTransition}
+                    >
                         <i className="icon-[mdi--search] size-5"></i>
-                    </span>
+                    </motion.span>
                 </motion.button>
 
                 <div className="nav-flat-group flex items-center rounded-full w-56 h-14 m-2 sm:flex-col sm:w-10 sm:h-50 sm:-order-1">
                     <motion.button
                         type="button"
-                        whileTap={{ scale: tapScale }}
+                        whileHover={
+                            prefersReducedMotion ? undefined : microHover
+                        }
+                        whileTap={prefersReducedMotion ? undefined : microPress}
                         transition={microInteractionTransition}
                         className={`nav-flat-tab flex-1 h-full w-full flex items-center justify-center cursor-pointer ${
                             currentTab === "/" ? "nav-flat-tab-active" : ""
@@ -76,9 +88,17 @@ export default function Navigation({ hidden }: { hidden?: boolean }) {
                                 className="nav-active-indicator"
                             />
                         )}
-                        <span className="nav-icon">
+                        <motion.span
+                            className="nav-icon"
+                            animate={
+                                currentTab === "/"
+                                    ? { y: -1, scale: 1.06 }
+                                    : { y: 0, scale: 1 }
+                            }
+                            transition={microInteractionTransition}
+                        >
                             <i className="icon-[mdi--format-align-center] size-5"></i>
-                        </span>
+                        </motion.span>
                     </motion.button>
 
                     <ComplexAddButton
@@ -90,7 +110,10 @@ export default function Navigation({ hidden }: { hidden?: boolean }) {
 
                     <motion.button
                         type="button"
-                        whileTap={{ scale: tapScale }}
+                        whileHover={
+                            prefersReducedMotion ? undefined : microHover
+                        }
+                        whileTap={prefersReducedMotion ? undefined : microPress}
                         transition={microInteractionTransition}
                         className={`nav-flat-tab flex-1 h-full w-full flex items-center justify-center cursor-pointer ${
                             currentTab === "/stat" ? "nav-flat-tab-active" : ""
@@ -104,24 +127,44 @@ export default function Navigation({ hidden }: { hidden?: boolean }) {
                                 className="nav-active-indicator"
                             />
                         )}
-                        <span className="nav-icon">
+                        <motion.span
+                            className="nav-icon"
+                            animate={
+                                currentTab === "/stat"
+                                    ? { y: -1, scale: 1.06 }
+                                    : { y: 0, scale: 1 }
+                            }
+                            transition={microInteractionTransition}
+                        >
                             <i className="icon-[mdi--chart-box-outline] size-5"></i>
-                        </span>
+                        </motion.span>
                     </motion.button>
                 </div>
 
                 <motion.button
                     type="button"
-                    whileTap={{ scale: tapScale }}
+                    whileHover={prefersReducedMotion ? undefined : microHover}
+                    whileTap={prefersReducedMotion ? undefined : microPress}
                     transition={microInteractionTransition}
                     className="nav-flat-button w-14 h-14 sm:w-10 sm:h-10 cursor-pointer flex items-center justify-center rounded-full m-2"
                     onClick={() => {
                         showSettings();
                     }}
                 >
-                    <span className="nav-icon">
+                    <motion.span
+                        className="nav-icon"
+                        whileHover={
+                            prefersReducedMotion
+                                ? undefined
+                                : {
+                                      rotate: 4,
+                                      scale: 1.04,
+                                      transition: microInteractionTransition,
+                                  }
+                        }
+                    >
                         <i className="icon-[mdi--more-horiz] size-5"></i>
-                    </span>
+                    </motion.span>
                 </motion.button>
             </div>
         </LayoutGroup>,

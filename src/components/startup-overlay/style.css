@@ -15,8 +15,8 @@
 	background:
 		radial-gradient(circle at top, rgb(255 255 255 / 0.18), transparent 55%),
 		rgb(255 255 255 / 0.5);
-	backdrop-filter: blur(22px) saturate(1.14);
-	-webkit-backdrop-filter: blur(22px) saturate(1.14);
+	backdrop-filter: blur(14px) saturate(1.08);
+	-webkit-backdrop-filter: blur(14px) saturate(1.08);
 }
 
 .dark .startup-overlay__backdrop {
@@ -89,7 +89,7 @@
 	align-items: center;
 	gap: 12px;
 	text-align: center;
-	will-change: transform, opacity, filter;
+	will-change: transform, opacity;
 }
 
 .startup-overlay__name {
@@ -129,7 +129,7 @@
 	border-radius: 999px;
 	border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
 	transform: translate(-50%, -50%);
-	animation: startup-overlay-ring 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+	animation: startup-overlay-ring 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
 .startup-overlay__spinner span {
@@ -139,7 +139,7 @@
 	border-radius: 999px;
 	background: color-mix(in srgb, var(--foreground) 74%, transparent);
 	opacity: 0.26;
-	animation: startup-overlay-spinner 1.08s ease-in-out infinite;
+	animation: startup-overlay-spinner 1.32s ease-in-out infinite;
 }
 
 .startup-overlay__spinner span:nth-child(2) {

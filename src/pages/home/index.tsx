@@ -39,7 +39,13 @@ import { filterOrderedBillListByTimeRange } from "@/utils/filter";
 import {
     getStageProps,
     panelSpringTransition,
+    reducedSectionEnterVariants,
+    reducedStateSurfaceVariants,
+    sectionEnterVariants,
     sharedElementTransition,
+    staggerChildren,
+    stateSurfaceVariants,
+    surfaceTransition,
 } from "@/utils/motion";
 import { getStoredSyncEndpointType } from "@/utils/storage-runtime";
 import { denseDate } from "@/utils/time";
@@ -182,6 +188,34 @@ export default function Page() {
         1,
         pullDistance / PULL_SYNC_THRESHOLD,
     );
+    const stagedContentVariants = prefersReducedMotion
+        ? {
+              initial: {},
+              animate: {
+                  transition: staggerChildren({
+                      delayChildren: 0,
+                      staggerStep: 0,
+                  }),
+              },
+          }
+        : {
+              initial: {},
+              animate: {
+                  transition: staggerChildren({
+                      delayChildren: 0.04,
+                      staggerStep: 0.05,
+                  }),
+              },
+          };
+    const stagedItemVariants = prefersReducedMotion
+        ? reducedSectionEnterVariants
+        : sectionEnterVariants;
+    const ledgerStateVariants = prefersReducedMotion
+        ? reducedStateSurfaceVariants
+        : stateSurfaceVariants;
+    const ledgerStateTransition = prefersReducedMotion
+        ? { duration: 0.16 }
+        : surfaceTransition;
 
     const currentDateBills = useMemo(() => {
         const today = filterOrderedBillListByTimeRange(bills, [
@@ -685,8 +719,16 @@ export default function Page() {
                             >
                                 <div className="home-hero-orb home-hero-orb-primary"></div>
                                 <div className="home-hero-orb home-hero-orb-secondary"></div>
-                                <div className="relative z-[1] flex h-full flex-col justify-between">
-                                    <div className="home-hero-head flex items-start justify-between gap-1">
+                                <motion.div
+                                    className="relative z-[1] flex h-full flex-col justify-between"
+                                    variants={stagedContentVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                >
+                                    <motion.div
+                                        variants={stagedItemVariants}
+                                        className="home-hero-head flex items-start justify-between gap-1"
+                                    >
                                         <div className="flex flex-col gap-1">
                                             <span className="home-kicker">
                                                 {denseDate(currentDate)}
@@ -738,16 +780,22 @@ export default function Page() {
                                                 />
                                             )}
                                         </div>
-                                    </div>
-                                    <div className="home-hero-main flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                                        <div className="home-hero-value-stack flex flex-col gap-1">
+                                    </motion.div>
+                                    <motion.div
+                                        variants={stagedItemVariants}
+                                        className="home-hero-main flex flex-col gap-2 md:flex-row md:items-end md:justify-between"
+                                    >
+                                        <motion.div
+                                            variants={stagedItemVariants}
+                                            className="home-hero-value-stack flex flex-col gap-1"
+                                        >
                                             <AnimatedNumber
                                                 value={currentDateAmount}
                                                 className="home-hero-amount font-bold"
                                             />
-                                        </div>
-                                    </div>
-                                </div>
+                                        </motion.div>
+                                    </motion.div>
+                                </motion.div>
                             </motion.div>
                         </div>
 
@@ -775,13 +823,34 @@ export default function Page() {
                                     ref={budgetContainer}
                                     className="w-full flex overflow-x-auto gap-3 scrollbar-hidden snap-mandatory snap-x"
                                 >
-                                    {budgets.map((budget) => {
+                                    {budgets.map((budget, index) => {
                                         return (
-                                            <BudgetCard
-                                                className="home-budget-card flex-shrink-0 snap-start"
+                                            <motion.div
                                                 key={budget.id}
-                                                budget={budget}
-                                            />
+                                                animate={
+                                                    prefersReducedMotion
+                                                        ? undefined
+                                                        : index ===
+                                                            curBudgetIndex
+                                                          ? {
+                                                                opacity: 1,
+                                                                scale: 1,
+                                                                y: 0,
+                                                            }
+                                                          : {
+                                                                opacity: 0.86,
+                                                                scale: 0.986,
+                                                                y: 2,
+                                                            }
+                                                }
+                                                transition={surfaceTransition}
+                                                className="flex-shrink-0 snap-start"
+                                            >
+                                                <BudgetCard
+                                                    className="home-budget-card"
+                                                    budget={budget}
+                                                />
+                                            </motion.div>
                                         );
                                     })}
                                 </div>
@@ -825,6 +894,7 @@ export default function Page() {
                 onTouchCancel={handleTouchCancel}
             >
                 <motion.div
+                    layout
                     {...getStageProps({
                         index: isExpanded ? 0 : 2,
                         reducedMotion: prefersReducedMotion,
@@ -910,28 +980,48 @@ export default function Page() {
                     )}
                 >
                     <div className="w-full h-full">
-                        {bills.length > 0 ? (
-                            <Ledger
-                                ref={ledgerRef}
-                                bills={bills}
-                                className={cn(
-                                    bills.length > 0 &&
-                                        "relative home-ledger-list",
-                                )}
-                                enableDivideAsOrdered
-                                showTime
-                                onItemShow={onItemShow}
-                                onVisibleDateChange={setCurrentDate}
-                                onDateClick={onDateClick}
-                                onScroll={onScroll}
-                                presence={presence}
-                                showAssets={showAssets}
-                            />
-                        ) : (
-                            <div className="home-empty-state text-xs p-4 text-center">
-                                {t("nothing-here-add-one-bill")}
-                            </div>
-                        )}
+                        <AnimatePresence mode="wait" initial={false}>
+                            {bills.length > 0 ? (
+                                <motion.div
+                                    key="home-ledger-list"
+                                    variants={ledgerStateVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                    transition={ledgerStateTransition}
+                                    className="h-full"
+                                >
+                                    <Ledger
+                                        ref={ledgerRef}
+                                        bills={bills}
+                                        className={cn(
+                                            bills.length > 0 &&
+                                                "relative home-ledger-list",
+                                        )}
+                                        enableDivideAsOrdered
+                                        showTime
+                                        onItemShow={onItemShow}
+                                        onVisibleDateChange={setCurrentDate}
+                                        onDateClick={onDateClick}
+                                        onScroll={onScroll}
+                                        presence={presence}
+                                        showAssets={showAssets}
+                                    />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="home-ledger-empty"
+                                    variants={ledgerStateVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                    transition={ledgerStateTransition}
+                                    className="home-empty-state text-xs p-4 text-center"
+                                >
+                                    {t("nothing-here-add-one-bill")}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </motion.div>
             </motion.div>

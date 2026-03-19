@@ -1,6 +1,12 @@
 import type { ECElementEvent } from "echarts/core";
-import { motion, useReducedMotion } from "motion/react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+    type ComponentProps,
+    useCallback,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import useCategory from "@/hooks/use-category";
 import { useCreators } from "@/hooks/use-creator";
 import { useCurrency } from "@/hooks/use-currency";
@@ -14,7 +20,12 @@ import {
     structureOption,
     userTrendOption,
 } from "@/utils/charts";
-import { getStageProps } from "@/utils/motion";
+import {
+    getStageProps,
+    reducedStateSwapVariants,
+    stateSwapVariants,
+    surfaceTransition,
+} from "@/utils/motion";
 import CategoryIcon from "../category/icon";
 import Chart, { type ChartInstance } from "../chart";
 import { Button } from "../ui/button";
@@ -22,6 +33,8 @@ import CalendarDetail from "./calendar-detail";
 import type { ViewType } from "./date-slice";
 import type { FocusType } from "./focus-type";
 import { StaticItem } from "./static-item";
+
+type CalendarDataset = ComponentProps<typeof CalendarDetail>["dataset"];
 
 export function useChartPart({
     viewType,
@@ -70,9 +83,9 @@ export function useChartPart({
                                 ? { ...cate, parent: { ...cate } }
                                 : { id, name: id, parent: { id, name: id } };
                         }
-                        const parent = categories.find(
-                            (c) => c.id === cate.parent,
-                        )!;
+                        const parent =
+                            categories.find((c) => c.id === cate.parent) ??
+                            cate;
                         return { ...cate, parent };
                     },
                     getUserInfo: (id) => {
@@ -205,6 +218,20 @@ export function useChartPart({
         ],
     );
     const isEmpty = filtered.length === 0;
+    const shellStateVariants = prefersReducedMotion
+        ? reducedStateSwapVariants
+        : stateSwapVariants;
+    const shellStateTransition = prefersReducedMotion
+        ? { duration: 0.16 }
+        : surfaceTransition;
+    const trendTitle = useMemo(() => {
+        const title = charts[0]?.title;
+        if (!title || Array.isArray(title)) {
+            return "";
+        }
+        return typeof title.text === "string" ? title.text : "";
+    }, [charts]);
+    const trendDataset = charts[0]?.dataset as CalendarDataset | undefined;
 
     if (isEmpty) {
         const Part = (
@@ -280,27 +307,47 @@ export function useChartPart({
                         </button>
                     )}
                 </div>
-                {asCalendar && viewType !== "custom" ? (
-                    <div className="w-full">
-                        <div className="pt-4 pb-2 flex justify-center font-semibold text-lg">
-                            {(charts[0]?.title as any)?.text}
-                        </div>
-                        <CalendarDetail
-                            viewType={viewType}
-                            focusType={focusType}
-                            dataset={charts[0].dataset as any}
-                            dimension={dimension}
-                            range={calendarRange}
-                        />
-                    </div>
-                ) : (
-                    <Chart
-                        ref={trendChart}
-                        key={dimension}
-                        option={charts[0]}
-                        className="w-full h-[220px] sm:h-[260px]"
-                    />
-                )}
+                <AnimatePresence mode="wait" initial={false}>
+                    {asCalendar && viewType !== "custom" ? (
+                        <motion.div
+                            key={`trend-calendar-${dimension}-${focusType}-${viewType}`}
+                            variants={shellStateVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={shellStateTransition}
+                            className="w-full"
+                        >
+                            <div className="pt-4 pb-2 flex justify-center font-semibold text-lg">
+                                {trendTitle}
+                            </div>
+                            <CalendarDetail
+                                viewType={viewType}
+                                focusType={focusType}
+                                dataset={trendDataset ?? { source: [] }}
+                                dimension={dimension}
+                                range={calendarRange}
+                            />
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key={`trend-chart-${dimension}-${focusType}-${viewType}`}
+                            variants={shellStateVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={shellStateTransition}
+                            className="w-full"
+                        >
+                            <Chart
+                                ref={trendChart}
+                                key={dimension}
+                                option={charts[0]}
+                                className="w-full h-[220px] sm:h-[260px]"
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </motion.div>
             {focusType !== "balance" && (
                 <motion.div
@@ -330,87 +377,108 @@ export function useChartPart({
                             </button>
                         }
                     </div>
-                    {asList ? (
-                        <div className="w-full">
-                            <div className="py-4 flex justify-center font-semibold text-lg">
-                                {focusType === "income"
-                                    ? t("income-details")
-                                    : t("expense-details")}
-                            </div>
-                            <div className="table w-full border-collapse">
-                                <div className="table-row-group divide-y">
-                                    <ListChart
-                                        series={charts[1]?.series as Series}
-                                        focusType={focusType}
-                                        onItemClick={(v) => {
-                                            setSelectedCategoryId(v.id);
-                                        }}
-                                        onItemMoneyClick={(v) => {
+                    <AnimatePresence mode="wait" initial={false}>
+                        {asList ? (
+                            <motion.div
+                                key={`structure-list-${dimension}-${focusType}-${selectedCategoryId ?? "root"}`}
+                                variants={shellStateVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={shellStateTransition}
+                                className="w-full"
+                            >
+                                <div className="py-4 flex justify-center font-semibold text-lg">
+                                    {focusType === "income"
+                                        ? t("income-details")
+                                        : t("expense-details")}
+                                </div>
+                                <div className="table w-full border-collapse">
+                                    <div className="table-row-group divide-y">
+                                        <ListChart
+                                            series={charts[1]?.series as Series}
+                                            focusType={focusType}
+                                            onItemClick={(v) => {
+                                                setSelectedCategoryId(v.id);
+                                            }}
+                                            onItemMoneyClick={(v) => {
+                                                seeDetails({
+                                                    categories: categories
+                                                        .filter(
+                                                            (c) =>
+                                                                c.id === v.id ||
+                                                                c.parent ===
+                                                                    v.id,
+                                                        )
+                                                        .map((c) => c.id),
+                                                });
+                                            }}
+                                        />
+                                        {selectedCategoryChart && (
+                                            <>
+                                                <div className="w-full table-row">
+                                                    <div className="table-cell"></div>
+                                                    <div className="table-cell font-semibold">
+                                                        <div className="flex  h-10 justify-center items-center">
+                                                            {
+                                                                selectedCategory?.name
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div className="table-cell"></div>
+                                                </div>
+                                                <ListChart
+                                                    series={
+                                                        selectedCategoryChart.series
+                                                    }
+                                                    focusType={focusType}
+                                                    onItemMoneyClick={(v) => {
+                                                        seeDetails({
+                                                            categories: [v.id],
+                                                        });
+                                                    }}
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key={`structure-chart-${dimension}-${focusType}`}
+                                variants={shellStateVariants}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                transition={shellStateTransition}
+                                className="w-full"
+                            >
+                                <Chart
+                                    key={dimension}
+                                    option={charts[1]}
+                                    className="w-full h-[220px] sm:h-[260px]"
+                                    onClick={onStructureChartClick}
+                                />
+                                <div className="flex justify-end p-1">
+                                    <Button
+                                        variant="ghost"
+                                        size={"sm"}
+                                        className="stat-link-button"
+                                        onClick={() => {
                                             seeDetails({
-                                                categories: categories
-                                                    .filter(
-                                                        (c) =>
-                                                            c.id === v.id ||
-                                                            c.parent === v.id,
-                                                    )
-                                                    .map((c) => c.id),
+                                                type: focusType,
                                             });
                                         }}
-                                    />
-                                    {selectedCategoryChart && (
-                                        <>
-                                            <div className="w-full table-row">
-                                                <div className="table-cell"></div>
-                                                <div className="table-cell font-semibold">
-                                                    <div className="flex  h-10 justify-center items-center">
-                                                        {selectedCategory?.name}
-                                                    </div>
-                                                </div>
-                                                <div className="table-cell"></div>
-                                            </div>
-                                            <ListChart
-                                                series={
-                                                    selectedCategoryChart.series
-                                                }
-                                                focusType={focusType}
-                                                onItemMoneyClick={(v) => {
-                                                    seeDetails({
-                                                        categories: [v.id],
-                                                    });
-                                                }}
-                                            />
-                                        </>
-                                    )}
+                                    >
+                                        {focusType === "expense"
+                                            ? t("see-expense-ledgers")
+                                            : t("see-income-ledgers")}
+                                        <i className="icon-[mdi--arrow-up-right]"></i>
+                                    </Button>
                                 </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="w-full">
-                            <Chart
-                                key={dimension}
-                                option={charts[1]}
-                                className="w-full h-[220px] sm:h-[260px]"
-                                onClick={onStructureChartClick}
-                            />
-                            <div className="flex justify-end p-1">
-                                <Button
-                                    variant="ghost"
-                                    size={"sm"}
-                                    className="stat-link-button"
-                                    onClick={() => {
-                                        seeDetails({
-                                            type: focusType,
-                                        });
-                                    }}
-                                >
-                                    {focusType === "expense"
-                                        ? t("see-expense-ledgers")
-                                        : t("see-income-ledgers")}
-                                    <i className="icon-[mdi--arrow-up-right]"></i>
-                                </Button>
-                            </div>
-                        </div>
-                    )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             )}
             {!asList && selectedCategoryChart && (
@@ -421,12 +489,19 @@ export function useChartPart({
                     })}
                     className="stat-card stat-chart-card flex-shrink-0 w-full"
                 >
-                    <div className="w-full h-[220px] sm:h-[260px]">
+                    <motion.div
+                        variants={shellStateVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        transition={shellStateTransition}
+                        className="w-full h-[220px] sm:h-[260px]"
+                    >
                         <Chart
                             option={selectedCategoryChart}
                             className="w-full h-full "
                         />
-                    </div>
+                    </motion.div>
                     <div className="flex justify-end p-1">
                         <Button
                             variant="ghost"

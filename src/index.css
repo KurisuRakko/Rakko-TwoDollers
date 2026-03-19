@@ -233,8 +233,8 @@ button {
 .floating-tab {
 	border: 1px solid var(--home-border-strong);
 	box-shadow: var(--home-shadow-raised);
-	backdrop-filter: blur(24px) saturate(1.16);
-	-webkit-backdrop-filter: blur(24px) saturate(1.16);
+	backdrop-filter: blur(16px) saturate(1.1);
+	-webkit-backdrop-filter: blur(16px) saturate(1.1);
 }
 
 .main-layout-content {
@@ -270,8 +270,8 @@ button {
 		var(--home-surface)
 	);
 	box-shadow: var(--home-shadow);
-	backdrop-filter: blur(22px) saturate(1.18);
-	-webkit-backdrop-filter: blur(22px) saturate(1.18);
+	backdrop-filter: blur(14px) saturate(1.12);
+	-webkit-backdrop-filter: blur(14px) saturate(1.12);
 }
 
 .home-hero-panel {
@@ -289,11 +289,26 @@ button {
 }
 
 .home-hero-orb {
-	display: none;
+	position: absolute;
+	right: -24px;
+	top: -40px;
+	width: 124px;
+	height: 124px;
+	border-radius: 999px;
+	background: radial-gradient(
+		circle,
+		color-mix(in srgb, var(--home-highlight) 22%, white 78%),
+		transparent 72%
+	);
+	opacity: 0.28;
+	pointer-events: none;
+	will-change: transform;
+	animation: home-orb-float 14s cubic-bezier(0.42, 0, 0.18, 1) infinite
+		alternate;
 }
 
 .home-hero-orb-primary {
-	display: none;
+	display: block;
 }
 
 .home-hero-orb-secondary {
@@ -338,7 +353,7 @@ button {
 	color: var(--foreground);
 	animation: home-sync-pill-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 	transform-origin: left center;
-	will-change: opacity, transform, filter;
+	will-change: opacity, transform;
 }
 
 .home-sync-pill-leaving {
@@ -622,8 +637,8 @@ button {
 	border: 1px solid var(--home-border-strong);
 	border-radius: 999px;
 	background: color-mix(in srgb, var(--home-surface-strong) 86%, white 14%);
-	backdrop-filter: blur(22px) saturate(1.16);
-	-webkit-backdrop-filter: blur(22px) saturate(1.16);
+	backdrop-filter: blur(14px) saturate(1.08);
+	-webkit-backdrop-filter: blur(14px) saturate(1.08);
 	box-shadow: var(--home-shadow-raised);
 	font-size: 12px;
 	font-weight: 600;
@@ -660,8 +675,8 @@ button {
 		var(--home-surface)
 	);
 	box-shadow: var(--home-shadow);
-	backdrop-filter: blur(22px) saturate(1.14);
-	-webkit-backdrop-filter: blur(22px) saturate(1.14);
+	backdrop-filter: blur(14px) saturate(1.08);
+	-webkit-backdrop-filter: blur(14px) saturate(1.08);
 }
 
 .search-hero-card {
@@ -928,8 +943,8 @@ button {
 		var(--home-surface)
 	);
 	box-shadow: var(--home-shadow);
-	backdrop-filter: blur(20px) saturate(1.14);
-	-webkit-backdrop-filter: blur(20px) saturate(1.14);
+	backdrop-filter: blur(14px) saturate(1.08);
+	-webkit-backdrop-filter: blur(14px) saturate(1.08);
 }
 
 .stat-top-shell {
@@ -951,6 +966,17 @@ button {
 .stat-filter-chip {
 	border-radius: 999px;
 	color: color-mix(in srgb, var(--foreground) 72%, transparent);
+}
+
+.stat-chip-indicator {
+	position: absolute;
+	inset: 3px;
+	border-radius: inherit;
+	background: color-mix(in srgb, var(--home-highlight) 18%, transparent);
+	box-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.08),
+		0 6px 18px rgb(15 23 42 / 0.08);
+	pointer-events: none;
 }
 
 .stat-icon-button,
@@ -1379,7 +1405,7 @@ button {
 .nav-flat-group,
 .nav-add-button {
 	border: 1px solid var(--home-border-strong);
-	background: var(--home-surface-strong);
+	background: color-mix(in srgb, var(--home-surface-strong) 92%, white 8%);
 	box-shadow: var(--home-shadow);
 	color: var(--foreground);
 }
@@ -1461,6 +1487,7 @@ button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	transform: translateZ(0);
 }
 
 .nav-flat-button:active,
@@ -1475,8 +1502,8 @@ button {
 	background-size: cover;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
-	filter: saturate(0.92) contrast(0.98);
-	will-change: transform, opacity, filter;
+	filter: saturate(0.96) contrast(0.99);
+	will-change: transform, opacity;
 	animation: login-backdrop-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -1512,7 +1539,7 @@ button {
 	box-shadow:
 		0 24px 80px rgb(15 23 42 / 0.28),
 		0 2px 10px rgb(15 23 42 / 0.12);
-	backdrop-filter: blur(14px);
+	backdrop-filter: blur(10px);
 	will-change: transform, opacity;
 	transform-origin: center;
 	animation: login-card-in 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -1611,7 +1638,7 @@ button {
 
 .login-card-glow {
 	will-change: transform, opacity;
-	animation: login-glow-pulse 8s cubic-bezier(0.42, 0, 0.18, 1) infinite;
+	animation: login-glow-pulse 12s cubic-bezier(0.42, 0, 0.18, 1) infinite;
 }
 
 .login-section {
@@ -1654,10 +1681,10 @@ button {
 }
 
 .login-hero-spark {
-	backdrop-filter: blur(10px);
+	backdrop-filter: blur(6px);
 	box-shadow: 0 0 30px rgb(255 255 255 / 0.08);
 	will-change: transform, opacity;
-	animation: login-spark-float 9s cubic-bezier(0.42, 0, 0.18, 1) infinite;
+	animation: login-spark-float 14s cubic-bezier(0.42, 0, 0.18, 1) infinite;
 }
 
 @keyframes page-show {
@@ -1776,13 +1803,11 @@ button {
 	0% {
 		opacity: 0;
 		transform: translate3d(0, 10px, 0) scale(0.96);
-		filter: blur(4px);
 	}
 
 	100% {
 		opacity: 1;
 		transform: translate3d(0, 0, 0) scale(1);
-		filter: blur(0);
 	}
 }
 
@@ -1790,13 +1815,11 @@ button {
 	0% {
 		opacity: 1;
 		transform: translate3d(0, 0, 0) scale(1);
-		filter: blur(0);
 	}
 
 	100% {
 		opacity: 0;
 		transform: translate3d(0, -6px, 0) scale(0.98);
-		filter: blur(3px);
 	}
 }
 
@@ -1809,6 +1832,7 @@ button {
 	.login-section,
 	.login-hero-wallpaper,
 	.login-hero-spark,
+	.home-hero-orb,
 	.home-sync-pill,
 	.home-sync-pill-leaving {
 		animation: none;
@@ -1862,8 +1886,8 @@ button {
 			rgb(24 28 36 / 0.78),
 			rgb(17 20 28 / 0.68)
 		);
-		backdrop-filter: blur(24px) saturate(1.1);
-		-webkit-backdrop-filter: blur(24px) saturate(1.1);
+		backdrop-filter: blur(16px) saturate(1.06);
+		-webkit-backdrop-filter: blur(16px) saturate(1.06);
 	}
 
 	.stat-top-shell {
@@ -1978,6 +2002,11 @@ button {
 		display: none;
 	}
 
+	.login-card-glow,
+	.login-hero-spark {
+		display: none;
+	}
+
 	.home-page {
 		gap: 10px;
 	}
@@ -1989,6 +2018,10 @@ button {
 	.home-hero-panel {
 		min-height: 182px;
 		padding: 18px;
+	}
+
+	.home-hero-orb {
+		display: none;
 	}
 
 	.home-book-chip,

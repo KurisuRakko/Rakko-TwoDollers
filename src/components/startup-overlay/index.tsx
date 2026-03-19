@@ -76,7 +76,6 @@ export default function StartupOverlay({
               y: number;
           }
         | {
-              filter: string;
               opacity: number;
               y: number;
           };
@@ -106,7 +105,6 @@ export default function StartupOverlay({
             },
         };
         copyAnimate = {
-            filter: "blur(6px)",
             opacity: 0,
             y: -18,
         };
@@ -123,14 +121,13 @@ export default function StartupOverlay({
             },
         };
         copyAnimate = {
-            filter: "blur(6px)",
             opacity: 0,
             y: -10,
         };
     } else {
         contentAnimate = { opacity: 1, y: 0, scale: 1 };
         avatarAnimate = { opacity: 1, scale: 1, x: 0, y: 0 };
-        copyAnimate = { filter: "blur(0px)", opacity: 1, y: 0 };
+        copyAnimate = { opacity: 1, y: 0 };
     }
 
     useLayoutEffect(() => {
@@ -214,7 +211,7 @@ export default function StartupOverlay({
                 )}
                 <motion.div
                     className="startup-overlay__copy"
-                    initial={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    initial={{ opacity: 1, y: 0 }}
                     animate={copyAnimate}
                     transition={
                         reducedMotion ? { duration: 0.16 } : surfaceTransition

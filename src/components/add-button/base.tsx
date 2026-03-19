@@ -1,7 +1,11 @@
 import { type HTMLMotionProps, motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { cn } from "@/utils";
-import { microInteractionTransition } from "@/utils/motion";
+import {
+    microHover,
+    microInteractionTransition,
+    microPress,
+} from "@/utils/motion";
 
 export function BaseButton({
     children,
@@ -13,15 +17,8 @@ export function BaseButton({
     return (
         <motion.button
             type="button"
-            whileTap={{ scale: prefersReducedMotion ? 1 : 0.94 }}
-            whileHover={
-                prefersReducedMotion
-                    ? undefined
-                    : {
-                          y: -2,
-                          transition: microInteractionTransition,
-                      }
-            }
+            whileTap={prefersReducedMotion ? undefined : microPress}
+            whileHover={prefersReducedMotion ? undefined : microHover}
             transition={microInteractionTransition}
             className={cn(
                 "nav-add-button w-18 h-18 sm:w-14 sm:h-14 rounded-full flex items-center justify-center m-1 cursor-pointer",

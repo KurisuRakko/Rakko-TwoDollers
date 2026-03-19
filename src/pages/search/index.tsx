@@ -15,7 +15,6 @@ import { useShallow } from "zustand/shallow";
 import { StorageDeferredAPI } from "@/api/storage";
 import BillFilterForm from "@/components/bill-filter";
 import Clearable from "@/components/clearable";
-import { HintTooltip } from "@/components/hint";
 import Ledger from "@/components/ledger";
 import {
     type BatchEditOptions,
@@ -40,7 +39,13 @@ import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
 import {
     getStageProps,
+    microHover,
+    microInteractionTransition,
+    microPress,
+    reducedSectionEnterVariants,
     reducedStateSurfaceVariants,
+    sectionEnterVariants,
+    staggerChildren,
     stateSurfaceVariants,
     surfaceTransition,
 } from "@/utils/motion";
@@ -409,6 +414,28 @@ export default function Page() {
     const stateTransition = prefersReducedMotion
         ? { duration: 0.16 }
         : surfaceTransition;
+    const heroContainerVariants = prefersReducedMotion
+        ? {
+              initial: {},
+              animate: {
+                  transition: staggerChildren({
+                      delayChildren: 0,
+                      staggerStep: 0,
+                  }),
+              },
+          }
+        : {
+              initial: {},
+              animate: {
+                  transition: staggerChildren({
+                      delayChildren: 0.03,
+                      staggerStep: 0.05,
+                  }),
+              },
+          };
+    const heroItemVariants = prefersReducedMotion
+        ? reducedSectionEnterVariants
+        : sectionEnterVariants;
 
     return (
         <div className="search-page relative w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex justify-center overflow-hidden">
@@ -421,8 +448,16 @@ export default function Page() {
                     })}
                     className="search-hero-card"
                 >
-                    <div className="search-hero-content">
-                        <div className="search-input-surface">
+                    <motion.div
+                        className="search-hero-content"
+                        variants={heroContainerVariants}
+                        initial="initial"
+                        animate="animate"
+                    >
+                        <motion.div
+                            className="search-input-surface"
+                            variants={heroItemVariants}
+                        >
                             <i className="icon-[mdi--magnify] size-5 text-foreground/60"></i>
                             <div className="flex-1">
                                 <Clearable
@@ -455,11 +490,25 @@ export default function Page() {
                             {searchState === "searching" && (
                                 <i className="icon-[mdi--loading] size-4 animate-spin text-primary"></i>
                             )}
-                        </div>
-                        <div className="search-toolbar-row">
-                            <button
+                        </motion.div>
+                        <motion.div
+                            className="search-toolbar-row"
+                            variants={heroItemVariants}
+                        >
+                            <motion.button
                                 type="button"
                                 className="search-chip"
+                                whileHover={
+                                    prefersReducedMotion
+                                        ? undefined
+                                        : microHover
+                                }
+                                whileTap={
+                                    prefersReducedMotion
+                                        ? undefined
+                                        : microPress
+                                }
+                                transition={microInteractionTransition}
                                 onClick={() => setFilterOpen((value) => !value)}
                             >
                                 <i
@@ -475,19 +524,30 @@ export default function Page() {
                                         {activeFilterCount}
                                     </span>
                                 )}
-                            </button>
+                            </motion.button>
                             {hasCriteria && (
-                                <button
+                                <motion.button
                                     type="button"
                                     className="search-chip search-chip-muted"
+                                    whileHover={
+                                        prefersReducedMotion
+                                            ? undefined
+                                            : microHover
+                                    }
+                                    whileTap={
+                                        prefersReducedMotion
+                                            ? undefined
+                                            : microPress
+                                    }
+                                    transition={microInteractionTransition}
                                     onClick={toReset}
                                 >
                                     <i className="icon-[mdi--refresh]"></i>
                                     {t("reset")}
-                                </button>
+                                </motion.button>
                             )}
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
                 </motion.div>
 
                 <motion.div
@@ -503,12 +563,26 @@ export default function Page() {
                         className="search-filter-shell"
                     >
                         <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
-                            <BillFilterForm
-                                form={form}
-                                setForm={setForm}
-                                className="border-b-0"
-                                showComment
-                            />
+                            <motion.div
+                                initial={false}
+                                animate={
+                                    filterOpen
+                                        ? { opacity: 1, y: 0 }
+                                        : { opacity: 0, y: -8 }
+                                }
+                                transition={
+                                    prefersReducedMotion
+                                        ? { duration: 0.16 }
+                                        : surfaceTransition
+                                }
+                            >
+                                <BillFilterForm
+                                    form={form}
+                                    setForm={setForm}
+                                    className="border-b-0"
+                                    showComment
+                                />
+                            </motion.div>
                         </Collapsible.Content>
                         <div className="search-filter-actions">
                             <div className="search-filter-title">
@@ -552,17 +626,38 @@ export default function Page() {
                             enableSelect && "search-summary-row-select",
                         )}
                     >
-                        <div className="search-summary-copy">
-                            <div className="search-summary-title">
-                                {searchSummaryTitle}
-                            </div>
-                            <div className="search-summary-subtitle">
-                                {searchSummarySubtitle}
-                            </div>
-                        </div>
-                        <div className="search-summary-actions">
+                        <motion.div
+                            layout="position"
+                            className="search-summary-copy"
+                            transition={surfaceTransition}
+                        >
+                            <AnimatePresence mode="wait" initial={false}>
+                                <motion.div
+                                    key={`${searchSummaryTitle}-${searchSummarySubtitle}`}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
+                                    transition={stateTransition}
+                                >
+                                    <div className="search-summary-title">
+                                        {searchSummaryTitle}
+                                    </div>
+                                    <div className="search-summary-subtitle">
+                                        {searchSummarySubtitle}
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
+                        </motion.div>
+                        <AnimatePresence mode="wait" initial={false}>
                             {!enableSelect ? (
-                                <>
+                                <motion.div
+                                    key="search-summary-default"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
+                                    transition={stateTransition}
+                                    className="search-summary-actions"
+                                >
                                     {sorted.length > 0 && (
                                         <Button
                                             className="search-action-button"
@@ -607,9 +702,16 @@ export default function Page() {
                                         ></i>
                                         {t(SORTS[sortIndex].label)}
                                     </Button>
-                                </>
+                                </motion.div>
                             ) : (
-                                <>
+                                <motion.div
+                                    key="search-summary-select"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
+                                    transition={stateTransition}
+                                    className="search-summary-actions"
+                                >
                                     <Checkbox
                                         checked={allSelected}
                                         onClick={() => {
@@ -653,9 +755,9 @@ export default function Page() {
                                     >
                                         {t("cancel")}
                                     </Button>
-                                </>
+                                </motion.div>
                             )}
-                        </div>
+                        </AnimatePresence>
                     </motion.div>
                 )}
 

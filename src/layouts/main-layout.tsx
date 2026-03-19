@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type TouchEvent, useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { BillEditorProvider } from "@/components/bill-editor";
@@ -30,7 +31,11 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { useBookStore } from "@/store/book";
 import { useIsLogin, useUserStore } from "@/store/user";
 import { cn } from "@/utils";
-
+import {
+    pageShellTransition,
+    pageShellVariants,
+    reducedPageShellVariants,
+} from "@/utils/motion";
 
 const DEFAULT_BOOK_NAME = "personal";
 const MAIN_SWIPE_ROUTES = ["/stat", "/", "/search"] as const;
@@ -96,6 +101,7 @@ export default function MainLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const isDesktop = useIsDesktop();
+    const prefersReducedMotion = Boolean(useReducedMotion());
     const swipeContainerRef = useRef<HTMLDivElement>(null);
     const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const swipeLockedRef = useRef(false);
@@ -104,7 +110,6 @@ export default function MainLayout() {
     const swipeAnimatingRef = useRef(false);
     const swipeAnimationFrameRef = useRef<number | null>(null);
     const swipeTimerRef = useRef<number | null>(null);
-
 
     const resetSwipe = () => {
         swipeStartRef.current = null;
@@ -359,9 +364,27 @@ export default function MainLayout() {
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchCancel}
                 >
-                    <div className="h-full">
-                        <Outlet />
-                    </div>
+                    <AnimatePresence initial={false} mode="wait">
+                        <motion.div
+                            key={location.pathname}
+                            className="h-full"
+                            variants={
+                                prefersReducedMotion
+                                    ? reducedPageShellVariants
+                                    : pageShellVariants
+                            }
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={
+                                prefersReducedMotion
+                                    ? { duration: 0.16 }
+                                    : pageShellTransition
+                            }
+                        >
+                            <Outlet />
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
                 <BillEditorProvider />
                 <BillInfoProvider />
