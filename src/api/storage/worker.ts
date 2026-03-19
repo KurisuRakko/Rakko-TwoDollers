@@ -10,6 +10,8 @@ import {
 } from "@/api/predict/linear-predict";
 import { type Full, StashBucket } from "@/database/stash";
 import { BillIndexedDBStorage } from "@/database/storage";
+import { amountToNumber } from "@/ledger/bill";
+import { BillCategories } from "@/ledger/category";
 import type { Bill, BillFilter, ExportedJSON, GlobalMeta } from "@/ledger/type";
 import { isBillMatched } from "@/ledger/utils";
 import { blobToBase64 } from "@/utils/file";
@@ -39,16 +41,101 @@ const getDB = (storeFullName: string) => {
     return { itemBucket };
 };
 
+const normalizeKeyword = (value?: string) => value?.trim().toLowerCase() ?? "";
+
+const buildCategoryLookup = (meta?: GlobalMeta) => {
+    const merged = [...BillCategories, ...(meta?.categories ?? [])];
+    return new Map(merged.map((category) => [category.id, category]));
+};
+
+const buildTagLookup = (meta?: GlobalMeta) => {
+    return new Map((meta?.tags ?? []).map((tag) => [tag.id, tag]));
+};
+
+const buildDateTokens = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const yyyy = date.getFullYear();
+    const mm = `${date.getMonth() + 1}`.padStart(2, "0");
+    const dd = `${date.getDate()}`.padStart(2, "0");
+    const hh = `${date.getHours()}`.padStart(2, "0");
+    const min = `${date.getMinutes()}`.padStart(2, "0");
+
+    return [
+        `${yyyy}-${mm}-${dd}`,
+        `${yyyy}/${mm}/${dd}`,
+        `${mm}-${dd}`,
+        `${mm}/${dd}`,
+        `${yyyy}-${mm}-${dd} ${hh}:${min}`,
+        `${yyyy}/${mm}/${dd} ${hh}:${min}`,
+    ];
+};
+
+const buildKeywordText = (
+    bill: Bill,
+    meta?: GlobalMeta,
+    lookups?: {
+        categories: Map<string, (typeof BillCategories)[number]>;
+        tags: Map<string, NonNullable<GlobalMeta["tags"]>[number]>;
+    },
+) => {
+    const categoryLookup = lookups?.categories ?? buildCategoryLookup(meta);
+    const tagLookup = lookups?.tags ?? buildTagLookup(meta);
+    const category = categoryLookup.get(bill.categoryId);
+    const parentCategory = category?.parent
+        ? categoryLookup.get(category.parent)
+        : undefined;
+    const amount = amountToNumber(bill.amount);
+    const amountTokens = [
+        amount.toString(),
+        amount.toFixed(2),
+        Math.abs(amount).toString(),
+        Math.abs(amount).toFixed(2),
+    ];
+    const tagTokens = (bill.tagIds ?? []).flatMap((id) => {
+        const tag = tagLookup.get(id);
+        return [id, tag?.name ?? ""];
+    });
+
+    return [
+        bill.comment ?? "",
+        bill.categoryId,
+        category?.name ?? "",
+        parentCategory?.name ?? "",
+        ...tagTokens,
+        ...amountTokens,
+        ...buildDateTokens(bill.time),
+    ]
+        .join(" ")
+        .toLowerCase();
+};
+
 /** 获取所有数据，再通过Array.filter过滤 */
 const filter = async (storeFullName: string, rule: BillFilter) => {
     const items = await getDB(storeFullName).itemBucket.getItems();
+    const meta: GlobalMeta = (await getDB(
+        storeFullName,
+    ).itemBucket.getMeta()) ?? {
+        tags: [],
+    };
+    const keyword = normalizeKeyword(rule.keyword);
+    const lookups = {
+        categories: buildCategoryLookup(meta),
+        tags: buildTagLookup(meta),
+    };
     // 提升筛选性能
     const filtered = filterOrderedBillListByTimeRangeAnd(items, {
         range: [rule.start, rule.end],
         interval: "[]",
         customFilter: (v) =>
             Boolean(
-                isBillMatched(v, { ...rule, start: undefined, end: undefined }),
+                isBillMatched(v, {
+                    ...rule,
+                    keyword: undefined,
+                    start: undefined,
+                    end: undefined,
+                }) &&
+                    (!keyword ||
+                        buildKeywordText(v, meta, lookups).includes(keyword)),
             ),
     });
     // const filtered = items.filter((v) => isBillMatched(v, rule));

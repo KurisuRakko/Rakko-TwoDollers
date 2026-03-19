@@ -1,6 +1,15 @@
+import dayjs from "dayjs";
 import { orderBy } from "lodash-es";
+import { AnimatePresence, motion } from "motion/react";
 import { Collapsible } from "radix-ui";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    startTransition,
+    useCallback,
+    useDeferredValue,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useShallow } from "zustand/shallow";
 import { StorageDeferredAPI } from "@/api/storage";
@@ -17,39 +26,39 @@ import modal from "@/components/modal";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import useCategory from "@/hooks/use-category";
 import { useCurrency } from "@/hooks/use-currency";
 import { useCustomFilters } from "@/hooks/use-custom-filters";
+import { useTag } from "@/hooks/use-tag";
+import { amountToNumber } from "@/ledger/bill";
 import type { Bill, BillFilter } from "@/ledger/type";
 import { useIntl } from "@/locale";
 import { useBookStore } from "@/store/book";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
+import { formatDate, formatTime } from "@/utils/time";
 
 const SORTS = [
-    // 最近的在最上面
     {
         by: "time",
         order: "desc",
         icon: "icon-[mdi--sort-clock-ascending-outline]",
         label: "newest",
     },
-    // 最早的在最上面
     {
         by: "time",
         order: "asc",
         icon: "icon-[mdi--sort-clock-descending-outline]",
         label: "oldest",
     },
-    // 数额最大的在最上面
     {
         by: "amount",
         order: "desc",
         icon: "icon-[mdi--sort-descending]",
         label: "highest-amount",
     },
-    // 数额最小的在最上面
     {
         by: "amount",
         order: "asc",
@@ -58,55 +67,216 @@ const SORTS = [
     },
 ] as const;
 
+const SEARCH_DEBOUNCE_MS = 260;
+
+const normalizeKeyword = (value?: string) => value?.trim().toLowerCase() ?? "";
+
+const buildDateTokens = (timestamp: number) => {
+    const date = dayjs(timestamp);
+    return [
+        formatDate(timestamp),
+        formatTime(timestamp),
+        date.format("YYYY/MM/DD"),
+        date.format("MM/DD"),
+        date.format("MM-DD"),
+        date.format("YYYY/MM/DD HH:mm"),
+    ];
+};
+
+const getSearchFormHasCriteria = (form: BillFilter) => {
+    return Object.entries(form).some(([key, value]) => {
+        if (key === "baseCurrency") {
+            return false;
+        }
+        if (value === undefined || value === null) {
+            return false;
+        }
+        if (typeof value === "string") {
+            return value.trim().length > 0;
+        }
+        if (Array.isArray(value)) {
+            return value.length > 0;
+        }
+        return true;
+    });
+};
+
+const getActiveFilterCount = (form: BillFilter) => {
+    return Object.entries(form).reduce((count, [key, value]) => {
+        if (key === "keyword" || key === "baseCurrency") {
+            return count;
+        }
+        if (value === undefined || value === null) {
+            return count;
+        }
+        if (typeof value === "string") {
+            return count + (value.trim() ? 1 : 0);
+        }
+        if (Array.isArray(value)) {
+            return count + (value.length > 0 ? 1 : 0);
+        }
+        return count + 1;
+    }, 0);
+};
+
 export default function Page() {
     const t = useIntl();
-
     const { baseCurrency } = useCurrency();
     const { categories } = useCategory();
+    const { tags } = useTag();
     const { state } = useLocation();
+    const navigate = useNavigate();
+    const { addFilter } = useCustomFilters();
+
     const [form, setForm] = useState<BillFilter>(() => {
-        const filter = state?.filter as BillFilter;
+        const filter = state?.filter as BillFilter | undefined;
         if (filter) {
             return {
                 baseCurrency: baseCurrency.id,
                 ...filter,
-                // 如果传入的参数只有父级分类，则需要同时选择子级分类
                 categories: categories
-                    .filter((c) =>
+                    .filter((category) =>
                         filter.categories?.some(
-                            (v) => v === c.id || v === c.parent,
+                            (value) =>
+                                value === category.id ||
+                                value === category.parent,
                         ),
                     )
-                    .map((c) => c.id),
+                    .map((category) => category.id),
             };
         }
         return {};
     });
-    const [filterOpen, setFilterOpen] = useState(false);
+    const [filterOpen, setFilterOpen] = useState(Boolean(state?.filter));
+    const [list, setList] = useState<Bill[]>([]);
+    const [searchState, setSearchState] = useState<
+        "idle" | "searching" | "complete"
+    >("idle");
+    const [sortIndex, setSortIndex] = useState(0);
+    const [enableSelect, setEnableSelect] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    const showAssets = usePreferenceStore(
+        useShallow((current) => current.showAssetsInLedger),
+    );
+    const deferredKeyword = useDeferredValue(form.keyword ?? "");
+    const activeFilterCount = useMemo(() => getActiveFilterCount(form), [form]);
+    const hasCriteria = useMemo(() => getSearchFormHasCriteria(form), [form]);
+
+    const effectiveForm = useMemo(
+        () => ({
+            ...form,
+            keyword: deferredKeyword.trim() || undefined,
+        }),
+        [deferredKeyword, form],
+    );
+
+    const categoryNameMap = useMemo(() => {
+        return new Map(
+            categories.map((category) => [category.id, category.name]),
+        );
+    }, [categories]);
+
+    const categoryParentMap = useMemo(() => {
+        return new Map(
+            categories.map((category) => [category.id, category.parent]),
+        );
+    }, [categories]);
+
+    const tagNameMap = useMemo(() => {
+        return new Map(tags.map((tag) => [tag.id, tag.name]));
+    }, [tags]);
+
+    const buildSearchText = useCallback(
+        (bill: Bill) => {
+            const categoryName = categoryNameMap.get(bill.categoryId) ?? "";
+            const parentCategoryId = categoryParentMap.get(bill.categoryId);
+            const parentCategoryName = parentCategoryId
+                ? (categoryNameMap.get(parentCategoryId) ?? "")
+                : "";
+            const amount = amountToNumber(bill.amount);
+
+            return [
+                bill.comment ?? "",
+                bill.categoryId,
+                categoryName,
+                parentCategoryName,
+                ...(bill.tagIds ?? []).flatMap((id) => [
+                    id,
+                    tagNameMap.get(id) ?? "",
+                ]),
+                amount.toString(),
+                amount.toFixed(2),
+                Math.abs(amount).toString(),
+                Math.abs(amount).toFixed(2),
+                ...buildDateTokens(bill.time),
+            ]
+                .join(" ")
+                .toLowerCase();
+        },
+        [categoryNameMap, categoryParentMap, tagNameMap],
+    );
+
+    const runSearch = useCallback(
+        async (nextForm: BillFilter) => {
+            const book = useBookStore.getState().currentBookId;
+            if (!book) {
+                setList([]);
+                setSearchState("idle");
+                return;
+            }
+
+            if (!getSearchFormHasCriteria(nextForm)) {
+                startTransition(() => {
+                    setList([]);
+                    setSearchState("idle");
+                    setEnableSelect(false);
+                    setSelectedIds([]);
+                });
+                return;
+            }
+
+            setSearchState("searching");
+            setEnableSelect(false);
+            setSelectedIds([]);
+            const keyword = normalizeKeyword(nextForm.keyword);
+            const result = await StorageDeferredAPI.filter(book, {
+                ...nextForm,
+                keyword: undefined,
+            });
+            const filtered = keyword
+                ? result.filter((bill) =>
+                      buildSearchText(bill).includes(keyword),
+                  )
+                : result;
+            startTransition(() => {
+                setList(filtered);
+                setSearchState("complete");
+            });
+        },
+        [buildSearchText],
+    );
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            void runSearch(effectiveForm);
+        }, SEARCH_DEBOUNCE_MS);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [effectiveForm, runSearch]);
+
+    const sorted = useMemo(() => {
+        const sort = SORTS[sortIndex] ?? SORTS[0];
+        return orderBy(list, [sort.by], [sort.order]);
+    }, [list, sortIndex]);
 
     const toReset = useCallback(() => {
         setForm({});
+        setFilterOpen(false);
     }, []);
 
-    const showAssets = usePreferenceStore(
-        useShallow((state) => state.showAssetsInLedger),
-    );
-
-    const [list, setList] = useState<Bill[]>([]);
-    const [searched, setSearched] = useState(false);
-    const toSearch = useCallback(async () => {
-        const book = useBookStore.getState().currentBookId;
-        if (!book) {
-            return;
-        }
-        setEnableSelect(false);
-        setSelectedIds([]);
-        const result = await StorageDeferredAPI.filter(book, form);
-        setList(result);
-    }, [form]);
-
-    const navigate = useNavigate();
-    const { addFilter } = useCustomFilters();
     const toSaveFilter = useCallback(async () => {
         const name = (await modal.prompt({
             title: t("please-enter-a-name-for-current-filter"),
@@ -115,39 +285,25 @@ export default function Page() {
         if (!name) {
             return;
         }
+
         const book = useBookStore.getState().currentBookId;
         if (!book) {
             return;
         }
-        const id = await addFilter(name, { filter: form });
+
+        const id = await addFilter(name, { filter: effectiveForm });
         navigate(`/stat/${id}`);
-    }, [addFilter, form, navigate, t]);
+    }, [addFilter, effectiveForm, navigate, t]);
 
-    const hasFilter = useRef(Boolean(state?.filter));
-    useEffect(() => {
-        if (hasFilter.current) {
-            // setFilterOpen(true);
-            toSearch();
-            hasFilter.current = false;
-        }
-    }, [toSearch]);
-
-    const [sortIndex, setSortIndex] = useState(0);
-    const sorted = useMemo(() => {
-        const sort = SORTS[sortIndex] ?? SORTS[0];
-        return orderBy(list, [sort.by], [sort.order]);
-    }, [list, sortIndex]);
-
-    const [enableSelect, setEnableSelect] = useState(false);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const onSelectChange = (id: string) => {
+    const onSelectChange = useCallback((id: string) => {
         setSelectedIds((prev) => {
             if (prev.includes(id)) {
-                return prev.filter((v) => v !== id);
+                return prev.filter((value) => value !== id);
             }
             return [...prev, id];
         });
-    };
+    }, []);
+
     const allSelected =
         selectedIds.length === 0
             ? false
@@ -163,12 +319,13 @@ export default function Page() {
         });
         setEnableSelect(false);
         await useLedgerStore.getState().removeBills(selectedIds);
-        await toSearch();
+        await runSearch(effectiveForm);
     };
+
     const toBatchEdit = async () => {
         const initial = selectedIds.reduce(
             (prev, id, index) => {
-                const bill = sorted.find((v) => v.id === id);
+                const bill = sorted.find((value) => value.id === id);
                 if (!bill) {
                     return prev;
                 }
@@ -194,7 +351,9 @@ export default function Page() {
         const edit = await showBatchEdit(initial);
         const updatedEntries = selectedIds
             .map((id) => {
-                const bill = { ...sorted.find((v) => v.id === id) } as Bill;
+                const bill = {
+                    ...sorted.find((value) => value.id === id),
+                } as Bill;
                 if (!bill) {
                     return undefined;
                 }
@@ -205,7 +364,7 @@ export default function Page() {
                         bill.categoryId = edit.categoryId;
                     } else if (isTypeChanged) {
                         const firstCategoryId = categories.find(
-                            (c) => c.type === edit.type,
+                            (category) => category.type === edit.type,
                         )?.id;
                         if (firstCategoryId) {
                             bill.categoryId = firstCategoryId;
@@ -220,200 +379,326 @@ export default function Page() {
                     entry: bill,
                 };
             })
-            .filter((v) => v !== undefined);
+            .filter((value) => value !== undefined);
         await useLedgerStore.getState().updateBills(updatedEntries);
-        await toSearch();
+        await runSearch(effectiveForm);
     };
+
+    const showIdleState = searchState === "idle" && !hasCriteria;
+    const showEmptyState =
+        searchState === "complete" && hasCriteria && sorted.length === 0;
+    const showSummaryRow = enableSelect || searchState === "complete";
+    const searchSummaryTitle = enableSelect
+        ? `${selectedIds.length}/${sorted.length}`
+        : t("total-records", { n: sorted.length });
+    const searchSummarySubtitle = enableSelect
+        ? t("multi-select")
+        : activeFilterCount > 0
+          ? t("search-active-filters", { n: activeFilterCount })
+          : t("search-results-live");
+
     return (
-        <div className="search-page w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex justify-center overflow-hidden page-show">
+        <div className="search-page relative w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex justify-center overflow-hidden page-show">
             <Navigation />
-            <div className="search-page-shell h-full w-full px-2 max-w-[600px] flex flex-col">
-                <div className="search w-full flex justify-center pt-4">
-                    <div className="search-input-surface w-full h-12 flex items-center px-4">
-                        <div className="flex-1">
-                            <Clearable
-                                visible={Boolean(form.comment?.length)}
-                                onClear={() =>
-                                    setForm((v) => ({
-                                        ...v,
-                                        comment: undefined,
-                                    }))
-                                }
-                            >
-                                <input
-                                    value={form.comment ?? ""}
-                                    type="text"
-                                    maxLength={50}
-                                    className="w-full bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-                                    placeholder={t("search")}
-                                    onChange={(e) => {
-                                        setForm((v) => ({
-                                            ...v,
-                                            comment: e.target.value,
-                                        }));
-                                    }}
-                                />
-                            </Clearable>
+            <div className="search-page-shell h-full w-full max-w-[720px] flex flex-col">
+                <motion.div
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                    className="search-hero-card"
+                >
+                    <div className="search-hero-content">
+                        <div className="search-input-surface">
+                            <i className="icon-[mdi--magnify] size-5 text-foreground/60"></i>
+                            <div className="flex-1">
+                                <Clearable
+                                    visible={Boolean(form.keyword?.length)}
+                                    onClear={() =>
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            keyword: undefined,
+                                        }))
+                                    }
+                                >
+                                    <input
+                                        value={form.keyword ?? ""}
+                                        type="text"
+                                        maxLength={80}
+                                        className="search-input-field"
+                                        placeholder={t(
+                                            "search-comprehensive-placeholder",
+                                        )}
+                                        onChange={(event) => {
+                                            const value = event.target.value;
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                keyword: value || undefined,
+                                            }));
+                                        }}
+                                    />
+                                </Clearable>
+                            </div>
+                            {searchState === "searching" && (
+                                <i className="icon-[mdi--loading] size-4 animate-spin text-primary"></i>
+                            )}
                         </div>
-                        <Button
-                            variant="ghost"
-                            className="p-3 rounded-md"
-                            onClick={() => {
-                                toSearch();
-                                setTimeout(() => {
-                                    setSearched(true);
-                                }, 1000);
-                            }}
-                        >
-                            <i className="icon-[mdi--search]"></i>
-                        </Button>
+                        <div className="search-toolbar-row">
+                            <button
+                                type="button"
+                                className="search-chip"
+                                onClick={() => setFilterOpen((value) => !value)}
+                            >
+                                <i
+                                    className={cn(
+                                        filterOpen
+                                            ? "icon-[mdi--tune-vertical]"
+                                            : "icon-[mdi--tune]",
+                                    )}
+                                ></i>
+                                {t("filter")}
+                                {activeFilterCount > 0 && (
+                                    <span className="search-chip-count">
+                                        {activeFilterCount}
+                                    </span>
+                                )}
+                            </button>
+                            {hasCriteria && (
+                                <button
+                                    type="button"
+                                    className="search-chip search-chip-muted"
+                                    onClick={toReset}
+                                >
+                                    <i className="icon-[mdi--refresh]"></i>
+                                    {t("reset")}
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </motion.div>
+
                 <Collapsible.Root
                     open={filterOpen}
                     onOpenChange={setFilterOpen}
-                    className="search-filter-shell flex flex-col group pt-3 text-xs md:text-sm font-medium"
+                    className="search-filter-shell"
                 >
                     <Collapsible.Content className="data-[state=open]:animate-collapse-open data-[state=closed]:animate-collapse-close data-[state=closed]:overflow-hidden">
-                        <BillFilterForm form={form} setForm={setForm} />
+                        <BillFilterForm
+                            form={form}
+                            setForm={setForm}
+                            className="border-b-0"
+                            showComment
+                        />
                     </Collapsible.Content>
-                    <div className="search-filter-actions w-full flex justify-between px-2 pt-1">
-                        <Button variant="ghost" onClick={toReset}>
-                            {t("reset")}
-                        </Button>
-                        {searched && (
-                            <Button
-                                className="text-xs underline animate-content-show"
-                                variant="ghost"
-                                size="sm"
-                                onClick={toSaveFilter}
-                            >
-                                <i className="icon-[mdi--coffee-to-go-outline]" />
-                                {t("save-for-analyze")}
-                            </Button>
-                        )}
-
-                        <HintTooltip
-                            persistKey="filterHintShows"
-                            content={"点击展开详细筛选面板"}
-                        >
+                    <div className="search-filter-actions">
+                        <div className="search-filter-title">
+                            {t("search-advanced-title")}
+                            {activeFilterCount > 0 && (
+                                <span className="search-filter-count">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
                             <Collapsible.Trigger asChild>
-                                <Button variant="ghost">
-                                    <i className="group-[[data-state=open]]:icon-[mdi--filter-variant-minus] group-[[data-state=closed]]:icon-[mdi--filter-variant-plus]"></i>
-                                    {t("filter")}
+                                <Button variant="ghost" size="sm">
+                                    <i className="icon-[mdi--tune]"></i>
+                                    {filterOpen ? t("collapse") : t("expand")}
                                 </Button>
                             </Collapsible.Trigger>
-                        </HintTooltip>
+                            <Button variant="ghost" size="sm" onClick={toReset}>
+                                {t("reset")}
+                            </Button>
+                        </div>
                     </div>
                 </Collapsible.Root>
-                <div
-                    className={cn(
-                        "search-summary-row flex items-center justify-between px-4 text-xs text-foreground/80",
-                        enableSelect && "pl-0",
-                    )}
-                >
-                    <div className="flex gap-2 items-center">
-                        {!enableSelect ? (
-                            <>
-                                {sorted.length > 0 && (
+
+                {showSummaryRow && (
+                    <div
+                        className={cn(
+                            "search-summary-row",
+                            enableSelect && "search-summary-row-select",
+                        )}
+                    >
+                        <div className="search-summary-copy">
+                            <div className="search-summary-title">
+                                {searchSummaryTitle}
+                            </div>
+                            <div className="search-summary-subtitle">
+                                {searchSummarySubtitle}
+                            </div>
+                        </div>
+                        <div className="search-summary-actions">
+                            {!enableSelect ? (
+                                <>
+                                    {sorted.length > 0 && (
+                                        <Button
+                                            className="search-action-button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                                setEnableSelect(true);
+                                            }}
+                                        >
+                                            <i className="icon-[mdi--checkbox-multiple-marked-outline]"></i>
+                                            {t("multi-select")}
+                                        </Button>
+                                    )}
+                                    {searchState === "complete" &&
+                                        sorted.length > 0 && (
+                                            <Button
+                                                className="search-action-button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={toSaveFilter}
+                                            >
+                                                <i className="icon-[mdi--chart-box-outline]"></i>
+                                                {t("save-for-analyze")}
+                                            </Button>
+                                        )}
                                     <Button
-                                        className="p-1 h-fit"
-                                        variant={"ghost"}
+                                        className="search-action-button"
+                                        variant="ghost"
                                         size="sm"
                                         onClick={() => {
-                                            setEnableSelect(true);
+                                            setSortIndex((current) =>
+                                                current === SORTS.length - 1
+                                                    ? 0
+                                                    : current + 1,
+                                            );
                                         }}
                                     >
-                                        {t("multi-select")}
+                                        <i
+                                            className={cn(
+                                                SORTS[sortIndex].icon,
+                                            )}
+                                        ></i>
+                                        {t(SORTS[sortIndex].label)}
                                     </Button>
-                                )}
-                                {t("total-records", { n: sorted.length })}
-                            </>
-                        ) : (
-                            <>
-                                <Checkbox
-                                    checked={
-                                        selectedIds.length === 0
-                                            ? false
-                                            : selectedIds.length ===
-                                                sorted.length
-                                              ? true
-                                              : "indeterminate"
-                                    }
-                                    onClick={() => {
-                                        if (allSelected === true) {
+                                </>
+                            ) : (
+                                <>
+                                    <Checkbox
+                                        checked={allSelected}
+                                        onClick={() => {
+                                            if (allSelected === true) {
+                                                setSelectedIds([]);
+                                            } else {
+                                                setSelectedIds(
+                                                    sorted.map(
+                                                        (bill) => bill.id,
+                                                    ),
+                                                );
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        className="search-action-button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={toBatchEdit}
+                                        disabled={selectedIds.length === 0}
+                                    >
+                                        {t("edit")}
+                                    </Button>
+                                    <Button
+                                        className="search-action-button text-destructive"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={toBatchDelete}
+                                        disabled={selectedIds.length === 0}
+                                    >
+                                        {t("delete")}
+                                    </Button>
+                                    <Button
+                                        className="search-action-button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            setEnableSelect(false);
                                             setSelectedIds([]);
-                                        } else {
-                                            setSelectedIds(
-                                                sorted.map((v) => v.id),
-                                            );
-                                        }
-                                    }}
-                                ></Checkbox>
-                                <Button
-                                    className="p-1 h-fit"
-                                    variant={"ghost"}
-                                    size="sm"
-                                    onClick={() => {
-                                        setEnableSelect(false);
-                                        setSelectedIds([]);
-                                    }}
-                                >
-                                    {t("cancel")}
-                                </Button>
-                                <span>
-                                    {selectedIds.length}/{sorted.length}
-                                </span>
-                                {selectedIds.length > 0 && (
-                                    <>
-                                        <Button
-                                            className="p-1 h-fit"
-                                            variant={"ghost"}
-                                            size="sm"
-                                            onClick={toBatchEdit}
-                                        >
-                                            {t("edit")}
-                                        </Button>
-                                        <Button
-                                            className="p-1 h-fit text-destructive"
-                                            variant={"ghost"}
-                                            size="sm"
-                                            onClick={toBatchDelete}
-                                        >
-                                            {t("delete")}
-                                        </Button>
-                                    </>
-                                )}
-                            </>
-                        )}
+                                        }}
+                                    >
+                                        {t("cancel")}
+                                    </Button>
+                                </>
+                            )}
+                        </div>
                     </div>
-                    <div>
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                                setSortIndex((v) => {
-                                    if (v === SORTS.length - 1) {
-                                        return 0;
-                                    }
-                                    return v + 1;
-                                });
-                            }}
-                        >
-                            <i className={cn(SORTS[sortIndex].icon)}></i>
-                            {t(SORTS[sortIndex].label)}
-                        </Button>
-                    </div>
-                </div>
+                )}
+
                 <div className="search-results-shell min-h-0 flex-1">
-                    <Ledger
-                        bills={sorted}
-                        showTime
-                        selectedIds={enableSelect ? selectedIds : undefined}
-                        onSelectChange={onSelectChange}
-                        afterEdit={toSearch}
-                        showAssets={showAssets}
-                    />
+                    <AnimatePresence mode="wait" initial={false}>
+                        {showIdleState ? (
+                            <motion.div
+                                key="search-idle"
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="search-empty-state"
+                            >
+                                <div className="search-empty-icon">
+                                    <i className="icon-[mdi--magnify-scan] size-6"></i>
+                                </div>
+                                <div className="search-empty-title">
+                                    {t("search-ready-title")}
+                                </div>
+                                <div className="search-empty-subtitle">
+                                    {t("search-ready-tip")}
+                                </div>
+                            </motion.div>
+                        ) : searchState === "searching" ? (
+                            <motion.div
+                                key="search-loading"
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="search-loading-state"
+                            >
+                                <Skeleton className="h-16 rounded-[18px]" />
+                                <Skeleton className="h-16 rounded-[18px]" />
+                                <Skeleton className="h-16 rounded-[18px]" />
+                            </motion.div>
+                        ) : showEmptyState ? (
+                            <motion.div
+                                key="search-empty"
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="search-empty-state"
+                            >
+                                <div className="search-empty-icon">
+                                    <i className="icon-[mdi--text-box-search-outline] size-6"></i>
+                                </div>
+                                <div className="search-empty-title">
+                                    {t("search-empty-title")}
+                                </div>
+                                <div className="search-empty-subtitle">
+                                    {t("search-empty-tip")}
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="search-results"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="h-full"
+                            >
+                                <Ledger
+                                    bills={sorted}
+                                    showTime
+                                    selectedIds={
+                                        enableSelect ? selectedIds : undefined
+                                    }
+                                    onSelectChange={onSelectChange}
+                                    afterEdit={() => {
+                                        void runSearch(effectiveForm);
+                                    }}
+                                    showAssets={showAssets}
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
             <BatchEditProvider />

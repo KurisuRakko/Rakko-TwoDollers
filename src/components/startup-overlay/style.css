@@ -6,6 +6,7 @@
 	align-items: center;
 	justify-content: center;
 	padding: 20px;
+	pointer-events: none;
 }
 
 .startup-overlay__backdrop {
@@ -50,6 +51,17 @@
 		0 18px 34px rgb(15 23 42 / 0.14),
 		inset 0 1px 0 rgb(255 255 255 / 0.16);
 	overflow: hidden;
+}
+
+.startup-overlay__avatar-shell--placeholder {
+	visibility: hidden;
+}
+
+.startup-overlay__avatar-shell--flying {
+	position: fixed;
+	z-index: 2;
+	margin: 0;
+	pointer-events: none;
 }
 
 .dark .startup-overlay__avatar-shell {
@@ -98,6 +110,23 @@
 	justify-content: center;
 	gap: 8px;
 	min-height: 18px;
+	position: relative;
+}
+
+.startup-overlay--manual-sync .startup-overlay__avatar-shell {
+	box-shadow:
+		0 26px 52px rgb(15 23 42 / 0.2),
+		inset 0 1px 0 rgb(255 255 255 / 0.22);
+}
+
+.startup-overlay__spinner-ring {
+	position: absolute;
+	inset: 50%;
+	width: 52px;
+	height: 52px;
+	border-radius: 999px;
+	border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+	transform: translate(-50%, -50%);
 }
 
 .startup-overlay__spinner span {

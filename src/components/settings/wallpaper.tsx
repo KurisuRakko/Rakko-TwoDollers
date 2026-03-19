@@ -7,11 +7,11 @@ import {
     useRef,
     useState,
 } from "react";
-import defaultWallpaper from "@/assets/arknightswall9.jpg";
 import PopupLayout from "@/layouts/popup-layout";
 import { useIntl } from "@/locale";
 import { usePreferenceStore } from "@/store/preference";
 import { cn } from "@/utils";
+import { DEFAULT_WALLPAPER_PATH } from "@/utils/runtime-assets";
 import createConfirmProvider from "../confirm";
 import modal from "../modal";
 import { Button } from "../ui/button";
@@ -156,7 +156,9 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
         y: number;
     } | null>(null);
     const [draft, setDraft] = useState(savedWallpaper ?? "");
-    const [_preview, setPreview] = useState(savedWallpaper || defaultWallpaper);
+    const [_preview, setPreview] = useState(
+        savedWallpaper || DEFAULT_WALLPAPER_PATH,
+    );
     const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
     const [viewportSize, setViewportSize] = useState({
         width: 0,
@@ -184,7 +186,7 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
 
     useEffect(() => {
         setDraft(savedWallpaper ?? "");
-        setPreview(savedWallpaper || defaultWallpaper);
+        setPreview(savedWallpaper || DEFAULT_WALLPAPER_PATH);
     }, [savedWallpaper]);
 
     const cropViewportObserveRef = useCallback(
@@ -324,7 +326,7 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
 
     const resetWallpaper = () => {
         setDraft("");
-        setPreview(defaultWallpaper);
+        setPreview(DEFAULT_WALLPAPER_PATH);
         usePreferenceStore.setState({ mainWallpaper: undefined });
         modal.toast.success(t("wallpaper-reset-success"));
         onCancel?.();
@@ -521,7 +523,9 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                             onChange={(e) => {
                                 const value = e.target.value;
                                 setDraft(value);
-                                setPreview(value.trim() || defaultWallpaper);
+                                setPreview(
+                                    value.trim() || DEFAULT_WALLPAPER_PATH,
+                                );
                             }}
                             placeholder={t("wallpaper-url-placeholder")}
                             className="bg-background/80"
@@ -555,7 +559,7 @@ function WallpaperForm({ onCancel }: { onCancel?: () => void }) {
                             className="w-full"
                             onClick={() => {
                                 setDraft("");
-                                setPreview(defaultWallpaper);
+                                setPreview(DEFAULT_WALLPAPER_PATH);
                             }}
                         >
                             <i className="icon-[mdi--image-refresh-outline]" />

@@ -1,8 +1,11 @@
 import { useEffect, useMemo } from "react";
-import wallpaper from "@/assets/arknightswall9.jpg";
 import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
 import { useUserStore } from "@/store/user";
+import {
+    DEFAULT_WALLPAPER_PATH,
+    preloadImageWhenIdle,
+} from "@/utils/runtime-assets";
 
 const STYLE_ID = "rakko-custom-css";
 
@@ -114,8 +117,12 @@ export default function CustomCSS() {
     });
 
     const cssText = useMemo(() => {
-        return `${getDefaultMainWallpaperCSS(mainWallpaper || wallpaper)}\n${customCSS}`;
+        return `${getDefaultMainWallpaperCSS(mainWallpaper || DEFAULT_WALLPAPER_PATH)}\n${customCSS}`;
     }, [customCSS, mainWallpaper]);
+
+    useEffect(() => {
+        return preloadImageWhenIdle(mainWallpaper || DEFAULT_WALLPAPER_PATH);
+    }, [mainWallpaper]);
 
     useEffect(() => {
         document.body.classList.add("main-layout-active");

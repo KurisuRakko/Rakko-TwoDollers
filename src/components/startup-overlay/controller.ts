@@ -1,11 +1,14 @@
 import { create } from "zustand";
 
 type StartupOverlayOwner = "root" | "home";
+export type StartupOverlayMode = "startup" | "manual-sync";
 
 type StartupOverlayPayload = {
     avatarSource?: string;
     displayName: string;
     layoutId?: string;
+    minVisibleMs?: number;
+    mode?: StartupOverlayMode;
     status: string;
 };
 
@@ -25,6 +28,9 @@ type StartupOverlayFlightTarget = {
 type StartupOverlayState = StartupOverlayPayload & {
     avatarRect: StartupOverlayRect | null;
     exitFlightTarget: StartupOverlayFlightTarget | null;
+    exitSourceRect: StartupOverlayRect | null;
+    minVisibleMs?: number;
+    mode: StartupOverlayMode;
     owner: StartupOverlayOwner | null;
     visible: boolean;
 };
@@ -45,7 +51,10 @@ export const useStartupOverlayStore = create<StartupOverlayState>(() => ({
     avatarRect: null,
     displayName: "",
     exitFlightTarget: null,
+    exitSourceRect: null,
     layoutId: undefined,
+    minVisibleMs: 0,
+    mode: "startup",
     owner: null,
     status: "",
     visible: false,
@@ -113,6 +122,7 @@ const showOverlay = (
             ...payload,
             avatarRect: state.avatarRect,
             exitFlightTarget: null,
+            exitSourceRect: null,
             owner,
             visible: true,
         };
@@ -136,6 +146,9 @@ export const releaseRootStartupOverlay = () => {
                 ...state,
                 avatarRect: null,
                 exitFlightTarget: null,
+                exitSourceRect: null,
+                minVisibleMs: 0,
+                mode: "startup",
                 owner: null,
                 visible: false,
             };
@@ -163,6 +176,9 @@ export const hideHomeStartupOverlay = () => {
                 state.layoutId,
                 state.avatarRect,
             ),
+            exitSourceRect: state.avatarRect,
+            minVisibleMs: state.minVisibleMs,
+            mode: state.mode,
             owner: null,
             visible: false,
         };

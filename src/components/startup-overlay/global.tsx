@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useStartupOverlayStore } from "./controller";
+import { type StartupOverlayMode, useStartupOverlayStore } from "./controller";
 import StartupOverlay from "./index";
 
 const STARTUP_OVERLAY_EXIT_MS = 560;
@@ -12,8 +12,16 @@ type RenderedStartupOverlay = {
         x: number;
         y: number;
     } | null;
+    exitSourceRect?: {
+        height: number;
+        left: number;
+        top: number;
+        width: number;
+    } | null;
     isExiting: boolean;
     layoutId?: string;
+    minVisibleMs?: number;
+    mode: StartupOverlayMode;
     status: string;
 };
 
@@ -22,7 +30,10 @@ export default function GlobalStartupOverlay() {
         avatarSource,
         displayName,
         exitFlightTarget,
+        exitSourceRect,
         layoutId,
+        minVisibleMs,
+        mode,
         status,
         visible,
     } = useStartupOverlayStore();
@@ -41,8 +52,11 @@ export default function GlobalStartupOverlay() {
                 avatarSource,
                 displayName,
                 exitFlightTarget: null,
+                exitSourceRect: null,
                 isExiting: false,
                 layoutId,
+                minVisibleMs,
+                mode,
                 status,
             });
             return;
@@ -54,8 +68,11 @@ export default function GlobalStartupOverlay() {
                 avatarSource,
                 displayName,
                 exitFlightTarget,
+                exitSourceRect,
                 isExiting: true,
                 layoutId,
+                minVisibleMs,
+                mode,
                 status,
             }));
 
@@ -71,7 +88,10 @@ export default function GlobalStartupOverlay() {
         avatarSource,
         displayName,
         exitFlightTarget,
+        exitSourceRect,
         layoutId,
+        minVisibleMs,
+        mode,
         status,
         visible,
     ]);
@@ -93,8 +113,10 @@ export default function GlobalStartupOverlay() {
             avatarSource={renderedOverlay.avatarSource}
             displayName={renderedOverlay.displayName}
             exitFlightTarget={renderedOverlay.exitFlightTarget}
+            exitSourceRect={renderedOverlay.exitSourceRect}
             isExiting={renderedOverlay.isExiting}
             layoutId={renderedOverlay.layoutId}
+            mode={renderedOverlay.mode}
             status={renderedOverlay.status}
         />
     );

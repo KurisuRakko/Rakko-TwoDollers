@@ -14,7 +14,12 @@ clientsClaim();
 self.skipWaiting();
 
 // 预缓存由 VitePWA 注入的所有静态资源
-precacheAndRoute(self.__WB_MANIFEST);
+const PRECACHE_EXCLUDES = ["wallpaper-default.jpg"];
+const precacheManifest = self.__WB_MANIFEST.filter((entry) => {
+    const url = typeof entry === "string" ? entry : entry.url;
+    return !PRECACHE_EXCLUDES.some((assetName) => url.endsWith(assetName));
+});
+precacheAndRoute(precacheManifest);
 
 // 🧩 Safari 导航修复核心逻辑
 const navigationHandler = async (params: any) => {

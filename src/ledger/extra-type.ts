@@ -39,6 +39,7 @@ export type Budget = {
  * 过滤器，不需要转换，可以略过
  */
 export type BillFilter = Partial<{
+    keyword: string;
     comment: string;
     recent?: {
         value: number;

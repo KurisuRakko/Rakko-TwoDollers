@@ -1,6 +1,8 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import UserAvatarImage from "@/components/user-avatar";
+import { cn } from "@/utils";
+import type { StartupOverlayMode } from "./controller";
 import { setStartupOverlayAvatarRect } from "./controller";
 import "./style.css";
 
@@ -22,8 +24,10 @@ export default function StartupOverlay({
     avatarSource,
     displayName,
     exitFlightTarget,
+    exitSourceRect,
     isExiting = false,
     layoutId,
+    mode = "startup",
     status,
 }: {
     avatarSource?: string;
@@ -33,8 +37,15 @@ export default function StartupOverlay({
         x: number;
         y: number;
     } | null;
+    exitSourceRect?: {
+        height: number;
+        left: number;
+        top: number;
+        width: number;
+    } | null;
     isExiting?: boolean;
     layoutId?: string;
+    mode?: StartupOverlayMode;
     status: string;
 }) {
     const reducedMotion = Boolean(useReducedMotion());
@@ -78,6 +89,9 @@ export default function StartupOverlay({
               opacity: number;
               y: number;
           };
+    const useFixedExitAvatar =
+        !reducedMotion &&
+        Boolean(isExiting && exitFlightTarget && exitSourceRect);
 
     if (reducedMotion) {
         contentAnimate = { opacity: isExiting ? 0 : 1, y: 0, scale: 1 };
@@ -160,7 +174,7 @@ export default function StartupOverlay({
     }, []);
 
     return (
-        <div className="startup-overlay">
+        <div className={cn("startup-overlay", `startup-overlay--${mode}`)}>
             <motion.div
                 className="startup-overlay__backdrop"
                 initial={{ opacity: 0 }}
@@ -183,23 +197,30 @@ export default function StartupOverlay({
                           }
                 }
             >
-                <motion.div
-                    ref={avatarShellRef}
-                    layoutId={layoutId}
-                    transition={
-                        reducedMotion
-                            ? { duration: 0.16 }
-                            : startupOverlayAvatarTransition
-                    }
-                    animate={avatarAnimate}
-                    className="startup-overlay__avatar-shell"
-                >
-                    <UserAvatarImage
-                        source={avatarSource}
-                        alt={displayName}
-                        className="startup-overlay__avatar-image"
+                {useFixedExitAvatar ? (
+                    <div
+                        ref={avatarShellRef}
+                        className="startup-overlay__avatar-shell startup-overlay__avatar-shell--placeholder"
                     />
-                </motion.div>
+                ) : (
+                    <motion.div
+                        ref={avatarShellRef}
+                        layoutId={layoutId}
+                        transition={
+                            reducedMotion
+                                ? { duration: 0.16 }
+                                : startupOverlayAvatarTransition
+                        }
+                        animate={avatarAnimate}
+                        className="startup-overlay__avatar-shell"
+                    >
+                        <UserAvatarImage
+                            source={avatarSource}
+                            alt={displayName}
+                            className="startup-overlay__avatar-image"
+                        />
+                    </motion.div>
+                )}
                 <motion.div
                     className="startup-overlay__copy"
                     initial={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -212,6 +233,9 @@ export default function StartupOverlay({
                         className="startup-overlay__spinner"
                         aria-hidden="true"
                     >
+                        {mode === "manual-sync" && (
+                            <span className="startup-overlay__spinner-ring"></span>
+                        )}
                         <span></span>
                         <span></span>
                         <span></span>
@@ -220,6 +244,31 @@ export default function StartupOverlay({
                     </div>
                 </motion.div>
             </motion.div>
+            {useFixedExitAvatar && exitSourceRect && (
+                <motion.div
+                    animate={avatarAnimate}
+                    className="startup-overlay__avatar-shell startup-overlay__avatar-shell--flying"
+                    style={{
+                        height: exitSourceRect.height,
+                        left: exitSourceRect.left,
+                        top: exitSourceRect.top,
+                        width: exitSourceRect.width,
+                    }}
+                    transition={
+                        "transition" in avatarAnimate
+                            ? avatarAnimate.transition
+                            : reducedMotion
+                              ? { duration: 0.16 }
+                              : startupOverlayAvatarTransition
+                    }
+                >
+                    <UserAvatarImage
+                        source={avatarSource}
+                        alt={displayName}
+                        className="startup-overlay__avatar-image"
+                    />
+                </motion.div>
+            )}
         </div>
     );
 }

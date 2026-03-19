@@ -7,10 +7,10 @@ import {
     useRef,
     useState,
 } from "react";
-import { StorageAPI } from "@/api/storage";
 import { useBookStore } from "@/store/book";
 import { cacheInDB } from "@/utils/cache";
 import { GetOnlineAssetsCacheKey } from "@/utils/constant";
+import { loadStorageEndpoint } from "@/utils/storage-runtime";
 
 // 降低弹窗过渡动画时图片渲染时的抖动
 function Delayed({ children }: { children: ReactNode }) {
@@ -50,29 +50,39 @@ export function SmartImageCore({
             return;
         }
         if (!(source instanceof File)) {
-            // 普通字符串 url
-            if (StorageAPI.getOnlineAsset) {
-                cacheInDB(StorageAPI.getOnlineAsset, GetOnlineAssetsCacheKey)?.(
-                    source,
-                    book,
-                )
-                    .then((file) => {
-                        if (file === undefined) {
-                            setUrl(source);
-                            return;
-                        }
-                        const objectUrl = URL.createObjectURL(file);
-                        objectUrlRef.current = objectUrl;
-                        setUrl(objectUrl);
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                        setStatus("error");
-                    });
-                return;
-            }
             setUrl(source);
-            return () => {};
+            let cancelled = false;
+            void loadStorageEndpoint()
+                .then((storageAPI) => {
+                    if (!storageAPI.getOnlineAsset || cancelled) {
+                        return;
+                    }
+
+                    return cacheInDB(
+                        storageAPI.getOnlineAsset,
+                        GetOnlineAssetsCacheKey,
+                    )?.(source, book);
+                })
+                .then((file) => {
+                    if (cancelled || file === undefined) {
+                        return;
+                    }
+                    const objectUrl = URL.createObjectURL(file);
+                    objectUrlRef.current = objectUrl;
+                    setUrl(objectUrl);
+                })
+                .catch((error) => {
+                    console.error(error);
+                    setStatus("error");
+                });
+
+            return () => {
+                cancelled = true;
+                if (objectUrlRef.current) {
+                    URL.revokeObjectURL(objectUrlRef.current);
+                    objectUrlRef.current = null;
+                }
+            };
         }
         // 如果传入的是 File，创建 blob url
         const objectUrl = URL.createObjectURL(source);

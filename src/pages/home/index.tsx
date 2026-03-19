@@ -9,7 +9,6 @@ import {
     useState,
 } from "react";
 import { useShallow } from "zustand/shallow";
-import { StorageAPI } from "@/api/storage";
 import CloudLoopIcon from "@/assets/icons/cloud-loop.svg?react";
 import AnimatedNumber from "@/components/animated-number";
 import { showBookGuide } from "@/components/book/util";
@@ -37,6 +36,7 @@ import { usePreferenceStore } from "@/store/preference";
 import { useIsLogin, useUserStore } from "@/store/user";
 import { cn } from "@/utils";
 import { filterOrderedBillListByTimeRange } from "@/utils/filter";
+import { getStoredSyncEndpointType } from "@/utils/storage-runtime";
 import { denseDate } from "@/utils/time";
 
 let ledgerAnimationShows = false;
@@ -44,6 +44,12 @@ const HOME_AVATAR_LAYOUT_ID = "home-current-user-avatar";
 const shownStartupBooks = new Set<string>();
 const STARTUP_OVERLAY_MIN_VISIBLE_MS = 320;
 const STARTUP_OVERLAY_BUSY_GRACE_MS = 640;
+const MANUAL_SYNC_MIN_VISIBLE_MS = 300;
+const MANUAL_SYNC_EXIT_MS = 560;
+const PULL_SYNC_THRESHOLD = 86;
+const PULL_SYNC_MAX = 124;
+
+type PullSyncState = "idle" | "pulling" | "armed" | "syncing" | "settling";
 
 // Spring configuration for iOS-like feel
 const springTransition = {
@@ -123,6 +129,7 @@ export default function Page() {
     const { id: userId } = useUserStore();
     const isLogin = useIsLogin();
     const { avatarSource, displayName } = useCurrentUserDisplay();
+    const storageType = getStoredSyncEndpointType();
     const prefersReducedMotion = Boolean(useReducedMotion());
     const avatarLayoutId = prefersReducedMotion
         ? undefined
@@ -138,10 +145,6 @@ export default function Page() {
 
     const [currentDate, setCurrentDate] = useState(dayjs());
     const ledgerRef = useRef<any>(null);
-    const previousSyncRef = useRef(sync);
-    const [showSyncSuccess, setShowSyncSuccess] = useState(false);
-    const [syncPillMounted, setSyncPillMounted] = useState(false);
-    const [syncPillLeaving, setSyncPillLeaving] = useState(false);
     const [startupBookId, setStartupBookId] = useState<string | null>(null);
     const [startupExiting, setStartupExiting] = useState(false);
     const [startupShownAt, setStartupShownAt] = useState<number | null>(null);
@@ -150,6 +153,15 @@ export default function Page() {
     const [startupTimingTick, setStartupTimingTick] = useState(0);
     const isDesktop = useIsDesktop();
     const [isExpanded, setIsExpanded] = useState(false);
+    const [pullSyncState, setPullSyncState] = useState<PullSyncState>("idle");
+    const [pullDistance, setPullDistance] = useState(0);
+    const [manualSyncOverlayVisible, setManualSyncOverlayVisible] =
+        useState(false);
+    const [manualSyncExiting, setManualSyncExiting] = useState(false);
+    const [manualSyncStatus, setManualSyncStatus] = useState("");
+    const collapseTouchStartY = useRef<number>(-1);
+    const pullTouchStartY = useRef<number | null>(null);
+    const settlePullTimerRef = useRef<number | null>(null);
 
     const syncStateLabel =
         sync === "wait"
@@ -159,6 +171,23 @@ export default function Page() {
               : sync === "success"
                 ? t("sync-success")
                 : t("home-sync-failed");
+    const pullIndicatorLabel =
+        pullSyncState === "armed"
+            ? t("home-pull-release")
+            : pullSyncState === "syncing"
+              ? t("home-pull-syncing")
+              : t("home-pull-to-sync");
+    const pullIndicatorIconClassName =
+        pullSyncState === "armed"
+            ? "icon-[mdi--cloud-sync-outline]"
+            : pullSyncState === "syncing"
+              ? "icon-[mdi--loading] animate-spin"
+              : "icon-[mdi--arrow-down-circle-outline]";
+    const pullIndicatorVisible =
+        !manualSyncOverlayVisible &&
+        !manualSyncExiting &&
+        !isExpanded &&
+        (pullSyncState !== "idle" || pullDistance > 0);
 
     const currentDateBills = useMemo(() => {
         const today = filterOrderedBillListByTimeRange(bills, [
@@ -229,38 +258,180 @@ export default function Page() {
         [isExpanded, isDesktop],
     );
 
-    const touchStartY = useRef<number>(-1);
+    const clearPullSyncSettleTimer = useCallback(() => {
+        if (settlePullTimerRef.current) {
+            window.clearTimeout(settlePullTimerRef.current);
+            settlePullTimerRef.current = null;
+        }
+    }, []);
+
+    const settlePullSync = useCallback(
+        (nextState: PullSyncState = "idle") => {
+            clearPullSyncSettleTimer();
+            setPullDistance(0);
+            if (nextState === "idle") {
+                setPullSyncState("idle");
+                return;
+            }
+            setPullSyncState(nextState);
+            settlePullTimerRef.current = window.setTimeout(() => {
+                setPullSyncState("idle");
+                settlePullTimerRef.current = null;
+            }, 220);
+        },
+        [clearPullSyncSettleTimer],
+    );
+
+    const getLedgerContainer = useCallback(() => {
+        return ledgerRef.current?.getContainer() as HTMLDivElement | null;
+    }, []);
+
+    const canPullSync = useCallback(() => {
+        if (
+            isDesktop ||
+            isExpanded ||
+            manualSyncOverlayVisible ||
+            manualSyncExiting
+        ) {
+            return false;
+        }
+
+        const container = getLedgerContainer();
+        return !container || container.scrollTop <= 0;
+    }, [
+        getLedgerContainer,
+        isDesktop,
+        isExpanded,
+        manualSyncExiting,
+        manualSyncOverlayVisible,
+    ]);
+
+    const triggerManualSync = useCallback(async () => {
+        if (manualSyncOverlayVisible || manualSyncExiting) {
+            return;
+        }
+
+        clearPullSyncSettleTimer();
+        setPullDistance(0);
+        setPullSyncState("syncing");
+        setManualSyncExiting(false);
+        setManualSyncStatus(t("syncing"));
+        setManualSyncOverlayVisible(true);
+
+        const startedAt = Date.now();
+        try {
+            await useLedgerStore.getState().syncCurrentBook();
+            const remaining = Math.max(
+                0,
+                MANUAL_SYNC_MIN_VISIBLE_MS - (Date.now() - startedAt),
+            );
+            if (remaining > 0) {
+                await new Promise((resolve) =>
+                    window.setTimeout(resolve, remaining),
+                );
+            }
+        } catch (error) {
+            setManualSyncStatus(t("home-sync-failed"));
+            await new Promise((resolve) => window.setTimeout(resolve, 180));
+            console.error("manual sync failed", error);
+        } finally {
+            setManualSyncOverlayVisible(false);
+            setManualSyncExiting(true);
+        }
+    }, [
+        clearPullSyncSettleTimer,
+        manualSyncExiting,
+        manualSyncOverlayVisible,
+        t,
+    ]);
+
     const handleTouchStart = (e: React.TouchEvent) => {
         if (isDesktop) return;
-        const container = ledgerRef.current?.getContainer();
+        const container = getLedgerContainer();
         const isAtTop = !container || container.scrollTop <= 0;
 
         if (!isExpanded || isAtTop) {
-            touchStartY.current = e.touches[0].clientY;
+            collapseTouchStartY.current = e.touches[0].clientY;
         } else {
-            touchStartY.current = -1;
+            collapseTouchStartY.current = -1;
+        }
+
+        if (canPullSync()) {
+            pullTouchStartY.current = e.touches[0].clientY;
+            clearPullSyncSettleTimer();
+        } else {
+            pullTouchStartY.current = null;
         }
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        if (isDesktop || touchStartY.current === -1) return;
+        if (isDesktop) return;
+
         const currentY = e.touches[0].clientY;
-        const deltaY = currentY - touchStartY.current;
+        if (
+            pullTouchStartY.current !== null &&
+            pullSyncState !== "syncing" &&
+            canPullSync()
+        ) {
+            const pullDeltaY = currentY - pullTouchStartY.current;
+            if (pullDeltaY > 0) {
+                const resistedDistance = Math.min(
+                    PULL_SYNC_MAX,
+                    pullDeltaY * 0.58,
+                );
+                setPullDistance(resistedDistance);
+                setPullSyncState(
+                    resistedDistance >= PULL_SYNC_THRESHOLD
+                        ? "armed"
+                        : "pulling",
+                );
+                return;
+            }
+        }
+
+        if (collapseTouchStartY.current === -1) return;
+        const deltaY = currentY - collapseTouchStartY.current;
 
         if (isExpanded) {
             // 在全屏状态，只有在顶端且向下滑动超过一定距离才收起
             if (deltaY > 50) {
                 setIsExpanded(false);
-                touchStartY.current = -1;
+                collapseTouchStartY.current = -1;
             }
         } else {
             // 在收起状态，只要向上滑动超过一定距离就展开
             if (deltaY < -40) {
                 setIsExpanded(true);
-                touchStartY.current = -1;
+                collapseTouchStartY.current = -1;
             }
         }
     };
+
+    const handleTouchEnd = useCallback(() => {
+        collapseTouchStartY.current = -1;
+
+        if (pullTouchStartY.current === null) {
+            return;
+        }
+
+        pullTouchStartY.current = null;
+        if (pullSyncState === "armed") {
+            void triggerManualSync();
+            return;
+        }
+
+        if (pullDistance > 0 || pullSyncState === "pulling") {
+            settlePullSync("settling");
+        }
+    }, [pullDistance, pullSyncState, settlePullSync, triggerManualSync]);
+
+    const handleTouchCancel = useCallback(() => {
+        collapseTouchStartY.current = -1;
+        pullTouchStartY.current = null;
+        if (pullDistance > 0 || pullSyncState !== "idle") {
+            settlePullSync("settling");
+        }
+    }, [pullDistance, pullSyncState, settlePullSync]);
 
     useEffect(() => {
         if (isDesktop && isExpanded) {
@@ -279,52 +450,6 @@ export default function Page() {
     useEffect(() => {
         ledgerAnimationShows = true;
     }, []);
-
-    useEffect(() => {
-        const previousSync = previousSyncRef.current;
-        previousSyncRef.current = sync;
-
-        if (sync === "syncing" || sync === "wait") {
-            setShowSyncSuccess(false);
-            return;
-        }
-
-        if (sync === "success" && previousSync === "syncing") {
-            setShowSyncSuccess(true);
-            const timer = window.setTimeout(() => {
-                setShowSyncSuccess(false);
-            }, 2200);
-            return () => {
-                window.clearTimeout(timer);
-            };
-        }
-
-        if (sync !== "success") {
-            setShowSyncSuccess(false);
-        }
-    }, [sync]);
-
-    const showSyncPill =
-        sync === "syncing" ||
-        (sync !== "wait" && sync !== "success") ||
-        showSyncSuccess;
-
-    useEffect(() => {
-        if (showSyncPill) {
-            setSyncPillMounted(true);
-            setSyncPillLeaving(false);
-            return;
-        }
-
-        setSyncPillLeaving(true);
-        const timer = window.setTimeout(() => {
-            setSyncPillMounted(false);
-            setSyncPillLeaving(false);
-        }, 220);
-        return () => {
-            window.clearTimeout(timer);
-        };
-    }, [showSyncPill]);
 
     const isCurrentBookInitializing =
         Boolean(currentBookId) && (bookLoading || ledgerLoading);
@@ -441,6 +566,23 @@ export default function Page() {
         !shouldBookPickerTakeOver;
 
     useEffect(() => {
+        if (manualSyncOverlayVisible) {
+            showHomeStartupOverlay({
+                avatarSource,
+                displayName,
+                layoutId: avatarLayoutId,
+                minVisibleMs: MANUAL_SYNC_MIN_VISIBLE_MS,
+                mode: "manual-sync",
+                status: manualSyncStatus,
+            });
+            return;
+        }
+
+        if (manualSyncExiting) {
+            hideHomeStartupOverlay();
+            return;
+        }
+
         if (!showStartupOverlay) {
             hideHomeStartupOverlay();
             return;
@@ -450,15 +592,34 @@ export default function Page() {
             avatarSource,
             displayName,
             layoutId: avatarLayoutId,
+            mode: "startup",
             status: startupStatusLabel,
         });
     }, [
         avatarLayoutId,
         avatarSource,
         displayName,
+        manualSyncExiting,
+        manualSyncOverlayVisible,
+        manualSyncStatus,
         showStartupOverlay,
         startupStatusLabel,
     ]);
+
+    useEffect(() => {
+        if (!manualSyncExiting) {
+            return;
+        }
+
+        const timer = window.setTimeout(() => {
+            setManualSyncExiting(false);
+            settlePullSync("settling");
+        }, MANUAL_SYNC_EXIT_MS);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [manualSyncExiting, settlePullSync]);
 
     useEffect(() => {
         if (!startupExiting) {
@@ -475,12 +636,20 @@ export default function Page() {
         };
     }, [startupExiting]);
 
+    useEffect(() => {
+        return () => {
+            clearPullSyncSettleTimer();
+        };
+    }, [clearPullSyncSettleTimer]);
+
     return (
         <div
             className={cn(
                 "home-page relative w-full h-full px-2 pt-2 pb-0 flex flex-col overflow-hidden page-show",
                 isExpanded && "p-0 gap-0",
             )}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
         >
             <Navigation hidden={isExpanded} />
             <AnimatePresence initial={false}>
@@ -509,6 +678,8 @@ export default function Page() {
                             className="home-hero-grid flex-shrink-0"
                             onTouchStart={handleTouchStart}
                             onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                            onTouchCancel={handleTouchCancel}
                         >
                             <div className="home-summary-card home-hero-panel relative overflow-hidden rounded-[24px] p-4 text-foreground">
                                 <div className="home-hero-orb home-hero-orb-primary"></div>
@@ -529,8 +700,7 @@ export default function Page() {
                                                 className="home-book-chip"
                                                 onClick={() => {
                                                     if (
-                                                        StorageAPI.type ===
-                                                        "github"
+                                                        storageType === "github"
                                                     ) {
                                                         showBookGuide();
                                                     } else {
@@ -544,13 +714,12 @@ export default function Page() {
                                             >
                                                 <i
                                                     className={cn(
-                                                        StorageAPI.type ===
-                                                            "github"
+                                                        storageType === "github"
                                                             ? "icon-[mdi--book-open-variant-outline]"
                                                             : "icon-[mdi--account-outline]",
                                                     )}
                                                 ></i>
-                                                {StorageAPI.type === "github"
+                                                {storageType === "github"
                                                     ? (currentBook?.name ??
                                                       t("ledger-books"))
                                                     : t("login-action")}
@@ -575,23 +744,6 @@ export default function Page() {
                                                 value={currentDateAmount}
                                                 className="home-hero-amount font-bold"
                                             />
-                                            {syncPillMounted && (
-                                                <div
-                                                    className={cn(
-                                                        "home-sync-pill",
-                                                        syncPillLeaving &&
-                                                            "home-sync-pill-leaving",
-                                                    )}
-                                                >
-                                                    <i
-                                                        className={cn(
-                                                            syncIconClassName,
-                                                            "size-[18px]",
-                                                        )}
-                                                    ></i>
-                                                    {syncStateLabel}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -632,6 +784,24 @@ export default function Page() {
                 )}
             </AnimatePresence>
 
+            <div
+                className={cn(
+                    "home-pull-sync-indicator",
+                    pullIndicatorVisible && "home-pull-sync-indicator-visible",
+                )}
+                style={{
+                    transform: `translate3d(0, ${Math.max(
+                        0,
+                        pullDistance * 0.72,
+                    )}px, 0)`,
+                }}
+            >
+                <div className="home-pull-sync-badge">
+                    <i className={cn(pullIndicatorIconClassName, "size-4")}></i>
+                    <span>{pullIndicatorLabel}</span>
+                </div>
+            </div>
+
             <motion.div
                 layout
                 transition={springTransition}
@@ -641,6 +811,8 @@ export default function Page() {
                 )}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
             >
                 <div
                     className={cn(
@@ -653,6 +825,11 @@ export default function Page() {
                         <div className="home-toolbar-subtitle">
                             {t("home-today-records")}: {currentDateBills.length}
                         </div>
+                        {sync === "failed" && (
+                            <div className="home-toolbar-title text-destructive">
+                                {syncStateLabel}
+                            </div>
+                        )}
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                         <HintTooltip
@@ -664,9 +841,10 @@ export default function Page() {
                             <button
                                 type="button"
                                 className="home-toolbar-button"
+                                title={syncStateLabel}
+                                aria-label={syncStateLabel}
                                 onClick={() => {
-                                    useLedgerStore.getState().initCurrentBook();
-                                    StorageAPI.toSync();
+                                    void triggerManualSync();
                                 }}
                             >
                                 {ledgerLoading ? (

@@ -5,10 +5,10 @@ import {
     useRef,
     useState,
 } from "react";
-import { StorageAPI } from "@/api/storage";
 import { useBookStore } from "@/store/book";
 import { cacheInDB } from "@/utils/cache";
 import { GetOnlineAssetsCacheKey } from "@/utils/constant";
+import { loadStorageEndpoint } from "@/utils/storage-runtime";
 import { DEFAULT_USER_AVATAR } from "@/utils/user-display";
 
 const getPersistedCurrentBookId = () => {
@@ -72,19 +72,22 @@ export default function UserAvatarImage({
             getPersistedCurrentBookId();
         setUrl(fallbackSource);
 
-        if (
-            !bookId ||
-            !StorageAPI.getOnlineAsset ||
-            !isPrivateAssetSource(fallbackSource)
-        ) {
+        if (!bookId || !isPrivateAssetSource(fallbackSource)) {
             return () => {};
         }
 
         let cancelled = false;
-        cacheInDB(StorageAPI.getOnlineAsset, GetOnlineAssetsCacheKey)?.(
-            fallbackSource,
-            bookId,
-        )
+        void loadStorageEndpoint()
+            .then((storageAPI) => {
+                if (!storageAPI.getOnlineAsset || cancelled) {
+                    return;
+                }
+
+                return cacheInDB(
+                    storageAPI.getOnlineAsset,
+                    GetOnlineAssetsCacheKey,
+                )?.(fallbackSource, bookId);
+            })
             .then((blob) => {
                 if (cancelled || blob === undefined) {
                     return;

@@ -1,11 +1,12 @@
 /** biome-ignore-all lint/a11y/noSvgWithoutTitle: <explanation> */
 
 import { Collapsible } from "radix-ui";
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useShallow } from "zustand/shallow";
-import loginWallpaper from "@/assets/arknightswall9.jpg";
 import { useIntl } from "@/locale";
 import { useIsLogin, useUserStore } from "@/store/user";
+import { DEFAULT_WALLPAPER_PATH, preloadImage } from "@/utils/runtime-assets";
 
 const loaded = import("@/api/storage");
 
@@ -29,6 +30,10 @@ export default function Login() {
         })),
     );
 
+    useEffect(() => {
+        preloadImage(DEFAULT_WALLPAPER_PATH);
+    }, []);
+
     if (loading && !forceLoginUI) {
         return null;
     }
@@ -36,17 +41,18 @@ export default function Login() {
     if (isLogin && !forceLoginUI) {
         return null;
     }
+
     return createPortal(
         <div className="fixed z-[50] top-0 right-0 w-screen h-screen overflow-y-auto overscroll-contain">
             <div
                 className="login-backdrop absolute w-full h-full z-[-1]"
                 style={{
-                    backgroundImage: `linear-gradient(rgba(10, 10, 10, 0.46), rgba(10, 10, 10, 0.72)), url(${loginWallpaper})`,
+                    backgroundImage: `linear-gradient(rgba(10, 10, 10, 0.46), rgba(10, 10, 10, 0.72)), url(${DEFAULT_WALLPAPER_PATH})`,
                 }}
             ></div>
             <div className="login-screen-shell w-full min-h-full flex justify-center items-start sm:items-center p-3 sm:p-6">
                 <div className="login-shell login-card bg-background/80 w-full max-w-[460px] sm:max-w-[1024px] h-fit sm:max-h-[calc(100vh-64px)] grid grid-cols-1 sm:grid-cols-[1.1fr_1fr] overflow-hidden border border-white/10 rounded-[32px] shadow-2xl">
-                    <Guide wallpaper={loginWallpaper} />
+                    <Guide wallpaper={DEFAULT_WALLPAPER_PATH} />
                     <div className="login-panel relative flex flex-col overflow-hidden">
                         <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent)] pointer-events-none"></div>
                         <div className="flex items-center justify-between px-5 pt-5 pb-3 sm:px-7">

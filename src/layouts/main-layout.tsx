@@ -36,6 +36,8 @@ const MAIN_SWIPE_ROUTES = ["/stat", "/", "/search"] as const;
 const SWIPE_LOCK_DISTANCE = 14;
 const SWIPE_TRIGGER_DISTANCE = 72;
 const SWIPE_DIRECTION_RATIO = 1.2;
+const SWIPE_SETTLE_DURATION_MS = 220;
+const SWIPE_EDGE_RESISTANCE = 0.18;
 
 type MainSwipeRoute = (typeof MAIN_SWIPE_ROUTES)[number];
 
@@ -97,11 +99,71 @@ export default function MainLayout() {
     const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const swipeLockedRef = useRef(false);
     const swipeCancelledRef = useRef(false);
+    const swipeOffsetRef = useRef(0);
+    const swipeAnimatingRef = useRef(false);
+    const swipeAnimationFrameRef = useRef<number | null>(null);
+    const swipeTimerRef = useRef<number | null>(null);
 
     const resetSwipe = () => {
         swipeStartRef.current = null;
         swipeLockedRef.current = false;
         swipeCancelledRef.current = false;
+    };
+
+    const clearSwipeAnimationFrame = () => {
+        if (swipeAnimationFrameRef.current !== null) {
+            window.cancelAnimationFrame(swipeAnimationFrameRef.current);
+            swipeAnimationFrameRef.current = null;
+        }
+    };
+
+    const clearSwipeTimer = () => {
+        if (swipeTimerRef.current !== null) {
+            window.clearTimeout(swipeTimerRef.current);
+            swipeTimerRef.current = null;
+        }
+    };
+
+    const applySwipeOffset = (offset: number, animated = false) => {
+        swipeOffsetRef.current = offset;
+        const container = swipeContainerRef.current;
+        if (!container) {
+            return;
+        }
+
+        clearSwipeAnimationFrame();
+        swipeAnimationFrameRef.current = window.requestAnimationFrame(() => {
+            container.style.willChange = offset === 0 ? "" : "transform";
+            container.style.transition = animated
+                ? `transform ${SWIPE_SETTLE_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`
+                : "none";
+            container.style.transform =
+                offset === 0 ? "" : `translate3d(${offset}px, 0, 0)`;
+            swipeAnimationFrameRef.current = null;
+        });
+    };
+
+    const settleSwipe = (offset: number, onComplete?: () => void) => {
+        clearSwipeTimer();
+        applySwipeOffset(offset, true);
+        swipeTimerRef.current = window.setTimeout(() => {
+            swipeTimerRef.current = null;
+            onComplete?.();
+        }, SWIPE_SETTLE_DURATION_MS);
+    };
+
+    const cleanupSwipeStyles = () => {
+        clearSwipeAnimationFrame();
+        clearSwipeTimer();
+        swipeOffsetRef.current = 0;
+        swipeAnimatingRef.current = false;
+        const container = swipeContainerRef.current;
+        if (!container) {
+            return;
+        }
+        container.style.transition = "";
+        container.style.transform = "";
+        container.style.willChange = "";
     };
 
     // 自动周期记账
@@ -148,7 +210,11 @@ export default function MainLayout() {
     }, [isLogin, userLoading]);
 
     const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-        if (isDesktop || event.touches.length !== 1) {
+        if (
+            swipeAnimatingRef.current ||
+            isDesktop ||
+            event.touches.length !== 1
+        ) {
             resetSwipe();
             return;
         }
@@ -183,6 +249,7 @@ export default function MainLayout() {
 
     const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
         if (
+            swipeAnimatingRef.current ||
             isDesktop ||
             swipeCancelledRef.current ||
             event.touches.length !== 1
@@ -213,6 +280,17 @@ export default function MainLayout() {
 
             swipeLockedRef.current = true;
         }
+
+        const currentRoute = resolveMainSwipeRoute(location.pathname);
+        if (!currentRoute) {
+            return;
+        }
+        const currentIndex = MAIN_SWIPE_ROUTES.indexOf(currentRoute);
+        const nextIndex = deltaX < 0 ? currentIndex - 1 : currentIndex + 1;
+        const hasNextRoute = Boolean(MAIN_SWIPE_ROUTES[nextIndex]);
+        const offset = hasNextRoute ? deltaX : deltaX * SWIPE_EDGE_RESISTANCE;
+
+        applySwipeOffset(offset);
     };
 
     const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
@@ -238,6 +316,8 @@ export default function MainLayout() {
         const currentIndex = MAIN_SWIPE_ROUTES.indexOf(currentRoute);
         const nextIndex = deltaX < 0 ? currentIndex - 1 : currentIndex + 1;
         const nextRoute = MAIN_SWIPE_ROUTES[nextIndex];
+        const width =
+            swipeContainerRef.current?.clientWidth || window.innerWidth || 1;
 
         resetSwipe();
 
@@ -246,10 +326,20 @@ export default function MainLayout() {
             absX < SWIPE_TRIGGER_DISTANCE ||
             absX <= absY * SWIPE_DIRECTION_RATIO
         ) {
+            settleSwipe(0, cleanupSwipeStyles);
             return;
         }
 
-        navigate(nextRoute);
+        swipeAnimatingRef.current = true;
+        settleSwipe(deltaX < 0 ? -width : width, () => {
+            cleanupSwipeStyles();
+            navigate(nextRoute);
+        });
+    };
+
+    const handleTouchCancel = () => {
+        resetSwipe();
+        settleSwipe(0, cleanupSwipeStyles);
     };
 
     return (
@@ -265,7 +355,7 @@ export default function MainLayout() {
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
-                    onTouchCancel={resetSwipe}
+                    onTouchCancel={handleTouchCancel}
                 >
                     <Outlet />
                 </div>

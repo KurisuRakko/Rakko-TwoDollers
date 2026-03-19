@@ -58,6 +58,7 @@ type LedgerStoreActions = {
 
     refreshBillList: () => Promise<Full<Bill>[]>;
     initCurrentBook: () => Promise<void>;
+    syncCurrentBook: () => Promise<void>;
 
     updateGlobalMeta: (
         v: Partial<GlobalMeta> | ((prev: GlobalMeta) => GlobalMeta),
@@ -72,12 +73,29 @@ type LedgerStore = LedgerStoreState & LedgerStoreActions;
 const MIN_SIZE = 200;
 
 export const useLedgerStore = create<LedgerStore>()((set, get) => {
+    let currentSyncPromise: Promise<void> | null = null;
+
     const getCurrentFullRepoName = () => {
         const id = useBookStore.getState().currentBookId;
         if (id === undefined) {
             throw new Error("currentBookId not found");
         }
         return id;
+    };
+
+    const syncCurrentBook: LedgerStoreActions["syncCurrentBook"] = async () => {
+        if (currentSyncPromise) {
+            return currentSyncPromise;
+        }
+
+        currentSyncPromise = loadStorageAPI()
+            .then(({ StorageAPI }) => StorageAPI.toSync())
+            .then(() => undefined)
+            .finally(() => {
+                currentSyncPromise = null;
+            });
+
+        return currentSyncPromise;
     };
 
     const updateBillList = async (limit?: number) => {
@@ -135,11 +153,9 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
             if (!currentBookId) {
                 return;
             }
-            await updateBillList(MIN_SIZE);
             await StorageAPI.initBook(currentBookId);
-            // 初始化时先加载100条，后续按需加载全部
             await updateBillList(MIN_SIZE);
-            StorageAPI.toSync();
+            void syncCurrentBook();
         } catch (err) {
             if ((err as any)?.status === 404) {
                 const { toast } = await toastLib;
@@ -295,6 +311,7 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
         actions: [],
         pendingCursor: undefined,
         initCurrentBook: init,
+        syncCurrentBook,
         refreshBillList: updateBillList,
         removeBills,
         removeBill: async (id) => {
