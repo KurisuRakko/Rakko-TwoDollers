@@ -367,7 +367,7 @@ export default function MainLayout() {
                     <AnimatePresence initial={false} mode="wait">
                         <motion.div
                             key={location.pathname}
-                            className="h-full"
+                            className="h-full w-full min-w-0"
                             variants={
                                 prefersReducedMotion
                                     ? reducedPageShellVariants

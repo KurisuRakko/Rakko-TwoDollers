@@ -720,14 +720,14 @@ export default function Page() {
                                 <div className="home-hero-orb home-hero-orb-primary"></div>
                                 <div className="home-hero-orb home-hero-orb-secondary"></div>
                                 <motion.div
-                                    className="relative z-[1] flex h-full flex-col justify-between"
+                                    className="relative z-[1] flex h-full min-w-0 flex-col justify-between"
                                     variants={stagedContentVariants}
                                     initial="initial"
                                     animate="animate"
                                 >
                                     <motion.div
                                         variants={stagedItemVariants}
-                                        className="home-hero-head flex items-start justify-between gap-1"
+                                        className="home-hero-head flex min-w-0 items-start justify-between gap-1"
                                     >
                                         <div className="flex flex-col gap-1">
                                             <span className="home-kicker">
@@ -787,7 +787,7 @@ export default function Page() {
                                     >
                                         <motion.div
                                             variants={stagedItemVariants}
-                                            className="home-hero-value-stack flex flex-col gap-1"
+                                            className="home-hero-value-stack flex min-w-0 flex-col gap-1"
                                         >
                                             <AnimatedNumber
                                                 value={currentDateAmount}
@@ -844,7 +844,7 @@ export default function Page() {
                                                             }
                                                 }
                                                 transition={surfaceTransition}
-                                                className="flex-shrink-0 snap-start"
+                                                className="min-w-0 flex-shrink-0 snap-start"
                                             >
                                                 <BudgetCard
                                                     className="home-budget-card"
@@ -989,7 +989,7 @@ export default function Page() {
                                     animate="animate"
                                     exit="exit"
                                     transition={ledgerStateTransition}
-                                    className="h-full"
+                                    className="h-full w-full"
                                 >
                                     <Ledger
                                         ref={ledgerRef}
@@ -1016,7 +1016,7 @@ export default function Page() {
                                     animate="animate"
                                     exit="exit"
                                     transition={ledgerStateTransition}
-                                    className="home-empty-state text-xs p-4 text-center"
+                                    className="home-empty-state w-full text-xs p-4 text-center"
                                 >
                                     {t("nothing-here-add-one-bill")}
                                 </motion.div>
