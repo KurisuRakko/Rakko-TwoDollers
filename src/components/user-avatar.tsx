@@ -8,8 +8,11 @@ import {
 import { useBookStore } from "@/store/book";
 import { cacheInDB } from "@/utils/cache";
 import { GetOnlineAssetsCacheKey } from "@/utils/constant";
+import { readFileAsDataUrl } from "@/utils/file";
 import { loadStorageEndpoint } from "@/utils/storage-runtime";
 import { DEFAULT_USER_AVATAR } from "@/utils/user-display";
+
+const USER_AVATAR_CACHE_PREFIX = "user-avatar-cache";
 
 const getPersistedCurrentBookId = () => {
     if (typeof window === "undefined") {
@@ -48,6 +51,40 @@ const isPrivateAssetSource = (source: string) => {
     }
 };
 
+const getCachedAvatarKey = (source: string) => {
+    return `${USER_AVATAR_CACHE_PREFIX}:${encodeURIComponent(source)}`;
+};
+
+const getCachedAvatarSource = (source: string) => {
+    if (typeof window === "undefined") {
+        return undefined;
+    }
+
+    try {
+        const cached = window.localStorage.getItem(getCachedAvatarKey(source));
+        return cached || undefined;
+    } catch {
+        return undefined;
+    }
+};
+
+const persistCachedAvatarSource = async (source: string, blob: Blob) => {
+    if (typeof window === "undefined") {
+        return;
+    }
+
+    const dataUrl = await readFileAsDataUrl(blob).catch(() => undefined);
+    if (!dataUrl) {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(getCachedAvatarKey(source), dataUrl);
+    } catch {
+        // Ignore quota errors and keep the runtime object URL only.
+    }
+};
+
 export default function UserAvatarImage({
     source,
     alt,
@@ -59,20 +96,52 @@ export default function UserAvatarImage({
     className?: string;
     style?: CSSProperties;
 }) {
+    const currentBookId = useBookStore((state) => state.currentBookId);
     const fallbackSource = useMemo(
         () => source || DEFAULT_USER_AVATAR,
         [source],
     );
-    const [url, setUrl] = useState(fallbackSource);
+    const privateAssetSource = useMemo(
+        () => isPrivateAssetSource(fallbackSource),
+        [fallbackSource],
+    );
+    const cachedAvatarSource = useMemo(() => {
+        if (!privateAssetSource) {
+            return undefined;
+        }
+
+        return getCachedAvatarSource(fallbackSource);
+    }, [fallbackSource, privateAssetSource]);
+    const [url, setUrl] = useState(() => {
+        if (!privateAssetSource) {
+            return fallbackSource;
+        }
+
+        return cachedAvatarSource || DEFAULT_USER_AVATAR;
+    });
     const objectUrlRef = useRef<string | null>(null);
 
     useEffect(() => {
-        const bookId =
-            useBookStore.getState().currentBookId ||
-            getPersistedCurrentBookId();
-        setUrl(fallbackSource);
+        const releaseObjectUrl = () => {
+            if (objectUrlRef.current) {
+                URL.revokeObjectURL(objectUrlRef.current);
+                objectUrlRef.current = null;
+            }
+        };
+        const bookId = currentBookId || getPersistedCurrentBookId();
 
-        if (!bookId || !isPrivateAssetSource(fallbackSource)) {
+        releaseObjectUrl();
+
+        if (!privateAssetSource) {
+            setUrl(fallbackSource);
+            return () => {};
+        }
+
+        // Private GitHub asset URLs need an authenticated fetch first.
+        // Showing the raw URL directly is brittle on Safari and often ends in a blank avatar.
+        setUrl(cachedAvatarSource || DEFAULT_USER_AVATAR);
+
+        if (!bookId) {
             return () => {};
         }
 
@@ -93,23 +162,40 @@ export default function UserAvatarImage({
                     return;
                 }
 
+                releaseObjectUrl();
                 const objectUrl = URL.createObjectURL(blob);
                 objectUrlRef.current = objectUrl;
                 setUrl(objectUrl);
+                void persistCachedAvatarSource(fallbackSource, blob);
             })
             .catch((error) => {
                 console.error(error);
-                setUrl(fallbackSource);
+                if (!cancelled) {
+                    setUrl(cachedAvatarSource || DEFAULT_USER_AVATAR);
+                }
             });
 
         return () => {
             cancelled = true;
-            if (objectUrlRef.current) {
-                URL.revokeObjectURL(objectUrlRef.current);
-                objectUrlRef.current = null;
-            }
+            releaseObjectUrl();
         };
-    }, [fallbackSource]);
+    }, [cachedAvatarSource, currentBookId, fallbackSource, privateAssetSource]);
 
-    return <img src={url} alt={alt} className={className} style={style} />;
+    return (
+        <img
+            src={url}
+            alt={alt}
+            className={className}
+            style={style}
+            onError={() => {
+                const nextFallback =
+                    privateAssetSource && cachedAvatarSource
+                        ? cachedAvatarSource
+                        : DEFAULT_USER_AVATAR;
+                if (url !== nextFallback) {
+                    setUrl(nextFallback);
+                }
+            }}
+        />
+    );
 }

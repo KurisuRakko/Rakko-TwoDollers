@@ -6,6 +6,28 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { Book } from "@/api/endpoints/type";
 import { loadStorageAPI } from "../api/storage/dynamic";
 
+const BOOK_STORE_KEY = "book-store";
+
+const readPersistedBookState = () => {
+    if (typeof window === "undefined") {
+        return {};
+    }
+
+    try {
+        const raw = localStorage.getItem(BOOK_STORE_KEY);
+        if (!raw) {
+            return {};
+        }
+        const parsed = JSON.parse(raw) as {
+            state?: Partial<Pick<BookStoreState, "books" | "currentBookId">>;
+        };
+        return parsed.state ?? {};
+    } catch (error) {
+        console.warn("Failed to read persisted book state:", error);
+        return {};
+    }
+};
+
 type BookStoreState = {
     currentBookId: string | undefined;
     books: Book[];
@@ -30,15 +52,24 @@ type Persist<S> = (
 export const useBookStore = create<BookStore>()(
     (persist as Persist<BookStore>)(
         (set) => {
+            const persistedState = readPersistedBookState();
+            const persistedBooks = Array.isArray(persistedState.books)
+                ? persistedState.books
+                : [];
+            const hasPersistedBooks =
+                persistedBooks.length > 0 ||
+                typeof persistedState.currentBookId === "string";
             const visible = false;
             const loading = false;
-            const updateBookList = async () => {
+            const refreshBookList = async (background = false) => {
                 await Promise.resolve();
-                set(
-                    produce((state) => {
-                        state.loading = true;
-                    }),
-                );
+                if (!background) {
+                    set(
+                        produce((state) => {
+                            state.loading = true;
+                        }),
+                    );
+                }
                 try {
                     const { StorageAPI } = await loadStorageAPI();
                     const res = await StorageAPI.fetchAllBooks();
@@ -50,19 +81,22 @@ export const useBookStore = create<BookStore>()(
                     );
                     return allBooks;
                 } finally {
-                    set(
-                        produce((state) => {
-                            state.loading = false;
-                        }),
-                    );
+                    if (!background) {
+                        set(
+                            produce((state) => {
+                                state.loading = false;
+                            }),
+                        );
+                    }
                 }
             };
-            updateBookList();
+            const updateBookList = async () => refreshBookList(false);
+            void refreshBookList(hasPersistedBooks);
             return {
                 loading,
                 visible,
-                books: [],
-                currentBookId: undefined,
+                books: persistedBooks,
+                currentBookId: persistedState.currentBookId,
                 updateBookList,
                 addBook: async (name) => {
                     const { StorageAPI } = await loadStorageAPI();
@@ -86,7 +120,7 @@ export const useBookStore = create<BookStore>()(
             };
         },
         {
-            name: "book-store",
+            name: BOOK_STORE_KEY,
             storage: createJSONStorage(() => localStorage),
             version: 0,
             partialize(state) {

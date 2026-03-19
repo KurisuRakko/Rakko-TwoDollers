@@ -18,7 +18,9 @@ import { usePreferenceStore } from "./store/preference";
 import { register as registerLaunchQueue } from "./utils/launch-queue";
 import { lazyWithReload } from "./utils/lazy";
 
-const Rooot = lazyWithReload(() => import("./route"));
+const Rooot = lazyWithReload(() => import("./route"), undefined, {
+    preload: "immediate",
+});
 
 function AppStartupFallback() {
     const t = useIntl();

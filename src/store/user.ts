@@ -10,6 +10,28 @@ import { t } from "@/locale";
 
 const toastLib = import("sonner");
 
+const USER_STORE_KEY = "user-store";
+
+const readPersistedUserState = () => {
+    if (typeof window === "undefined") {
+        return {};
+    }
+
+    try {
+        const raw = localStorage.getItem(USER_STORE_KEY);
+        if (!raw) {
+            return {};
+        }
+        const parsed = JSON.parse(raw) as {
+            state?: Partial<Pick<UserStoreState, "avatar_url" | "name" | "id">>;
+        };
+        return parsed.state ?? {};
+    } catch (error) {
+        console.warn("Failed to read persisted user state:", error);
+        return {};
+    }
+};
+
 type UserStoreState = {
     avatar_url: string;
     name: string;
@@ -39,15 +61,19 @@ type Persist<S> = (
 export const useUserStore = create<UserStore>()(
     (persist as Persist<UserStore>)(
         (set, get) => {
-            const loading = true;
-            const updateUserInfo = async () => {
+            const persistedUser = readPersistedUserState();
+            const hasPersistedUser =
+                persistedUser.id !== -1 && Boolean(persistedUser.id);
+            const refreshUserInfo = async (background = false) => {
                 const { StorageAPI } = await loadStorageAPI();
                 await Promise.resolve();
-                set(
-                    produce((state) => {
-                        state.loading = true;
-                    }),
-                );
+                if (!background) {
+                    set(
+                        produce((state) => {
+                            state.loading = true;
+                        }),
+                    );
+                }
                 try {
                     const res = await StorageAPI.getUserInfo();
                     set(
@@ -81,17 +107,23 @@ export const useUserStore = create<UserStore>()(
                             state.expired = true;
                         }),
                     );
-                    throw error;
+                    if (!background) {
+                        throw error;
+                    }
                 } finally {
-                    set(
-                        produce((state) => {
-                            state.loading = false;
-                        }),
-                    );
+                    if (!background || get().loading) {
+                        set(
+                            produce((state) => {
+                                state.loading = false;
+                            }),
+                        );
+                    }
                 }
             };
 
-            updateUserInfo();
+            const updateUserInfo = async () => refreshUserInfo(false);
+
+            void refreshUserInfo(hasPersistedUser);
 
             const getUserInfo = async (login: string) => {
                 const run = async () => {
@@ -137,11 +169,11 @@ export const useUserStore = create<UserStore>()(
                 return run();
             };
             return {
-                loading,
-                avatar_url: "",
+                loading: !hasPersistedUser,
+                avatar_url: persistedUser.avatar_url ?? "",
                 login: "",
-                name: "",
-                id: 0,
+                name: persistedUser.name ?? "",
+                id: persistedUser.id ?? 0,
                 updateUserInfo,
                 getUserInfo,
                 getCollaborators,
@@ -158,7 +190,7 @@ export const useUserStore = create<UserStore>()(
             };
         },
         {
-            name: "user-store",
+            name: USER_STORE_KEY,
             storage: createJSONStorage(() => localStorage),
             version: 0,
             partialize(state) {

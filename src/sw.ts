@@ -14,7 +14,7 @@ clientsClaim();
 self.skipWaiting();
 
 // 预缓存由 VitePWA 注入的所有静态资源
-const PRECACHE_EXCLUDES = ["wallpaper-default.jpeg"];
+const PRECACHE_EXCLUDES: string[] = [];
 const precacheManifest = self.__WB_MANIFEST.filter((entry) => {
     const url = typeof entry === "string" ? entry : entry.url;
     return !PRECACHE_EXCLUDES.some((assetName) => url.endsWith(assetName));
@@ -54,6 +54,19 @@ registerRoute(
         cacheName: "cdn-jieba-wasm-cache",
         plugins: [
             // 可缓存响应插件 (确保缓存跨域的 Opaque Response)
+            new CacheableResponsePlugin({
+                statuses: [0, 200],
+            }),
+        ],
+    }),
+);
+
+registerRoute(
+    ({ request, url }) =>
+        request.destination === "image" && url.origin === self.location.origin,
+    new CacheFirst({
+        cacheName: "app-image-cache",
+        plugins: [
             new CacheableResponsePlugin({
                 statuses: [0, 200],
             }),

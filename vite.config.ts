@@ -32,7 +32,11 @@ export default defineConfig(({ mode }) => {
             filename: "sw.ts",
             registerType: "autoUpdate",
             injectRegister: "auto",
-            includeAssets: ["favicon.ico", "apple-touch-icon.png"],
+            includeAssets: [
+                "favicon.ico",
+                "apple-touch-icon.png",
+                "wallpaper-default.jpeg",
+            ],
             manifest: {
                 name: "Rakko-TwoDollars",
                 short_name: "Rakko-TwoDollars",
