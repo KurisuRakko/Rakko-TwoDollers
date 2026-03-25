@@ -1,11 +1,13 @@
 import { useIntl } from "@/locale";
 import { cn } from "@/utils";
 import { Button } from "../ui/button";
+import { IncomingScheduledProvider, showIncomingScheduled } from "./incoming";
 import { ScheduledProvider, showScheduled } from "./list-form";
 import { ScheduledEditProvider, showScheduledEdit } from "./scheduled-form";
 
 export { ScheduledProvider, showScheduled };
 export { ScheduledEditProvider, showScheduledEdit };
+export { IncomingScheduledProvider, showIncomingScheduled };
 
 export default function Scheduled() {
     const t = useIntl();

@@ -2,7 +2,7 @@ import type { UserInfo } from "@/api/endpoints/type";
 import type { GlobalMeta } from "@/ledger/type";
 
 export const DEFAULT_OFFLINE_USER_NAME = "Mikaela Hyakuya";
-export const DEFAULT_USER_AVATAR = "/icon.png";
+export const DEFAULT_USER_AVATAR = "/mika1.webp";
 
 type UserDisplayNameMap = GlobalMeta["userDisplayNames"];
 type UserAvatarMap = GlobalMeta["userAvatars"];

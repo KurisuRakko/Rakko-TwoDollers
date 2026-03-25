@@ -3,9 +3,9 @@ import { useIntl } from "@/locale";
 import { useBookStore } from "@/store/book";
 import { useIsLogin } from "@/store/user";
 import { cn } from "@/utils";
+import { openBookGuide } from "@/utils/deferred-openers";
 import { Button } from "../ui/button";
 import { BookForm } from "./form";
-import { showBookGuide } from "./util";
 
 export default function BookGuide() {
     const t = useIntl();
@@ -58,7 +58,7 @@ export function BookSettings() {
         <div className="backup">
             <Button
                 onClick={() => {
-                    showBookGuide();
+                    void openBookGuide();
                 }}
                 variant="ghost"
                 className="w-full py-4 rounded-none h-auto"

@@ -2,23 +2,8 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type TouchEvent, useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { BillEditorProvider } from "@/components/bill-editor";
-import { BillInfoProvider } from "@/components/bill-info";
-import { TagListProvider } from "@/components/bill-tag";
 import BookGuide from "@/components/book";
-import { BookConfirmProvider } from "@/components/book/util";
-import { BudgetEditProvider, BudgetProvider } from "@/components/budget";
-import { BudgetDetailProvider } from "@/components/budget/detail";
-import { CategoryListProvider } from "@/components/category";
-import { CurrencyListProvider } from "@/components/currency";
 import CustomCSS from "@/components/custom-css";
-import { ModalProvider } from "@/components/modal";
-import {
-    ScheduledEditProvider,
-    ScheduledProvider,
-} from "@/components/scheduled";
-import { Settings } from "@/components/settings";
-import { SortableListProvider } from "@/components/sortable";
-import { SortableGroupProvider } from "@/components/sortable/group";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsDesktop } from "@/hooks/use-media-query";
@@ -36,6 +21,7 @@ import {
     pageShellVariants,
     reducedPageShellVariants,
 } from "@/utils/motion";
+import DeferredGlobalProviderGate from "./deferred-global-provider-gate";
 
 const DEFAULT_BOOK_NAME = "personal";
 const MAIN_SWIPE_ROUTES = ["/stat", "/", "/search"] as const;
@@ -387,21 +373,8 @@ export default function MainLayout() {
                     </AnimatePresence>
                 </div>
                 <BillEditorProvider />
-                <BillInfoProvider />
-                <SortableListProvider />
-                <SortableGroupProvider />
-                <Settings />
-                <CurrencyListProvider />
                 <BookGuide />
-                <BookConfirmProvider />
-                <BudgetProvider />
-                <BudgetEditProvider />
-                <BudgetDetailProvider />
-                <ScheduledProvider />
-                <ScheduledEditProvider />
-                <TagListProvider />
-                <CategoryListProvider />
-                <ModalProvider />
+                <DeferredGlobalProviderGate />
                 <Toaster />
             </TooltipProvider>
         </ThemeProvider>

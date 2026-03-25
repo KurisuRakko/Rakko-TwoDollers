@@ -3,10 +3,18 @@ import { useCallback } from "react";
 import { v4 } from "uuid";
 import { useShallow } from "zustand/shallow";
 import type { Scheduled } from "@/components/scheduled/type";
-import type { Bill } from "@/ledger/type";
+import type { Bill, BillType } from "@/ledger/type";
 import { useBookStore } from "@/store/book";
 import { type EditBill, useLedgerStore } from "@/store/ledger";
 import { useUserStore } from "@/store/user";
+
+export type ScheduledOccurrence = {
+    scheduledId: string;
+    title: string;
+    time: number;
+    template: Scheduled["template"];
+    repeat: Scheduled["repeat"];
+};
 
 export function useScheduled() {
     const [scheduleds = []] = useLedgerStore(
@@ -208,4 +216,64 @@ export function calcNextDate(
     }
 
     return nextOccurrence.valueOf();
+}
+
+export function listScheduledOccurrences({
+    scheduleds = [],
+    from,
+    to,
+    enabledOnly = false,
+    billType,
+}: {
+    scheduleds?: Scheduled[];
+    from: number;
+    to: number;
+    enabledOnly?: boolean;
+    billType?: BillType;
+}) {
+    if (to <= from) {
+        return [] as ScheduledOccurrence[];
+    }
+
+    const rangeStart = from + 1;
+
+    return scheduleds
+        .filter((scheduled) => {
+            if (enabledOnly && !scheduled.enabled) {
+                return false;
+            }
+            if (billType && scheduled.template.type !== billType) {
+                return false;
+            }
+            if (scheduled.end && scheduled.end <= from) {
+                return false;
+            }
+            return true;
+        })
+        .flatMap((scheduled) => {
+            const effectiveTo = Math.min(scheduled.end ?? to, to);
+            if (effectiveTo <= from) {
+                return [] as ScheduledOccurrence[];
+            }
+
+            return calcDates(
+                scheduled.repeat.value,
+                scheduled.repeat.unit,
+                scheduled.start,
+                rangeStart,
+                effectiveTo,
+            ).map((time) => ({
+                scheduledId: scheduled.id,
+                title: scheduled.title,
+                time,
+                template: scheduled.template,
+                repeat: scheduled.repeat,
+            }));
+        })
+        .sort((left, right) => {
+            if (left.time !== right.time) {
+                return left.time - right.time;
+            }
+            return left.title.localeCompare(right.title);
+        });
 }

@@ -33,8 +33,7 @@ export default defineConfig(({ mode }) => {
             registerType: "autoUpdate",
             injectRegister: "auto",
             includeAssets: [
-                "favicon.ico",
-                "apple-touch-icon.png",
+                "mika1.webp",
                 "wallpaper-default.jpeg",
             ],
             manifest: {
@@ -43,8 +42,8 @@ export default defineConfig(({ mode }) => {
                 description: "Rakko-TwoDollars by KurisuRakko",
                 theme_color: "#ffffff",
                 icons: [
-                    { src: "icon.png", sizes: "192x192", type: "image/png" },
-                    { src: "icon.png", sizes: "512x512", type: "image/png" },
+                    { src: "mika1.webp", sizes: "192x192", type: "image/webp" },
+                    { src: "mika1.webp", sizes: "512x512", type: "image/webp" },
                 ],
                 protocol_handlers: [
                     {

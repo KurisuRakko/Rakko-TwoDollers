@@ -6,7 +6,7 @@ import type { SyncEndpointFactory, UserInfo } from "../type";
 import { OfflineStorage } from "./core";
 
 const OFFLINE_USER_KEY = "OFFLINE_USER";
-const OFFLINE_USER_AVATAR = "/icon.png";
+const OFFLINE_USER_AVATAR = "/mika1.webp";
 
 type OfflineUserRecord = {
     id: string;

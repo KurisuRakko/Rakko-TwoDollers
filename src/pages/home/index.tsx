@@ -11,14 +11,12 @@ import {
 import { useShallow } from "zustand/shallow";
 import CloudLoopIcon from "@/assets/icons/cloud-loop.svg?react";
 import AnimatedNumber from "@/components/animated-number";
-import { showBookGuide } from "@/components/book/util";
 import BudgetCard from "@/components/budget/card";
 import { HintTooltip } from "@/components/hint";
 import { PaginationIndicator } from "@/components/indicator";
 import Ledger from "@/components/ledger";
 import Loading from "@/components/loading";
 import Navigation from "@/components/navigation";
-import { showUserCenter } from "@/components/settings/user-center";
 import {
     hideHomeStartupOverlay,
     showHomeStartupOverlay,
@@ -26,6 +24,7 @@ import {
 import UserAvatarImage from "@/components/user-avatar";
 import { useBudget } from "@/hooks/use-budget";
 import { useIsDesktop } from "@/hooks/use-media-query";
+import { listScheduledOccurrences, useScheduled } from "@/hooks/use-scheduled";
 import { useSnap } from "@/hooks/use-snap";
 import { useCurrentUserDisplay } from "@/hooks/use-user-display";
 import { amountToNumber } from "@/ledger/bill";
@@ -35,6 +34,11 @@ import { useLedgerStore } from "@/store/ledger";
 import { usePreferenceStore } from "@/store/preference";
 import { useIsLogin, useUserStore } from "@/store/user";
 import { cn } from "@/utils";
+import {
+    openBookGuide,
+    openIncomingScheduled,
+    openUserCenter,
+} from "@/utils/deferred-openers";
 import { filterOrderedBillListByTimeRange } from "@/utils/filter";
 import {
     getStageProps,
@@ -237,6 +241,18 @@ export default function Page() {
     const budgets = allBudgets.filter((b) => {
         return b.joiners.includes(userId) && b.start < Date.now();
     });
+    const { scheduleds } = useScheduled();
+    const incomingScheduledCount = useMemo(() => {
+        const from = Date.now();
+        const to = dayjs(from).add(30, "day").endOf("day").valueOf();
+        return listScheduledOccurrences({
+            scheduleds,
+            from,
+            to,
+            enabledOnly: true,
+            billType: "expense",
+        }).length;
+    }, [scheduleds]);
 
     const budgetContainer = useRef<HTMLDivElement>(null);
     const { count: budgetCount, index: curBudgetIndex } = useSnap(
@@ -745,7 +761,7 @@ export default function Page() {
                                                     if (
                                                         storageType === "github"
                                                     ) {
-                                                        showBookGuide();
+                                                        void openBookGuide();
                                                     } else {
                                                         useUserStore
                                                             .getState()
@@ -775,7 +791,7 @@ export default function Page() {
                                                     layoutId={avatarLayoutId}
                                                     className="home-avatar-button-hero"
                                                     onClick={() => {
-                                                        showUserCenter();
+                                                        void openUserCenter();
                                                     }}
                                                 />
                                             )}
@@ -916,7 +932,25 @@ export default function Page() {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
+                        <button
+                            type="button"
+                            className="home-toolbar-button relative"
+                            title={t("incoming-scheduled-open")}
+                            aria-label={t("incoming-scheduled-open")}
+                            onClick={() => {
+                                void openIncomingScheduled();
+                            }}
+                        >
+                            <i className="icon-[mdi--calendar-clock-outline] size-[18px]"></i>
+                            {incomingScheduledCount > 0 && (
+                                <span className="pointer-events-none absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#cf6843] px-1 text-[10px] font-semibold leading-none text-white shadow-sm">
+                                    {incomingScheduledCount > 99
+                                        ? "99+"
+                                        : incomingScheduledCount}
+                                </span>
+                            )}
+                        </button>
                         <HintTooltip
                             persistKey={"cloudSyncHintShows"}
                             content={
@@ -954,7 +988,7 @@ export default function Page() {
                                 layoutId={avatarLayoutId}
                                 className="home-toolbar-avatar-button"
                                 onClick={() => {
-                                    showUserCenter();
+                                    void openUserCenter();
                                 }}
                             />
                         )}

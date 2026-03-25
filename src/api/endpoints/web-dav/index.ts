@@ -100,7 +100,7 @@ export const WebDAVEndpoint: SyncEndpointFactory = {
                 const Me = {
                     id: auth.customUserName || auth.username,
                     name: auth.customUserName || auth.username,
-                    avatar_url: "/icon.png",
+                    avatar_url: "/mika1.webp",
                 };
                 return Me;
             },
@@ -109,7 +109,7 @@ export const WebDAVEndpoint: SyncEndpointFactory = {
                 const Me = {
                     id: auth.username,
                     name: auth.username,
-                    avatar_url: "/icon.png",
+                    avatar_url: "/mika1.webp",
                 };
                 const users = [
                     Me,
@@ -118,7 +118,7 @@ export const WebDAVEndpoint: SyncEndpointFactory = {
                         .map((alias) => ({
                             id: alias,
                             name: alias,
-                            avatar_url: "/icon.png",
+                            avatar_url: "/mika1.webp",
                         })),
                 ];
                 return users;

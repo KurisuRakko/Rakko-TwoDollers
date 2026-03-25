@@ -11,6 +11,7 @@ import modal from "../modal";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { showScheduledEdit } from ".";
+import { persistScheduledDraft } from "./persist";
 
 const toDay = (v: number) => dayjs.unix(v / 1000).format("YYYY-MM-DD");
 
@@ -34,11 +35,11 @@ export default function ScheduledListForm({
                     variant="outline"
                     onClick={async () => {
                         const newOne = await showScheduledEdit();
-                        if (!newOne) return;
-                        const needBills = [...(newOne.needBills ?? [])];
-                        delete newOne.needBills;
-                        useLedgerStore.getState().addBills(needBills);
-                        await add(newOne);
+                        await persistScheduledDraft({
+                            draft: newOne,
+                            add,
+                            update,
+                        });
                     }}
                 >
                     <i className="icon-[mdi--add]" />
@@ -116,18 +117,14 @@ export default function ScheduledListForm({
                                     variant="secondary"
                                     className="w-[24px] h-[24px] text-xs p-0"
                                     onClick={async () => {
-                                        const id = s.id;
                                         const newOne =
                                             await showScheduledEdit(s);
-                                        if (!newOne) return;
-                                        const needBills = [
-                                            ...(newOne.needBills ?? []),
-                                        ];
-                                        delete newOne.needBills;
-                                        useLedgerStore
-                                            .getState()
-                                            .addBills(needBills);
-                                        await update(id, newOne);
+                                        await persistScheduledDraft({
+                                            draft: newOne,
+                                            add,
+                                            update,
+                                            currentId: s.id,
+                                        });
                                     }}
                                 >
                                     <i className="icon-[mdi--edit-outline]" />

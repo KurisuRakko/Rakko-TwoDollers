@@ -17,7 +17,7 @@ function Form({ onCancel }: { onCancel?: () => void }) {
             <div className="divide-y divide-solid flex flex-col overflow-hidden py-4 gap-2">
                 <div className="w-full flex flex-col justify-between items-center px-4 gap-2 pb-4">
                     <img
-                        src="/icon.png"
+                        src="/mika1.webp"
                         alt=""
                         width={80}
                         height={80}

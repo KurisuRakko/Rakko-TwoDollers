@@ -4,8 +4,6 @@ import { v4 } from "uuid";
 import { create } from "zustand";
 import type { UserInfo } from "@/api/endpoints/type";
 import { loadStorageAPI } from "@/api/storage/dynamic";
-import { showBookGuide } from "@/components/book/util";
-import modal from "@/components/modal";
 import type { Action, Full, OutputType, Update } from "@/database/stash";
 import type { Bill, GlobalMeta, PersonalMeta } from "@/ledger/type";
 import { t } from "@/locale";
@@ -168,7 +166,16 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
                         action: {
                             label: t("Go"),
                             onClick: () => {
-                                showBookGuide();
+                                void import("@/components/book/util")
+                                    .then(({ showBookGuide }) => {
+                                        showBookGuide();
+                                    })
+                                    .catch((error) => {
+                                        console.error(
+                                            "failed to open book guide",
+                                            error,
+                                        );
+                                    });
                             },
                         },
                     },
@@ -390,6 +397,7 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
                 },
             );
             if (repeated.length > 0) {
+                const { default: modal } = await import("@/components/modal");
                 await modal
                     .prompt({
                         title: `包含${repeated.length}条重复项目，是否去除后继续导入？`,

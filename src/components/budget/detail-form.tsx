@@ -25,55 +25,81 @@ function BudgetProgress({
     timePercent: number;
     todayUsed?: number;
 }) {
-    const p = used / total;
-    const tp = (todayUsed ?? 0) / total;
+    const safeTotal = Math.max(total, 1);
+    const p = used / safeTotal;
+    const tp = (todayUsed ?? 0) / safeTotal;
     const totalLeft = total - used;
+    const markerPercent = Math.min(Math.max(timePercent, 0), 1);
     // 计算超支进度条
     const overs = useMemo(() => {
         if (totalLeft >= 0) {
             return [];
         }
-        const p = Math.abs(totalLeft) / total;
+        const p = Math.abs(totalLeft) / safeTotal;
         const i = Math.floor(p);
         return [...Array.from({ length: Math.min(i, 3) }, () => 1), p - i];
-    }, [totalLeft, total]);
+    }, [safeTotal, totalLeft]);
 
     return (
-        <div className="w-full flex items-center h-4 relative">
-            <div className="relative w-full h-2 rounded-full outer bg-gray-300 flex items-center overflow-hidden">
+        <div className="relative flex h-5 w-full items-center">
+            <div className="relative flex h-2.5 w-full items-center overflow-hidden rounded-full bg-foreground/16">
                 <div
-                    className="inner h-2 rounded-full bg-amber-500 absolute top-0"
+                    className="absolute top-0 h-2.5 rounded-full bg-amber-500"
                     style={{
-                        left: `0px`,
                         width: `${(tp + p) * 100}%`,
                     }}
-                ></div>
+                />
                 <div
-                    className="inner h-2 rounded-full absolute left-0 top-0 bg-primary/60"
+                    className="absolute left-0 top-0 h-2.5 rounded-full bg-primary/70"
                     style={{
                         width: `${p * 100}%`,
                     }}
-                ></div>
+                />
                 {overs.map((p, i) => {
                     return (
                         <div
                             key={i}
                             className={cn(
-                                "inner h-2 rounded-full absolute left-0 top-0 bg-fuchsia-700/80",
+                                "absolute left-0 top-0 h-2.5 rounded-full bg-fuchsia-700/80",
                             )}
                             style={{
                                 width: `${p * 100}%`,
                             }}
-                        ></div>
+                        />
                     );
                 })}
             </div>
             <div
-                className="absolute top-0 h-4 bg-slate-500 w-[2px]"
+                className="absolute top-0 h-5 w-[3px] rounded-full bg-slate-500/80 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
                 style={{
-                    left: `${Math.min(timePercent, 1) * 100}%`,
+                    left: `${markerPercent * 100}%`,
+                    transform: "translateX(-50%)",
                 }}
-            ></div>
+            />
+        </div>
+    );
+}
+
+function BudgetMetricLine({
+    label,
+    value,
+    align = "start",
+}: {
+    label: string;
+    value: string;
+    align?: "start" | "end";
+}) {
+    return (
+        <div
+            className={cn(
+                "grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-2 whitespace-nowrap",
+                align === "end" && "text-right",
+            )}
+        >
+            <span className="truncate opacity-70">{label}</span>
+            <span className="justify-self-end font-medium tabular-nums">
+                {value}
+            </span>
         </div>
     );
 }
@@ -100,46 +126,56 @@ export function BudgetBar({
                 todayUsed={todayUsed}
                 timePercent={time?.percent ?? 1}
             />
-            <div className="flex justify-between items-center text-xs gap-1">
-                <div className="flex flex-col">
-                    <div>
-                        {t("expensed")}:{used.toFixed(2)}
-                    </div>
+            <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                <div className="flex min-w-0 flex-col gap-1">
+                    <BudgetMetricLine
+                        label={t("expensed")}
+                        value={used.toFixed(2)}
+                    />
                     {todayUsed !== undefined && (
-                        <div>
-                            {t("today-expense")}:{todayUsed}
-                        </div>
+                        <BudgetMetricLine
+                            label={t("today-expense")}
+                            value={todayUsed.toFixed(2)}
+                        />
                     )}
                     {time && (
-                        <div>
-                            {t("daily-expense")}:
-                            {(
+                        <BudgetMetricLine
+                            label={t("daily-expense")}
+                            value={(
                                 used /
-                                Math.max(1, time.totalDays - time?.leftDays)
+                                Math.max(1, time.totalDays - time.leftDays)
                             ).toFixed(2)}
-                        </div>
+                        />
                     )}
                 </div>
-                <div className="text-end">
-                    <div>
-                        {t("total-budget")}: {total}
-                    </div>
+                <div className="flex min-w-0 flex-col gap-1 text-end">
+                    <BudgetMetricLine
+                        label={t("total-budget")}
+                        value={total.toFixed(2)}
+                        align="end"
+                    />
                     {totalLeft > 0 ? (
-                        <div>
-                            {t("total-left")}: {totalLeft.toFixed(2)}
-                        </div>
+                        <BudgetMetricLine
+                            label={t("total-left")}
+                            value={totalLeft.toFixed(2)}
+                            align="end"
+                        />
                     ) : (
-                        <div className="font-semibold opacity-90">
-                            {t("overspending")}: {totalLeft.toFixed(2)}
+                        <div className="flex items-baseline justify-end gap-2 whitespace-nowrap font-semibold opacity-90">
+                            <span>{t("overspending")}</span>
+                            <span className="tabular-nums">
+                                {totalLeft.toFixed(2)}
+                            </span>
                         </div>
                     )}
                     {time && (
-                        <>
-                            {t("daily-left")}:
-                            {(totalLeft / Math.max(1, time.leftDays)).toFixed(
-                                2,
-                            )}
-                        </>
+                        <BudgetMetricLine
+                            label={t("daily-left")}
+                            value={(
+                                totalLeft / Math.max(1, time.leftDays)
+                            ).toFixed(2)}
+                            align="end"
+                        />
                     )}
                 </div>
             </div>

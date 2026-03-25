@@ -8,7 +8,7 @@ import useCategory from "@/hooks/use-category";
 import { useIntl } from "@/locale";
 import { useLedgerStore } from "@/store/ledger";
 import { cn } from "@/utils";
-import { showBudgetDetail } from "./detail";
+import { openBudgetDetail } from "@/utils/deferred-openers";
 import { BudgetBar } from "./detail-form";
 import type { Budget } from "./type";
 import { useBudgetDetail } from "./use-budget-detail";
@@ -58,16 +58,25 @@ export default function BudgetCard({
         const leftDays = Math.max(0, totalDays - spendDays);
         return { percent: spend / duration, leftDays, totalDays };
     }, [currentRange]);
+    const todayLeft = useMemo(() => {
+        if (!encountered || !todayEncountered || !time) {
+            return undefined;
+        }
+        return (
+            (total - encountered.totalUsed) / Math.max(1, time.leftDays) -
+            todayEncountered.totalUsed
+        ).toFixed(2);
+    }, [encountered, time, todayEncountered, total]);
 
     if (!encountered) {
         return (
             <div
                 className={cn(
-                    "home-budget-card rounded-2xl border flex flex-col w-full px-4 py-3 cursor-pointer",
+                "home-budget-card rounded-2xl border flex flex-col w-full px-4 py-3 cursor-pointer",
                     className,
                 )}
                 onClick={() => {
-                    showBudgetDetail(budget);
+                    void openBudgetDetail(budget);
                 }}
             >
                 <div className="font-semibold">{budget.title}</div>
@@ -105,30 +114,30 @@ export default function BudgetCard({
         <div
             className={cn(
                 "home-budget-card rounded-2xl border flex flex-col w-full px-4 py-3 cursor-pointer",
-                className,
-            )}
-            onClick={() => {
-                showBudgetDetail(budget);
-            }}
-        >
+            className,
+        )}
+        onClick={() => {
+                void openBudgetDetail(budget);
+        }}
+    >
             <Collapsible.Root className="group">
-                <div className="w-full flex items-center justify-between">
-                    <div className="font-semibold">{budget.title}</div>
-                    <div className="text-sm opacity-70">
-                        {todayEncountered && time && (
-                            <>
-                                {t("today-left")}:
-                                {(
-                                    (total - encountered.totalUsed) /
-                                        time.leftDays -
-                                    todayEncountered.totalUsed
-                                ).toFixed(2)}
-                            </>
-                        )}
+                <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
+                    <div className="min-w-0 truncate font-semibold">
+                        {budget.title}
                     </div>
+                    {todayLeft && (
+                        <div className="inline-flex items-center gap-1.5 rounded-full border bg-background/12 px-2.5 py-1 text-[11px] whitespace-nowrap">
+                            <span className="opacity-65">
+                                {t("today-left")}
+                            </span>
+                            <span className="font-semibold tabular-nums">
+                                {todayLeft}
+                            </span>
+                        </div>
+                    )}
                 </div>
                 {budget.totalBudget !== 0 ? (
-                    <div className="flex flex-col">
+                    <div className="mt-2 flex flex-col">
                         <BudgetBar
                             total={total}
                             used={encountered.totalUsed}

@@ -2,6 +2,7 @@ import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useId, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router";
+import { openSettings } from "@/utils/deferred-openers";
 import {
     microHover,
     microInteractionTransition,
@@ -11,7 +12,6 @@ import {
 import ComplexAddButton from "./add-button";
 import { goAddBill } from "./bill-editor";
 import { afterAddBillPromotion } from "./promotion";
-import { showSettings } from "./settings";
 
 export default function Navigation({ hidden }: { hidden?: boolean }) {
     const location = useLocation();
@@ -148,7 +148,7 @@ export default function Navigation({ hidden }: { hidden?: boolean }) {
                     transition={microInteractionTransition}
                     className="nav-flat-button w-14 h-14 sm:w-10 sm:h-10 cursor-pointer flex items-center justify-center rounded-full m-2"
                     onClick={() => {
-                        showSettings();
+                        void openSettings();
                     }}
                 >
                     <motion.span

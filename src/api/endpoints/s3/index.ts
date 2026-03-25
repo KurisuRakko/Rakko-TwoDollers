@@ -107,7 +107,7 @@ export const S3Endpoint: SyncEndpointFactory = {
                 const Me = {
                     id: auth.customUserName || auth.accessKeyId,
                     name: auth.customUserName || auth.accessKeyId,
-                    avatar_url: "/icon.png",
+                    avatar_url: "/mika1.webp",
                 };
                 return Me;
             },
@@ -116,7 +116,7 @@ export const S3Endpoint: SyncEndpointFactory = {
                 const Me = {
                     id: auth.accessKeyId,
                     name: auth.accessKeyId,
-                    avatar_url: "/icon.png",
+                    avatar_url: "/mika1.webp",
                 };
                 const users = [
                     Me,
@@ -125,7 +125,7 @@ export const S3Endpoint: SyncEndpointFactory = {
                         .map((alias) => ({
                             id: alias,
                             name: alias,
-                            avatar_url: "/icon.png",
+                            avatar_url: "/mika1.webp",
                         })),
                 ];
                 return users;
