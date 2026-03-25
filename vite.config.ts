@@ -32,10 +32,7 @@ export default defineConfig(({ mode }) => {
             filename: "sw.ts",
             registerType: "autoUpdate",
             injectRegister: "auto",
-            includeAssets: [
-                "mika1.webp",
-                "wallpaper-default.jpeg",
-            ],
+            includeAssets: ["mika1.webp", "wallpaper-default.jpeg"],
             manifest: {
                 name: "Rakko-TwoDollars",
                 short_name: "Rakko-TwoDollars",
