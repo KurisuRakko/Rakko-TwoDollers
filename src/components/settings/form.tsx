@@ -2,7 +2,7 @@ import { useCurrentUserDisplay } from "@/hooks/use-user-display";
 import PopupLayout from "@/layouts/popup-layout";
 import { useIntl } from "@/locale";
 import TagSettingsItem from "../bill-tag";
-import { BookSettings } from "../book";
+import { BookSettings } from "../book/settings-item";
 import Budget from "../budget";
 import CategorySettingsItem from "../category";
 import CurrencySettingsItem from "../currency";

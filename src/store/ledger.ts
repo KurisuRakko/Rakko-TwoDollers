@@ -166,9 +166,9 @@ export const useLedgerStore = create<LedgerStore>()((set, get) => {
                         action: {
                             label: t("Go"),
                             onClick: () => {
-                                void import("@/components/book/util")
-                                    .then(({ showBookGuide }) => {
-                                        showBookGuide();
+                                void import("@/utils/deferred-openers")
+                                    .then(({ openBookGuide }) => {
+                                        return openBookGuide();
                                     })
                                     .catch((error) => {
                                         console.error(

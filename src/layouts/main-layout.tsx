@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type TouchEvent, useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { BillEditorProvider } from "@/components/bill-editor";
-import BookGuide from "@/components/book";
+import BookGuide from "@/components/book/guide";
 import CustomCSS from "@/components/custom-css";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -164,7 +164,41 @@ export default function MainLayout() {
     const applyScheduledRef = useRef(applyScheduled);
     applyScheduledRef.current = applyScheduled;
     useEffect(() => {
-        applyScheduledRef.current();
+        const idleWindow = window as Window & {
+            requestIdleCallback?: (
+                callback: IdleRequestCallback,
+                options?: IdleRequestOptions,
+            ) => number;
+            cancelIdleCallback?: (id: number) => void;
+        };
+
+        const runApplyScheduled = () => {
+            void Promise.all(applyScheduledRef.current());
+        };
+
+        let timeoutId: number | undefined;
+        let idleId: number | undefined;
+
+        // 自动周期补账不需要阻塞首屏，让它在首帧后空闲时补齐即可。
+        if (typeof idleWindow.requestIdleCallback === "function") {
+            idleId = idleWindow.requestIdleCallback(runApplyScheduled, {
+                timeout: 1200,
+            });
+        } else {
+            timeoutId = window.setTimeout(runApplyScheduled, 180);
+        }
+
+        return () => {
+            if (
+                idleId !== undefined &&
+                typeof idleWindow.cancelIdleCallback === "function"
+            ) {
+                idleWindow.cancelIdleCallback(idleId);
+            }
+            if (timeoutId !== undefined) {
+                window.clearTimeout(timeoutId);
+            }
+        };
     }, []);
 
     const isLogin = useIsLogin();

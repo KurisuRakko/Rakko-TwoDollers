@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import type { Book } from "@/api/endpoints/type";
 import { loadStorageAPI } from "@/api/storage/dynamic";
+import { ensureDeferredGlobalProvidersReady } from "@/layouts/deferred-global-provider-gate";
 import { useIntl } from "@/locale";
 import { useBookStore } from "@/store/book";
 import { useIsLogin } from "@/store/user";
 import Loading from "../loading";
-import modal from "../modal";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
@@ -121,6 +121,10 @@ export function BookForm() {
                 <Button
                     disabled={creating}
                     onClick={async () => {
+                        const [{ default: modal }] = await Promise.all([
+                            import("../modal"),
+                            ensureDeferredGlobalProvidersReady(),
+                        ]);
                         const name = (await modal.prompt({
                             title: t("please-input-book-name"),
                             input: { type: "text" },

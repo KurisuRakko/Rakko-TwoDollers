@@ -72,7 +72,7 @@ export default function BudgetCard({
         return (
             <div
                 className={cn(
-                "home-budget-card rounded-2xl border flex flex-col w-full px-4 py-3 cursor-pointer",
+                    "home-budget-card rounded-2xl border flex flex-col w-full px-4 py-3 cursor-pointer",
                     className,
                 )}
                 onClick={() => {
@@ -114,12 +114,12 @@ export default function BudgetCard({
         <div
             className={cn(
                 "home-budget-card rounded-2xl border flex flex-col w-full px-4 py-3 cursor-pointer",
-            className,
-        )}
-        onClick={() => {
+                className,
+            )}
+            onClick={() => {
                 void openBudgetDetail(budget);
-        }}
-    >
+            }}
+        >
             <Collapsible.Root className="group">
                 <div className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
                     <div className="min-w-0 truncate font-semibold">

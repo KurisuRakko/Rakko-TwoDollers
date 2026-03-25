@@ -1,5 +1,5 @@
-import { ensureDeferredGlobalProvidersReady } from "@/layouts/deferred-global-provider-gate";
 import type { Budget } from "@/components/budget/type";
+import { ensureDeferredGlobalProvidersReady } from "@/layouts/deferred-global-provider-gate";
 
 export const openSettings = async () => {
     const [{ showSettings }] = await Promise.all([

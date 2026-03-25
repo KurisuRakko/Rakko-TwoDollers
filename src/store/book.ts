@@ -61,27 +61,48 @@ export const useBookStore = create<BookStore>()(
                 typeof persistedState.currentBookId === "string";
             const visible = false;
             const loading = false;
+            let currentRefreshPromise: Promise<Book[]> | null = null;
+            let shouldResetLoading = false;
             const refreshBookList = async (background = false) => {
                 await Promise.resolve();
                 if (!background) {
+                    shouldResetLoading = true;
                     set(
                         produce((state) => {
                             state.loading = true;
                         }),
                     );
                 }
+
+                if (!currentRefreshPromise) {
+                    currentRefreshPromise = (async () => {
+                        try {
+                            const { StorageAPI } = await loadStorageAPI();
+                            const allBooks = await StorageAPI.fetchAllBooks();
+                            set(
+                                produce((state: BookStore) => {
+                                    state.books = allBooks;
+                                }),
+                            );
+                            return allBooks;
+                        } finally {
+                            currentRefreshPromise = null;
+                            if (shouldResetLoading) {
+                                shouldResetLoading = false;
+                                set(
+                                    produce((state) => {
+                                        state.loading = false;
+                                    }),
+                                );
+                            }
+                        }
+                    })();
+                }
+
                 try {
-                    const { StorageAPI } = await loadStorageAPI();
-                    const res = await StorageAPI.fetchAllBooks();
-                    const allBooks = res;
-                    set(
-                        produce((state: BookStore) => {
-                            state.books = allBooks;
-                        }),
-                    );
-                    return allBooks;
+                    return await currentRefreshPromise;
                 } finally {
-                    if (!background) {
+                    if (!background && !currentRefreshPromise) {
                         set(
                             produce((state) => {
                                 state.loading = false;
