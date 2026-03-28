@@ -83,7 +83,7 @@ export function AnalysisDetail({
     // 当 unit 为 'day' 时，可能没有“上一周期”的概念，可以不显示
     const ComparisonSection =
         unit !== "day" ? (
-            <div className="compare text-xs">
+            <div className="stat-analysis-compare">
                 {t("analysis.comparison.full", {
                     // `lastPeriod` 也从语言包获取
                     lastPeriod: t(`period.${unit}`),
@@ -97,7 +97,7 @@ export function AnalysisDetail({
         <>
             <div
                 className={cn(
-                    "common text-sm [&_[data-state=value]]:font-medium pb-2",
+                    "stat-analysis-summary [&_[data-state=value]]:font-medium",
                     type === "expense"
                         ? "[&_[data-state=value]]:text-semantic-expense"
                         : type === "income"

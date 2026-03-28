@@ -2,11 +2,13 @@ import type {
     // 系列类型的定义后缀都为 SeriesOption
     BarSeriesOption,
     LineSeriesOption,
+    PieSeriesOption,
 } from "echarts/charts";
 import { BarChart, LineChart, PieChart } from "echarts/charts";
 import type {
     DatasetComponentOption,
     GridComponentOption,
+    LegendComponentOption,
     // 组件类型的定义后缀都为 ComponentOption
     TitleComponentOption,
     TooltipComponentOption,
@@ -33,9 +35,11 @@ import { cn } from "@/utils";
 export type ECOption = ComposeOption<
     | BarSeriesOption
     | LineSeriesOption
+    | PieSeriesOption
     | TitleComponentOption
     | TooltipComponentOption
     | GridComponentOption
+    | LegendComponentOption
     | DatasetComponentOption
 >;
 

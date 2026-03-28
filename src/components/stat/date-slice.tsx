@@ -120,19 +120,19 @@ export function DateSliced({
 
     const selectedSlice = value?.split("|")?.[1];
     return (
-        <div className="w-full flex flex-col gap-2">
-            <div className="w-full flex">
-                <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hidden">
+        <div className="stat-range-shell">
+            <div className="stat-range-row">
+                <div className="stat-range-group overflow-x-auto scrollbar-hidden">
                     {StaticViews.map((view) => (
                         <Button
                             key={view.id}
                             size={"sm"}
                             className={cn(
-                                selectedViewId !== view.id && "text-primary/50",
+                                "stat-range-button",
+                                selectedViewId === view.id &&
+                                    "stat-range-button-active",
                             )}
-                            variant={
-                                selectedViewId === view.id ? "default" : "ghost"
-                            }
+                            variant="ghost"
                             onClick={() => {
                                 if (view.id === "custom") {
                                     onValueChange?.();
@@ -148,26 +148,30 @@ export function DateSliced({
                     ))}
                 </div>
 
-                <div className="h-9">
+                <div className="stat-range-side">
                     {onClickSettings && (
-                        <Button variant="ghost" onClick={onClickSettings}>
+                        <Button
+                            variant="ghost"
+                            onClick={onClickSettings}
+                            className="stat-range-icon-button"
+                        >
                             <i className="icon-[mdi--mixer-settings] size-4"></i>
                         </Button>
                     )}
                 </div>
             </div>
-            <div className="flex gap-2 items-center h-9">
+            <div className="stat-range-row stat-range-row-secondary">
                 {slices && slices.length > 0 ? (
-                    <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hidden">
+                    <div className="stat-range-group overflow-x-auto scrollbar-hidden">
                         {slices.map((slice) => (
                             <Button
                                 key={slice.label}
                                 variant="ghost"
                                 size="sm"
                                 className={cn(
-                                    "text-primary/40 px-2",
+                                    "stat-slice-button",
                                     selectedSlice === slice.label &&
-                                        "text-primary",
+                                        "stat-slice-button-active",
                                 )}
                                 onClick={() => {
                                     onValueChange?.(
@@ -180,7 +184,7 @@ export function DateSliced({
                         ))}
                     </div>
                 ) : (
-                    <div className="flex-1 flex items-center gap-3 text-xs">
+                    <div className="stat-custom-range">
                         <DateInput
                             value={custom?.[0]}
                             type="start"
@@ -198,7 +202,7 @@ export function DateSliced({
                         ></DateInput>
                     </div>
                 )}
-                {children}
+                {children && <div className="stat-range-side">{children}</div>}
             </div>
         </div>
     );

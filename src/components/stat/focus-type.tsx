@@ -25,20 +25,17 @@ export function FocusTypeSelector({
     const t = useIntl();
     const prefersReducedMotion = Boolean(useReducedMotion());
     const layoutGroupId = useId();
-    const btnClass = `min-w-[90px] text-sm py-1 flex items-center justify-center  cursor-pointer transition-all duration-200`;
     return (
         <LayoutGroup id={layoutGroupId}>
-            <div className="stat-focus-toggle flex items-center overflow-hidden divide-x">
+            <div className="stat-focus-toggle">
                 <motion.button
                     type="button"
                     whileHover={prefersReducedMotion ? undefined : microHover}
                     whileTap={prefersReducedMotion ? undefined : microPress}
                     transition={microInteractionTransition}
                     className={cn(
-                        btnClass,
                         "stat-focus-button",
-                        focusType === "income" &&
-                            "stat-focus-button-active [&_span]:text-semantic-income-medium",
+                        focusType === "income" && "stat-focus-button-active",
                     )}
                     onClick={() => {
                         setFocusType("income");
@@ -51,14 +48,11 @@ export function FocusTypeSelector({
                             className="nav-active-indicator"
                         />
                     )}
-                    <div className="flex flex-col items-center justify-center">
-                        <span className="text-semantic-income">
+                    <div className="stat-focus-copy">
+                        <span className="stat-focus-value text-semantic-income">
                             +<Money value={money[0]} />
                         </span>
-                        <div className="text-[10px] opacity-60">
-                            {" "}
-                            {t("income")}
-                        </div>
+                        <div className="stat-focus-label">{t("income")}</div>
                     </div>
                 </motion.button>
                 <motion.button
@@ -67,10 +61,8 @@ export function FocusTypeSelector({
                     whileTap={prefersReducedMotion ? undefined : microPress}
                     transition={microInteractionTransition}
                     className={cn(
-                        btnClass,
                         "stat-focus-button",
-                        focusType === "expense" &&
-                            "stat-focus-button-active [&_span]:text-semantic-expense-medium",
+                        focusType === "expense" && "stat-focus-button-active",
                     )}
                     onClick={() => setFocusType("expense")}
                 >
@@ -81,13 +73,11 @@ export function FocusTypeSelector({
                             className="nav-active-indicator"
                         />
                     )}
-                    <div className="flex flex-col items-center justify-center">
-                        <span className="text-semantic-expense">
+                    <div className="stat-focus-copy">
+                        <span className="stat-focus-value text-semantic-expense">
                             -<Money value={money[1]} />
                         </span>
-                        <div className="text-[10px] opacity-60">
-                            {t("expense")}
-                        </div>
+                        <div className="stat-focus-label">{t("expense")}</div>
                     </div>
                 </motion.button>
                 <motion.button
@@ -96,7 +86,6 @@ export function FocusTypeSelector({
                     whileTap={prefersReducedMotion ? undefined : microPress}
                     transition={microInteractionTransition}
                     className={cn(
-                        btnClass,
                         "stat-focus-button",
                         focusType === "balance" && "stat-focus-button-active",
                     )}
@@ -109,13 +98,11 @@ export function FocusTypeSelector({
                             className="nav-active-indicator"
                         />
                     )}
-                    <div className="flex flex-col items-center justify-center">
-                        <span>
+                    <div className="stat-focus-copy">
+                        <span className="stat-focus-value">
                             <Money value={money[2]} />
                         </span>
-                        <div className="text-[10px] opacity-60">
-                            {t("Balance")}
-                        </div>
+                        <div className="stat-focus-label">{t("Balance")}</div>
                     </div>
                 </motion.button>
             </div>

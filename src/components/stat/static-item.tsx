@@ -1,5 +1,5 @@
-/** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
-/** biome-ignore-all lint/a11y/useKeyWithClickEvents: <explanation> */
+/** biome-ignore-all lint/a11y/noStaticElementInteractions: metric rows are pointer-driven cards with nested display content */
+/** biome-ignore-all lint/a11y/useKeyWithClickEvents: keyboard interactions are handled at higher-level stat cards */
 
 import type { ReactNode } from "react";
 import { cn } from "@/utils";
@@ -26,53 +26,44 @@ export function StaticItem({
     className?: string;
 }) {
     return (
-        <div
-            className={cn(
-                "w-full items-center cursor-pointer table-row h-10 rounded transition-all hover:bg-accent hover:text-accent-foreground",
-                className,
-            )}
-            onClick={onClick}
-        >
-            <div className="text-sm truncate text-left table-cell w-[1px] align-middle pl-2">
-                {children}
-            </div>
-            <div className="table-cell w-auto px-2 align-middle">
-                <Progress
-                    value={percent * 100}
-                    className="h-3 [&_[data-state=indeterminate]]:hidden min-w-[1px]"
+        <div className={cn("stat-metric-row", className)} onClick={onClick}>
+            <div className="stat-metric-row-top">
+                <div className="stat-metric-label">{children}</div>
+                <div
+                    className="stat-metric-value"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onMoneyClick?.();
+                    }}
                 >
-                    <div
-                        className={cn(
-                            "absolute top-0 text-[8px] px-2 rounded-full min-w-min h-full flex items-center justify-end text-white",
-                            type === "expense"
-                                ? "bg-semantic-expense"
+                    <div className="flex items-center gap-1">
+                        <span>
+                            {type === "expense"
+                                ? "-"
                                 : type === "income"
-                                  ? "bg-semantic-income"
-                                  : "bg-stone-700",
-                        )}
-                        style={{ width: `${percent * 100}%` }}
-                    >
-                        {toFixed(percent * 100, 2)}%
-                    </div>
-                </Progress>
-            </div>
-            <div
-                className="w-[1px] truncate text-right table-cell align-middle pr-2"
-                onClick={(e) => {
-                    onMoneyClick?.();
-                }}
-            >
-                <div className="flex items-center w-full">
-                    <div className="flex-1 gap-1">
-                        {type === "expense"
-                            ? "-"
-                            : type === "income"
-                              ? "+"
-                              : ""}
+                                  ? "+"
+                                  : ""}
+                        </span>
                         <Money value={money} />
                     </div>
                     <i className="icon-[mdi--arrow-up-right]"></i>
                 </div>
+            </div>
+            <div className="stat-metric-row-bottom">
+                <div className="stat-metric-percent">
+                    {toFixed(percent * 100, 2)}%
+                </div>
+                <Progress
+                    value={percent * 100}
+                    className={cn(
+                        "stat-metric-progress [&>*]:opacity-100",
+                        type === "expense"
+                            ? "[&>*]:bg-semantic-expense"
+                            : type === "income"
+                              ? "[&>*]:bg-semantic-income"
+                              : "[&>*]:bg-foreground/72",
+                    )}
+                />
             </div>
         </div>
     );

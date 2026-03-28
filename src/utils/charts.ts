@@ -429,97 +429,106 @@ export const overallTrendOption = (
     const axisColor = getCSSVariable("--muted-foreground");
     const textColor = getCSSVariable("--foreground");
     const borderColor = getCSSVariable("--home-border-strong");
+    const balanceColor = getCSSVariable("--foreground");
 
     return merge(
         {
-            // 提示框，'axis' 表示鼠标悬浮在x轴上时触发
             tooltip: {
                 trigger: "axis",
             },
-            // 图例，用于筛选系列
             legend: {
-                top: 36,
+                show: false,
                 textStyle: {
                     color: textColor,
                 },
-                // ECharts 会自动从 dataset.source 的第一行读取图例名称
-                // ['date', '收入', '支出', '结余'] -> '收入', '支出', '结余'
             },
             title: {
-                top: 10,
-                left: "center",
+                show: false,
                 textStyle: {
                     color: textColor,
                     fontSize: 18,
                     fontWeight: 700,
                 },
             },
-            // ECharts 的数据核心
             dataset: dataset,
             grid: {
-                left: 40,
-                right: 24,
-                top: 68,
-                bottom: 34,
+                left: 14,
+                right: 14,
+                top: 18,
+                bottom: 8,
+                containLabel: true,
             },
-            // x轴配置，type: 'category' 表示类目轴
-            // ECharts 会自动将 dataset 的第一列 ('date') 映射到 x 轴
             xAxis: {
                 type: "category",
-                boundaryGap: false, // 折线图建议设为 false，让线贴近y轴
+                boundaryGap: false,
                 axisLabel: {
-                    fontSize: 10, // 设置 y 轴刻度标签字体大小
+                    fontSize: 10,
                     color: axisColor,
+                    hideOverlap: true,
+                    margin: 10,
                 },
                 axisLine: {
-                    show: true, // 确保 X 轴线显示
+                    show: true,
                     lineStyle: {
-                        color: borderColor, // 可以设置轴线颜色
-                        width: 1, // 可以设置轴线宽度
-                        // type: 'solid'  // 也可以设置线的类型，如实线 'solid'，虚线 'dashed'
+                        color: borderColor,
+                        width: 1,
                     },
                 },
+                axisTick: {
+                    show: false,
+                },
             },
-            // y轴配置，type: 'value' 表示数值轴
             yAxis: {
                 type: "value",
                 splitLine: {
-                    // y轴网格线
-                    show: true, // 确保显示
+                    show: true,
                     lineStyle: {
-                        type: "dashed", // 设置为虚线
+                        type: "dashed",
                         color: borderColor,
                     },
                 },
                 axisLabel: {
-                    fontSize: 10, // 设置 y 轴刻度标签字体大小
+                    fontSize: 10,
                     color: axisColor,
                 },
                 axisLine: {
-                    show: true, // 确保 X 轴线显示
-                    lineStyle: {
-                        color: borderColor, // 可以设置轴线颜色
-                        width: 1, // 可以设置轴线宽度
-                        // type: 'solid'  // 也可以设置线的类型，如实线 'solid'，虚线 'dashed'
-                    },
+                    show: false,
+                },
+                axisTick: {
+                    show: false,
                 },
             },
-            // 系列列表，定义了图表中的每一条线（或其他图形）
             series: [
-                // ECharts 会自动将 dataset 的第二列('收入')映射到第一个系列
                 {
                     type: "line",
                     smooth: true,
                     color: getCSSVariable("--color-income"),
+                    showSymbol: false,
+                    symbolSize: 6,
+                    lineStyle: {
+                        width: 2.5,
+                    },
                 },
-                // 第三列('支出')映射到第二个系列
                 {
                     type: "line",
                     smooth: true,
                     color: getCSSVariable("--color-expense"),
+                    showSymbol: false,
+                    symbolSize: 6,
+                    lineStyle: {
+                        width: 2.5,
+                    },
                 },
-                // 第四列('结余')映射到第三个系列
-                { type: "line", smooth: true, color: "black" },
+                {
+                    type: "line",
+                    smooth: true,
+                    color: balanceColor,
+                    showSymbol: false,
+                    symbolSize: 6,
+                    lineStyle: {
+                        width: 2.5,
+                    },
+                },
             ],
         },
         options,
@@ -545,8 +554,7 @@ export const userTrendOption = (
     const baseOption: ECOption = {
         tooltip: { trigger: "axis" },
         title: {
-            top: 10,
-            left: "center",
+            show: false,
             textStyle: {
                 color: textColor,
                 fontSize: 18,
@@ -554,37 +562,49 @@ export const userTrendOption = (
             },
         },
         legend: {
-            top: 8,
+            show: false,
             textStyle: {
                 color: textColor,
             },
         },
         dataset: dataset,
         grid: {
-            left: 40,
-            right: 24,
-            top: 68,
-            bottom: 34,
+            left: 14,
+            right: 14,
+            top: 18,
+            bottom: 8,
+            containLabel: true,
         },
         xAxis: {
             type: "category",
             boundaryGap: false,
-            axisLabel: { color: axisColor },
+            axisLabel: {
+                color: axisColor,
+                hideOverlap: true,
+                margin: 10,
+            },
             axisLine: { lineStyle: { color: borderColor } },
+            axisTick: { show: false },
         },
         yAxis: {
             type: "value",
             axisLabel: { color: axisColor },
-            axisLine: { lineStyle: { color: borderColor } },
+            axisLine: { show: false },
+            axisTick: { show: false },
             splitLine: { lineStyle: { color: borderColor, type: "dashed" } },
         },
         series: Array.from({ length: seriesCount }, (_, i) => ({
             type: "line",
             smooth: true,
-            name: dataset.source[0][i + 1], // 系列名称，用于图例和 tooltip
+            showSymbol: false,
+            symbolSize: 6,
+            lineStyle: {
+                width: 2.5,
+            },
+            name: dataset.source[0][i + 1],
             encode: {
-                x: "date", // 映射到 dataset 中的 'date' 列
-                y: dataset.source[0][i + 1], // 映射到 dataset 中的 'glink25' 列
+                x: "date",
+                y: dataset.source[0][i + 1],
             },
             color: collaboratorColors(dataset.source[0][i + 1] as string),
         })),
@@ -596,18 +616,20 @@ export const userTrendOption = (
 export const structureOption = (dataset: any[], options?: ECOption) => {
     const textColor = getCSSVariable("--foreground");
     const axisColor = getCSSVariable("--muted-foreground");
-    // 处理数据，为每一项注入基于 name 的固定颜色
+    const backgroundColor = getCSSVariable("--background");
     const coloredData = sortBy(dataset, (v) => v.value).map((item) => ({
         ...item,
         itemStyle: {
-            // 根据 name 生成/获取固定颜色
             color: categoryColors(item.id),
+            borderColor: backgroundColor,
+            borderWidth: 2,
         },
     }));
 
     return merge(
         {
             title: {
+                show: false,
                 text: "支出结构",
                 left: "center",
                 top: 10,
@@ -622,6 +644,7 @@ export const structureOption = (dataset: any[], options?: ECOption) => {
                 formatter: "{b}: {c} ({d}%)",
             },
             legend: {
+                show: false,
                 orient: "vertical",
                 left: "left",
                 top: "center",
@@ -633,13 +656,16 @@ export const structureOption = (dataset: any[], options?: ECOption) => {
                 {
                     name: "支出类型",
                     type: "pie",
-                    center: ["58%", "56%"],
-                    radius: ["34%", "60%"],
+                    center: ["50%", "50%"],
+                    radius: ["54%", "78%"],
+                    minAngle: 4,
+                    avoidLabelOverlap: true,
                     label: {
+                        show: false,
                         color: textColor,
                     },
                     labelLine: {
-                        show: true,
+                        show: false,
                         length: 10,
                         length2: 10,
                         lineStyle: {
@@ -649,13 +675,14 @@ export const structureOption = (dataset: any[], options?: ECOption) => {
                         },
                         smooth: 0.2,
                     },
-                    // 使用处理后的带颜色数据
                     data: coloredData,
                     emphasis: {
+                        scale: true,
+                        scaleSize: 8,
                         itemStyle: {
-                            shadowBlur: 10,
+                            shadowBlur: 12,
                             shadowOffsetX: 0,
-                            shadowColor: "rgba(0, 0, 0, 0.5)",
+                            shadowColor: "rgba(0, 0, 0, 0.24)",
                         },
                     },
                 },

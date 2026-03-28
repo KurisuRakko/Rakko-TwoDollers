@@ -5,7 +5,6 @@ import {
     motion,
     useReducedMotion,
 } from "motion/react";
-import { Switch } from "radix-ui";
 import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useShallow } from "zustand/shallow";
@@ -28,6 +27,7 @@ import {
     FocusTypeSelector,
     FocusTypes,
 } from "@/components/stat/focus-type";
+import { StatMetaPill, StatSectionCard } from "@/components/stat/section-card";
 import { TagItem } from "@/components/stat/static-item";
 import { Button } from "@/components/ui/button";
 import { useCurrency } from "@/hooks/use-currency";
@@ -65,7 +65,7 @@ export default function Page() {
         })),
     );
 
-    const endTime = useMemo(() => Date.now(), []); //bills[0]?.time ?? dayjs();
+    const endTime = useMemo(() => Date.now(), []);
     const startTime = bills[bills.length - 1]?.time ?? dayjs();
 
     const customFilters = useLedgerStore(
@@ -73,7 +73,9 @@ export default function Page() {
     );
 
     const allFilterViews = useMemo(() => {
-        if (customFilters?.some((f) => f.id === DefaultFilterViewId)) {
+        if (
+            customFilters?.some((filter) => filter.id === DefaultFilterViewId)
+        ) {
             return customFilters;
         }
         return [
@@ -84,14 +86,14 @@ export default function Page() {
             } as BillFilterView,
             ...(customFilters ?? []),
         ];
-    }, [t, customFilters]);
+    }, [customFilters, t]);
 
     const [filterViewId, setFilterViewId] = useState(
         id ?? allFilterViews[0].id,
     );
 
     const selectedFilterView = allFilterViews.find(
-        (v) => v.id === filterViewId,
+        (filter) => filter.id === filterViewId,
     );
     const selectedFilter = selectedFilterView?.filter;
 
@@ -109,6 +111,7 @@ export default function Page() {
         range: fullRange,
         selectCustomSliceWhenInitial: Boolean(id),
     });
+
     const realRange = useMemo(
         () => [
             sliceRange?.[0] ?? selectedFilter?.start ?? startTime,
@@ -142,10 +145,7 @@ export default function Page() {
 
     useEffect(() => {
         const book = useBookStore.getState().currentBookId;
-        if (!book) {
-            return;
-        }
-        if (!selectedFilter) {
+        if (!book || !selectedFilter) {
             return;
         }
         StorageDeferredAPI.filter(book, {
@@ -155,7 +155,7 @@ export default function Page() {
         }).then((result) => {
             setFiltered(result);
         });
-    }, [selectedFilter, realRange[0], realRange[1]]);
+    }, [realRange, selectedFilter]);
 
     const [focusType, setFocusType] = useState<FocusType>("expense");
     const [dimension, setDimension] = useState<"category" | "user">("category");
@@ -169,14 +169,14 @@ export default function Page() {
         displayCurrency: selectedFilterView?.displayCurrency,
     });
 
-    const totalMoneys = FocusTypes.map((t) => dataSources.total[t]);
+    const totalMoneys = FocusTypes.map((type) => dataSources.total[type]);
 
     const { tags } = useTag();
     const tagStructure = useMemo(
         () =>
             Array.from(dataSources.tagStructure.entries())
                 .map(([tagId, struct]) => {
-                    const tag = tags.find((t) => t.id === tagId);
+                    const tag = tags.find((item) => item.id === tagId);
                     if (!tag) {
                         return undefined;
                     }
@@ -185,7 +185,7 @@ export default function Page() {
                         ...struct,
                     };
                 })
-                .filter((v) => v !== undefined),
+                .filter((value) => value !== undefined),
         [dataSources.tagStructure, tags],
     );
 
@@ -193,18 +193,21 @@ export default function Page() {
         useMemo(() => {
             const incomes: Bill[] = [];
             const expenses: Bill[] = [];
-            filtered.forEach((v) => {
-                if (v.type === "expense") {
-                    expenses.push(v);
-                } else {
-                    incomes.push(v);
+
+            filtered.forEach((bill) => {
+                if (bill.type === "expense") {
+                    expenses.push(bill);
+                    return;
                 }
+                incomes.push(bill);
             });
+
             return {
                 incomes,
                 expenses,
             };
         }, [filtered]);
+
     const [analysis, setAnalysis] = useState<AnalysisResult>();
     const analysisUnit =
         viewType === "yearly"
@@ -214,13 +217,10 @@ export default function Page() {
               : viewType === "weekly"
                 ? "week"
                 : "day";
+
     useEffect(() => {
         const book = useBookStore.getState().currentBookId;
-        if (!book || !realRange[0] || !realRange[1]) {
-            setAnalysis(undefined);
-            return;
-        }
-        if (!analysisUnit) {
+        if (!book || !realRange[0] || !realRange[1] || !analysisUnit) {
             setAnalysis(undefined);
             return;
         }
@@ -229,31 +229,30 @@ export default function Page() {
             [realRange[0], realRange[1]],
             analysisUnit,
             focusType,
-        ).then((v) => {
-            setAnalysis(v);
+        ).then((value) => {
+            setAnalysis(value);
         });
-    }, [analysisUnit, focusType, realRange[0], realRange[1]]);
+    }, [analysisUnit, focusType, realRange]);
 
     const { updateFilter, addFilter } = useCustomFilters();
     const toChangeFilter = async () => {
         if (!selectedFilterView) {
             return;
         }
-        const id = selectedFilterView.id;
         const action = await showBillFilterView({
             ...selectedFilterView,
-            // hideDelete: id === DefaultFilterViewId,
         });
         if (action === "delete") {
-            await updateFilter(id);
+            await updateFilter(selectedFilterView.id);
             setFilterViewId(allFilterViews[0].id);
             return;
         }
-        await updateFilter(id, {
+        await updateFilter(selectedFilterView.id, {
             ...action,
             name: action.name ?? selectedFilterView.name,
         });
     };
+
     const toReOrder = async () => {
         if ((customFilters?.length ?? 0) === 0) {
             return;
@@ -261,11 +260,16 @@ export default function Page() {
         const ordered = await showSortableList(customFilters);
         useLedgerStore.getState().updateGlobalMeta((prev) => {
             prev.customFilters = ordered
-                .map((v) => prev.customFilters?.find((c) => c.id === v.id))
-                .filter((v) => v !== undefined);
+                .map((value) =>
+                    prev.customFilters?.find(
+                        (filter) => filter.id === value.id,
+                    ),
+                )
+                .filter((value) => value !== undefined);
             return prev;
         });
     };
+
     const toAddFilter = async () => {
         const newFilter = await showBillFilterView({
             name: t("new-filter-name"),
@@ -275,140 +279,106 @@ export default function Page() {
         if (newFilter === "delete" || !newFilter.name) {
             return;
         }
-        const id = await addFilter(newFilter.name, newFilter);
-        if (!id) {
+        const createdId = await addFilter(newFilter.name, newFilter);
+        if (!createdId) {
             return;
         }
         setSliceId(undefined);
-        setFilterViewId(id);
+        setFilterViewId(createdId);
     };
 
     const { allCurrencies, baseCurrency } = useCurrency();
     const highestExpenseBill = dataSources.highestExpenseBill;
     const highestIncomeBill = dataSources.highestIncomeBill;
+    const selectedSliceLabel = dateSlicedProps.value?.split("|")?.[1];
+    const rangeSummary =
+        viewType === "custom"
+            ? `${dayjs(realRange[0]).format("MM/DD")} - ${dayjs(
+                  realRange[1],
+              ).format("MM/DD")}`
+            : [t(`stat-view-${viewType}`), selectedSliceLabel]
+                  .filter(Boolean)
+                  .join(" · ");
+    const dimensionSummary =
+        dimension === "category" ? t("categories") : t("creator");
+    const focusSummary = focusType === "balance" ? t("Balance") : t(focusType);
+    const currentCount = filtered.length;
 
     return (
         <div className="stat-page w-full h-full p-2 pb-[calc(100px+env(safe-area-inset-bottom))] flex flex-col items-center justify-start sm:justify-center gap-4 overflow-hidden">
             <Navigation />
-            <div className="stat-page-shell w-full mx-2 max-w-[600px] flex flex-col gap-3">
+
+            <div className="stat-page-shell relative z-[1] w-full mx-2 max-w-[600px] flex flex-col gap-3">
                 <motion.div
                     {...getStageProps({
                         index: 0,
                         reducedMotion: prefersReducedMotion,
                     })}
-                    className="stat-top-shell w-full flex flex-col gap-3"
+                    className="stat-top-shell w-full flex flex-col gap-4"
                 >
-                    <div className="stat-filter-row w-full flex">
-                        <LayoutGroup id={filterLayoutId}>
-                            <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hidden">
-                                {allFilterViews.map((filter) => {
-                                    const displayCurrency =
-                                        filter.displayCurrency ===
-                                        baseCurrency.id
-                                            ? undefined
-                                            : allCurrencies.find(
-                                                  (v) =>
-                                                      v.id ===
-                                                      filter.displayCurrency,
-                                              );
-                                    const isActive = filterViewId === filter.id;
-                                    return (
-                                        <Button
-                                            key={filter.id}
-                                            size={"sm"}
-                                            className={cn(
-                                                "stat-filter-chip relative",
-                                                !isActive && "text-primary/50",
-                                            )}
-                                            variant="ghost"
-                                            onClick={() => {
-                                                setSliceId(undefined);
-                                                setFilterViewId(filter.id);
-                                            }}
-                                        >
-                                            {isActive && (
-                                                <motion.span
-                                                    layoutId="stat-filter-indicator"
-                                                    transition={
-                                                        sharedElementTransition
-                                                    }
-                                                    className="stat-chip-indicator"
-                                                />
-                                            )}
-                                            <span className="relative z-[1] inline-flex items-center gap-1">
-                                                {displayCurrency?.symbol}
-                                                {filter.name}
-                                            </span>
-                                        </Button>
-                                    );
-                                })}
-                            </div>
-                        </LayoutGroup>
-                        <div className="stat-filter-actions">
-                            <Button
-                                variant="ghost"
-                                onClick={toAddFilter}
-                                size="sm"
-                                className="stat-icon-button"
-                            >
-                                <i className="icon-[mdi--plus] size-4"></i>
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                onClick={toReOrder}
-                                size="sm"
-                                className="stat-icon-button"
-                            >
-                                <i className="icon-[mdi--menu] size-4"></i>
-                            </Button>
-                        </div>
+                    <div className="stat-context-row">
+                        <StatMetaPill strong>
+                            {t("filter")} · {selectedFilterView?.name}
+                        </StatMetaPill>
+                        <StatMetaPill>
+                            {t("range")} · {rangeSummary}
+                        </StatMetaPill>
+                        <StatMetaPill>{dimensionSummary}</StatMetaPill>
+                        <StatMetaPill>{focusSummary}</StatMetaPill>
+                        <StatMetaPill>
+                            {t("total")} · {currentCount}
+                        </StatMetaPill>
                     </div>
-                </motion.div>
-                <DateSliced
-                    {...dateSlicedProps}
-                    onClickSettings={toChangeFilter}
-                >
-                    <div className="flex items-center pr-2 relative">
-                        <Switch.Root
-                            checked={dimension === "user"}
-                            onCheckedChange={() => {
-                                setDimension((v) => {
-                                    return v === "category"
-                                        ? "user"
-                                        : "category";
-                                });
+                    <StatFilterToolbar
+                        allCurrencies={allCurrencies}
+                        allFilterViews={allFilterViews}
+                        baseCurrency={baseCurrency.id}
+                        filterLayoutId={filterLayoutId}
+                        filterViewId={filterViewId}
+                        onAddFilter={toAddFilter}
+                        onReorder={toReOrder}
+                        onSelectFilter={(nextId) => {
+                            setSliceId(undefined);
+                            setFilterViewId(nextId);
+                        }}
+                    />
+                    <DateSliced
+                        {...dateSlicedProps}
+                        onClickSettings={toChangeFilter}
+                    >
+                        <StatDimensionToggle
+                            value={dimension}
+                            onValueChange={(value) => {
+                                setDimension(value);
+                                setSelectedCategoryId(undefined);
                             }}
-                            className="relative z-[0] h-[29px] w-[54px] cursor-pointer rounded-sm bg-blackA6 outline-none bg-stone-300 group"
-                        >
-                            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center gap-2 z-[1]">
-                                <i className="icon-[mdi--view-grid-outline] group-[data-[state=checked]]:text-white"></i>
-                                <i className="icon-[mdi--account-outline]"></i>
-                            </div>
-                            <Switch.Thumb className="block size-[22px] translate-x-[4px] rounded-sm bg-background transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[28px]" />
-                        </Switch.Root>
-                    </div>
-                </DateSliced>
+                        />
+                    </DateSliced>
+                </motion.div>
             </div>
+
             <motion.div
                 {...getStageProps({
                     index: 1,
                     reducedMotion: prefersReducedMotion,
                     y: 14,
                 })}
-                className="stat-focus-shell"
+                className="stat-focus-shell relative z-[1] w-full max-w-[600px]"
             >
                 <FocusTypeSelector
                     value={focusType}
-                    onValueChange={(v) => {
-                        setFocusType(v);
+                    onValueChange={(value) => {
+                        setFocusType(value);
                         setSelectedCategoryId(undefined);
                     }}
                     money={totalMoneys}
                 />
             </motion.div>
+
             <div className="stat-scroll-shell w-full px-2 flex-1 flex justify-center overflow-y-auto">
                 <div className="stat-content-shell w-full max-w-[600px] flex flex-col items-center gap-4 relative">
                     {Part}
+
                     <AnimatePresence mode="wait" initial={false}>
                         {hasFiltered ? (
                             <motion.div
@@ -427,13 +397,27 @@ export default function Page() {
                                             reducedMotion: prefersReducedMotion,
                                             y: 14,
                                         })}
-                                        className="stat-card stat-data-card w-full flex flex-col"
+                                        className="w-full"
                                     >
-                                        <h2 className="font-medium text-lg my-3 text-center">
-                                            {t("tag-details")}
-                                        </h2>
-                                        <div className="table w-full border-collapse">
-                                            <div className="table-row-group divide-y">
+                                        <StatSectionCard
+                                            className="stat-data-card"
+                                            icon={
+                                                <i className="icon-[mdi--tag-multiple-outline] size-4"></i>
+                                            }
+                                            title={t("tag-details")}
+                                            description={
+                                                <div className="stat-meta-row">
+                                                    <StatMetaPill>
+                                                        {focusSummary}
+                                                    </StatMetaPill>
+                                                    <StatMetaPill>
+                                                        {t("total")} ·{" "}
+                                                        {tagStructure.length}
+                                                    </StatMetaPill>
+                                                </div>
+                                            }
+                                        >
+                                            <div className="flex flex-col gap-3">
                                                 {tagStructure.map((struct) => {
                                                     const index =
                                                         FocusTypes.indexOf(
@@ -447,6 +431,7 @@ export default function Page() {
                                                     ][index];
                                                     const total =
                                                         totalMoneys[index];
+
                                                     return (
                                                         <TagItem
                                                             key={struct.id}
@@ -461,13 +446,14 @@ export default function Page() {
                                                                     ],
                                                                 });
                                                             }}
-                                                        ></TagItem>
+                                                        />
                                                     );
                                                 })}
                                             </div>
-                                        </div>
+                                        </StatSectionCard>
                                     </motion.div>
                                 )}
+
                                 <motion.div
                                     {...getStageProps({
                                         index: 6,
@@ -476,16 +462,44 @@ export default function Page() {
                                     })}
                                     className="w-full"
                                 >
-                                    <AnalysisCloud
-                                        bills={
-                                            focusType === "expense"
-                                                ? filteredExpenseBills
-                                                : focusType === "income"
-                                                  ? filteredIncomeBills
-                                                  : filtered
+                                    <StatSectionCard
+                                        className="stat-data-card"
+                                        icon={
+                                            <i className="icon-[mdi--comment-text-multiple-outline] size-4"></i>
                                         }
-                                    />
+                                        title={t("comment-cloud")}
+                                        description={
+                                            <div className="stat-meta-row">
+                                                <StatMetaPill>
+                                                    {focusSummary}
+                                                </StatMetaPill>
+                                                <StatMetaPill>
+                                                    {t("total")} ·{" "}
+                                                    {
+                                                        (focusType === "expense"
+                                                            ? filteredExpenseBills
+                                                            : focusType ===
+                                                                "income"
+                                                              ? filteredIncomeBills
+                                                              : filtered
+                                                        ).length
+                                                    }
+                                                </StatMetaPill>
+                                            </div>
+                                        }
+                                    >
+                                        <AnalysisCloud
+                                            bills={
+                                                focusType === "expense"
+                                                    ? filteredExpenseBills
+                                                    : focusType === "income"
+                                                      ? filteredIncomeBills
+                                                      : filtered
+                                            }
+                                        />
+                                    </StatSectionCard>
                                 </motion.div>
+
                                 {analysis && (
                                     <motion.div
                                         {...getStageProps({
@@ -493,57 +507,62 @@ export default function Page() {
                                             reducedMotion: prefersReducedMotion,
                                             y: 14,
                                         })}
-                                        className="stat-card stat-data-card w-full flex flex-col"
+                                        className="w-full"
                                     >
-                                        <h2 className="font-medium text-lg my-3 text-center">
-                                            {t("analysis")}
-                                        </h2>
-                                        <AnalysisDetail
-                                            analysis={analysis}
-                                            type={focusType}
-                                            unit={analysisUnit}
-                                        />
+                                        <StatSectionCard
+                                            className="stat-data-card"
+                                            icon={
+                                                <i className="icon-[mdi--chart-box-outline] size-4"></i>
+                                            }
+                                            title={t("analysis")}
+                                            description={
+                                                <div className="stat-meta-row">
+                                                    <StatMetaPill>
+                                                        {focusSummary}
+                                                    </StatMetaPill>
+                                                    <StatMetaPill>
+                                                        {rangeSummary}
+                                                    </StatMetaPill>
+                                                </div>
+                                            }
+                                        >
+                                            <AnalysisDetail
+                                                analysis={analysis}
+                                                type={focusType}
+                                                unit={analysisUnit}
+                                            />
+                                        </StatSectionCard>
                                     </motion.div>
                                 )}
-                                <motion.div
-                                    {...getStageProps({
-                                        index: 8,
-                                        reducedMotion: prefersReducedMotion,
-                                        y: 14,
-                                    })}
-                                    className="w-full flex flex-col gap-4"
-                                >
-                                    {highestExpenseBill && (
-                                        <div className="stat-card stat-inline-card">
-                                            {t("highest-expense")}:
-                                            <BillItem
-                                                className="w-full"
+
+                                {(highestExpenseBill || highestIncomeBill) && (
+                                    <motion.div
+                                        {...getStageProps({
+                                            index: 8,
+                                            reducedMotion: prefersReducedMotion,
+                                            y: 14,
+                                        })}
+                                        className={cn(
+                                            "w-full grid gap-4",
+                                            highestExpenseBill &&
+                                                highestIncomeBill &&
+                                                "sm:grid-cols-2",
+                                        )}
+                                    >
+                                        {highestExpenseBill && (
+                                            <StatBillHighlightCard
+                                                title={t("highest-expense")}
                                                 bill={highestExpenseBill}
-                                                showTime
-                                                onClick={() =>
-                                                    showBillInfo(
-                                                        highestExpenseBill,
-                                                    )
-                                                }
                                             />
-                                        </div>
-                                    )}
-                                    {highestIncomeBill && (
-                                        <div className="stat-card stat-inline-card">
-                                            {t("highest-income")}:
-                                            <BillItem
-                                                className="w-full"
+                                        )}
+                                        {highestIncomeBill && (
+                                            <StatBillHighlightCard
+                                                title={t("highest-income")}
                                                 bill={highestIncomeBill}
-                                                showTime
-                                                onClick={() =>
-                                                    showBillInfo(
-                                                        highestIncomeBill,
-                                                    )
-                                                }
                                             />
-                                        </div>
-                                    )}
-                                </motion.div>
+                                        )}
+                                    </motion.div>
+                                )}
                             </motion.div>
                         ) : (
                             <motion.div
@@ -561,18 +580,24 @@ export default function Page() {
                                         reducedMotion: prefersReducedMotion,
                                         y: 14,
                                     })}
-                                    className="stat-card stat-data-card stat-empty-summary w-full flex flex-col"
+                                    className="w-full"
                                 >
-                                    <div className="stat-empty-title">
-                                        {t("analysis")}
-                                    </div>
-                                    <div className="stat-empty-copy">
-                                        {t("nothing-here-add-one-bill")}
-                                    </div>
+                                    <StatSectionCard
+                                        className="stat-data-card stat-empty-summary"
+                                        icon={
+                                            <i className="icon-[mdi--chart-box-outline] size-4"></i>
+                                        }
+                                        title={t("analysis")}
+                                    >
+                                        <div className="stat-empty-copy">
+                                            {t("nothing-here-add-one-bill")}
+                                        </div>
+                                    </StatSectionCard>
                                 </motion.div>
                             </motion.div>
                         )}
                     </AnimatePresence>
+
                     <motion.div
                         {...getStageProps({
                             index: 9,
@@ -595,5 +620,170 @@ export default function Page() {
             </div>
             <BillFilterViewProvider />
         </div>
+    );
+}
+
+function StatFilterToolbar({
+    allCurrencies,
+    allFilterViews,
+    baseCurrency,
+    filterLayoutId,
+    filterViewId,
+    onAddFilter,
+    onReorder,
+    onSelectFilter,
+}: {
+    allCurrencies: {
+        id: string;
+        symbol: string;
+    }[];
+    allFilterViews: BillFilterView[];
+    baseCurrency: string;
+    filterLayoutId: string;
+    filterViewId: string;
+    onAddFilter: () => void;
+    onReorder: () => void;
+    onSelectFilter: (id: string) => void;
+}) {
+    return (
+        <div className="stat-filter-row w-full flex">
+            <LayoutGroup id={filterLayoutId}>
+                <div className="stat-filter-chip-row flex-1 overflow-x-auto scrollbar-hidden">
+                    {allFilterViews.map((filter) => {
+                        const displayCurrency =
+                            filter.displayCurrency === baseCurrency
+                                ? undefined
+                                : allCurrencies.find(
+                                      (currency) =>
+                                          currency.id ===
+                                          filter.displayCurrency,
+                                  );
+                        const isActive = filterViewId === filter.id;
+
+                        return (
+                            <Button
+                                key={filter.id}
+                                size="sm"
+                                className={cn(
+                                    "stat-filter-chip relative",
+                                    !isActive && "text-primary/58",
+                                )}
+                                variant="ghost"
+                                onClick={() => {
+                                    onSelectFilter(filter.id);
+                                }}
+                            >
+                                {isActive && (
+                                    <motion.span
+                                        layoutId="stat-filter-indicator"
+                                        transition={sharedElementTransition}
+                                        className="stat-chip-indicator"
+                                    />
+                                )}
+                                <span className="relative z-[1] inline-flex items-center gap-1">
+                                    {displayCurrency?.symbol}
+                                    {filter.name}
+                                </span>
+                            </Button>
+                        );
+                    })}
+                </div>
+            </LayoutGroup>
+            <div className="stat-filter-actions">
+                <Button
+                    variant="ghost"
+                    onClick={onAddFilter}
+                    size="sm"
+                    className="stat-icon-button"
+                >
+                    <i className="icon-[mdi--plus] size-4"></i>
+                </Button>
+                <Button
+                    variant="ghost"
+                    onClick={onReorder}
+                    size="sm"
+                    className="stat-icon-button"
+                >
+                    <i className="icon-[mdi--menu] size-4"></i>
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+function StatDimensionToggle({
+    value,
+    onValueChange,
+}: {
+    value: "category" | "user";
+    onValueChange: (value: "category" | "user") => void;
+}) {
+    const t = useIntl();
+    const layoutGroupId = useId();
+
+    return (
+        <LayoutGroup id={layoutGroupId}>
+            <div className="stat-dimension-toggle">
+                {[
+                    {
+                        icon: "icon-[mdi--view-grid-outline]",
+                        id: "category",
+                        label: t("categories"),
+                    },
+                    {
+                        icon: "icon-[mdi--account-outline]",
+                        id: "user",
+                        label: t("creator"),
+                    },
+                ].map((item) => {
+                    const isActive = value === item.id;
+
+                    return (
+                        <button
+                            key={item.id}
+                            type="button"
+                            className={cn(
+                                "stat-dimension-button",
+                                isActive && "stat-dimension-button-active",
+                            )}
+                            onClick={() => {
+                                onValueChange(item.id as "category" | "user");
+                            }}
+                        >
+                            {isActive && (
+                                <motion.span
+                                    layoutId="stat-dimension-indicator"
+                                    transition={sharedElementTransition}
+                                    className="nav-active-indicator"
+                                />
+                            )}
+                            <span className="relative z-[1] inline-flex items-center gap-2">
+                                <i className={cn(item.icon, "size-4")}></i>
+                                <span>{item.label}</span>
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        </LayoutGroup>
+    );
+}
+
+function StatBillHighlightCard({ title, bill }: { title: string; bill: Bill }) {
+    return (
+        <StatSectionCard
+            className="stat-inline-card"
+            icon={
+                <i className="icon-[mdi--star-four-points-outline] size-4"></i>
+            }
+            title={title}
+        >
+            <BillItem
+                className="w-full"
+                bill={bill}
+                showTime
+                onClick={() => showBillInfo(bill)}
+            />
+        </StatSectionCard>
     );
 }

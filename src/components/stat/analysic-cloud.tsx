@@ -67,20 +67,17 @@ export function AnalysisCloud({ bills }: { bills?: { comment?: string }[] }) {
         processText(texts).then(setWordCut);
     }, [bills]);
     return (
-        <div className="stat-card stat-data-card w-full flex flex-col relative">
-            <h2 className="font-medium text-lg my-3 text-center">
-                {t("comment-cloud")}
-            </h2>
+        <div className="stat-cloud-shell relative">
             {wordCut === undefined ? (
-                <MysteryLoading className="w-full h-[150px] rounded-md">
+                <MysteryLoading className="w-full h-[180px] rounded-[20px]">
                     <div className="text-[white] text-sm">{t("loading")}</div>
                 </MysteryLoading>
             ) : wordCut.length === 0 ? (
-                <div className="text-center text-sm">
+                <div className="stat-cloud-empty text-center text-sm">
                     {t("no-comment-cloud")}
                 </div>
             ) : (
-                <div>
+                <div className="min-h-[180px]">
                     <TextCloud data={wordCut} />
                 </div>
             )}
